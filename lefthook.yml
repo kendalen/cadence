@@ -1,0 +1,27 @@
+# Git hooks for Cadence, managed by lefthook (https://lefthook.dev).
+#
+# Run the full gate manually with:  lefthook run pre-commit
+# Install into .git/hooks with:      lefthook install
+#
+# This mirrors the CI gate in CLAUDE.md §8. Keep the two in sync: a change to
+# the checks here should be reflected in CI and vice versa.
+pre-commit:
+  # Run the checks in order and report the first failure clearly.
+  piped: true
+  commands:
+    format:
+      # Matches CLAUDE.md §8: fail (do not rewrite) on unformatted code.
+      run: dart format --set-exit-if-changed .
+    analyze:
+      # Flutter-aware static analysis. Note: `flutter analyze` does NOT run
+      # native analyzer plugins, so it does not enforce the import boundaries —
+      # the `boundaries` step below does that. Both are required.
+      run: flutter analyze --fatal-infos --fatal-warnings
+    boundaries:
+      # `dart analyze` runs the import_rules analyzer plugin that enforces the
+      # layered import boundaries (ui -> data -> domain, one-way; domain pure) —
+      # see CLAUDE.md §3 and analysis_options.yaml. `flutter analyze` cannot do
+      # this. Do not remove this step.
+      run: dart analyze --fatal-infos --fatal-warnings
+    test:
+      run: flutter test

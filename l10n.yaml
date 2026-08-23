@@ -1,0 +1,11 @@
+# Localisation configuration for Cadence (CLAUDE.md §9).
+#
+# English is the source locale. Every user-facing string is authored here in
+# app_en.arb and read through the generated AppLocalizations — no hardcoded UI
+# text. Generated output lands under .dart_tool/ and is not committed.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# Fail generation on a malformed ARB rather than silently producing bad output.
+use-escaping: true

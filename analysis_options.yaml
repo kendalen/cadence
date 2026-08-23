@@ -1,0 +1,79 @@
+# Static analysis configuration for Cadence.
+#
+# Base: flutter_lints (the Flutter team's recommended set), tightened with the
+# analyzer's strict language modes and a curated set of additional rules.
+#
+# Architectural import boundaries are enforced by the `import_rules` analyzer
+# plugin (see the `import_rules:` section below), not by convention — see
+# CLAUDE.md §3. The rules encode §3's prose: the domain layer is pure Dart and
+# depends on nothing above it (no Flutter, no Drift, no I/O); the data layer may
+# depend on domain but never on ui; the ui layer may depend on both.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # TODO comments are surfaced as info; do not let them fail `--fatal-infos`.
+    todo: ignore
+  exclude:
+    # Generated sources are not hand-maintained and are not held to these rules.
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    # Generated localisations (flutter gen-l10n writes these from the ARB files).
+    - "lib/l10n/app_localizations*.dart"
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+
+plugins:
+  # Enforces the layered import boundaries declared under `import_rules:` below.
+  import_rules: ^0.0.8
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_dynamic_calls
+    - avoid_slow_async_io
+    - cancel_subscriptions
+    - close_sinks
+    - directives_ordering
+    - prefer_final_in_for_each
+    - prefer_final_locals
+    - public_member_api_docs
+    - require_trailing_commas
+    - sort_pub_dependencies
+    - test_types_in_equals
+    - throw_in_finally
+    - unawaited_futures
+    - unnecessary_lambdas
+    - unnecessary_statements
+    - use_super_parameters
+
+# Layered architecture enforcement (CLAUDE.md §3).
+import_rules:
+  rules:
+    - target: lib/domain/**
+      disallow:
+        - lib/data/**
+        - lib/ui/**
+        - package:flutter/**
+        - package:drift/**
+        - dart:io
+        - dart:ui
+      reason: >-
+        The domain layer is pure Dart: no Flutter, no Drift, no I/O, and no
+        dependency on the data or ui layers (CLAUDE.md §3).
+    - target: lib/data/**
+      disallow:
+        - lib/ui/**
+      reason: >-
+        The data layer may depend on domain but must never import ui
+        (CLAUDE.md §3).

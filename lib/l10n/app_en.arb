@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "appTitle": "Cadence",
+  "@appTitle": {
+    "description": "The application name, shown as the title of the app."
+  }
+}
