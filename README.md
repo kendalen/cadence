@@ -16,11 +16,19 @@ Early scaffolding. There are no features yet: the repository holds the project s
 
 ## Development
 
-Requires the Flutter SDK (stable). The pre-commit gate is managed by [lefthook](https://lefthook.dev):
+Requires the Flutter SDK (stable) and [lefthook](https://lefthook.dev).
+
+On a fresh clone:
 
 ```sh
-lefthook install        # wire the hook into .git/hooks (once)
-lefthook run pre-commit # run the full gate manually
+flutter pub get   # fetch dependencies and generate localisations
+lefthook install  # wire the pre-commit gate into .git/hooks (once)
+```
+
+Run the full gate manually at any time:
+
+```sh
+lefthook run pre-commit
 ```
 
 The gate runs `dart format`, `flutter analyze`, `dart analyze` (which enforces the layered import boundaries), and `flutter test`.
