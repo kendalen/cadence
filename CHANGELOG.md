@@ -37,3 +37,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Android backup disabled: `android:allowBackup="false"` plus a
   `data_extraction_rules.xml` that also excludes device-to-device transfer,
   which `allowBackup` alone does not cover on Android 12+ (CLAUDE.md §5).
+- An end-to-end smoke test driving the real app against an in-memory
+  database: enter a reading, save it, and find it in the list, including
+  after the widget tree is rebuilt.
