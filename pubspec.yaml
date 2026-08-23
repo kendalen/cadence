@@ -31,16 +31,37 @@ dependencies:
   # Cupertino icon font. Kept from the default template; may be removed later if
   # the app ships Material-only.
   cupertino_icons: ^1.0.8
+  # Persistence engine (CLAUDE.md §2). MIT.
+  drift: ^2.34.3
+  # A runtime dependency, not a dev one, on purpose: validateDatabaseSchema()
+  # ships in drift_dev and CLAUDE.md §5 requires it in beforeOpen under debug.
+  # The kDebugMode guard tree-shakes the call out of release builds. drift_dev
+  # also generates the database code, the schema snapshots, and the migration
+  # test harness. MIT.
+  drift_dev: ^2.34.5
+  # Flutter bindings for drift: opens the database under
+  # getApplicationDocumentsDirectory() and bundles the sqlite3 native library,
+  # so path_provider is not needed as a direct dependency here. MIT.
+  drift_flutter: ^0.3.1
+  # Value equality for the immutable domain entities. MIT.
+  equatable: ^2.1.0
   flutter:
     sdk: flutter
+  # State management for the whole app: Cubits with constructor-injected
+  # dependencies. One approach app-wide (CLAUDE.md §3). MIT.
+  flutter_bloc: ^9.1.1
   # Flutter's bundled localisation delegates. Required for the ARB-based i18n
   # scaffolding (CLAUDE.md §9); English is the source locale.
   flutter_localizations:
     sdk: flutter
   # Used by the generated localisations for message and plural formatting.
   intl: any
+  # UUID v7 for client-generated, time-ordered entity ids. MIT.
+  uuid: ^4.6.0
 
 dev_dependencies:
+  # Code generation host for drift_dev. BSD-3 (Dart authors).
+  build_runner: ^2.16.0
   # Recommended Flutter lint set; tightened in analysis_options.yaml.
   flutter_lints: ^6.0.0
   flutter_test:

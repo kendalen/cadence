@@ -1,0 +1,140 @@
+import 'package:cadence/data/database/app_database.dart';
+import 'package:cadence/data/sessions/drift_session_repository.dart';
+import 'package:cadence/domain/core/result.dart';
+import 'package:cadence/domain/core/unit.dart';
+import 'package:cadence/domain/sessions/ids.dart';
+import 'package:cadence/domain/sessions/persistence_failure.dart';
+import 'package:cadence/domain/sessions/reading.dart';
+import 'package:cadence/domain/sessions/session.dart';
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+Session sessionOf(String id, List<Reading> readings) =>
+    Session(id: SessionId(id), readings: readings);
+
+Reading readingOf(
+  String id,
+  DateTime takenAt, {
+  int systolic = 132,
+  int diastolic = 84,
+  int? pulse,
+  String? notes,
+}) => Reading(
+  id: ReadingId(id),
+  systolic: systolic,
+  diastolic: diastolic,
+  pulse: pulse,
+  takenAt: takenAt,
+  notes: notes,
+);
+
+void main() {
+  late AppDatabase database;
+  late DriftSessionRepository repository;
+
+  final morning = DateTime.utc(2026, 8, 23, 6, 40);
+  final evening = DateTime.utc(2026, 8, 23, 19, 5);
+
+  setUp(() {
+    database = AppDatabase.forTesting(NativeDatabase.memory());
+    repository = DriftSessionRepository(database);
+  });
+
+  tearDown(() => database.close());
+
+  test('watchAll emits an empty list when nothing is stored', () {
+    expect(repository.watchAll(), emits(isEmpty));
+  });
+
+  test('a stored session comes back with every field intact', () async {
+    final session = sessionOf('s1', [
+      readingOf('r1', morning, pulse: 72, notes: 'after a walk'),
+    ]);
+
+    final result = await repository.add(session);
+
+    expect(result, const Ok<Unit, PersistenceFailure>(unit));
+    expect(await repository.watchAll().first, [session]);
+  });
+
+  test('an absent pulse and note round-trip as null', () async {
+    await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
+
+    final stored = (await repository.watchAll().first).single.readings.single;
+
+    expect(stored.pulse, isNull);
+    expect(stored.notes, isNull);
+  });
+
+  test('sessions are emitted newest occasion first', () async {
+    await repository.add(sessionOf('morning', [readingOf('r1', morning)]));
+    await repository.add(sessionOf('evening', [readingOf('r2', evening)]));
+
+    final ids = (await repository.watchAll().first)
+        .map((session) => session.id.value)
+        .toList();
+
+    expect(ids, ['evening', 'morning']);
+  });
+
+  test('the readings of a session are emitted oldest first', () async {
+    final second = morning.add(const Duration(minutes: 1));
+    await repository.add(
+      sessionOf('s1', [
+        readingOf('later', second),
+        readingOf('first', morning),
+      ]),
+    );
+
+    final ids = (await repository.watchAll().first).single.readings
+        .map((reading) => reading.id.value)
+        .toList();
+
+    expect(ids, ['first', 'later']);
+  });
+
+  test('watchAll emits again when a session is added', () async {
+    final emitted = <int>[];
+    final subscription = repository.watchAll().listen(
+      (sessions) => emitted.add(sessions.length),
+    );
+    await pumpEventQueue();
+
+    await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
+    await pumpEventQueue();
+    await repository.add(sessionOf('s2', [readingOf('r2', evening)]));
+    await pumpEventQueue();
+    await subscription.cancel();
+
+    expect(emitted, [0, 1, 2]);
+  });
+
+  test('add reports a failure instead of throwing on a duplicate id', () async {
+    final session = sessionOf('s1', [readingOf('r1', morning)]);
+    await repository.add(session);
+
+    final result = await repository.add(session);
+
+    expect(result, isA<Err<Unit, PersistenceFailure>>());
+    expect(await repository.watchAll().first, hasLength(1));
+  });
+
+  test('deleting a session deletes its readings', () async {
+    await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
+
+    await database.delete(database.sessions).go();
+
+    expect(await database.select(database.readings).get(), isEmpty);
+  });
+
+  test('takenAt is stored as UTC ISO-8601 text', () async {
+    await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
+
+    final stored = await database
+        .customSelect('SELECT typeof(taken_at) AS kind, taken_at FROM readings')
+        .getSingle();
+
+    expect(stored.read<String>('kind'), 'text');
+    expect(stored.read<String>('taken_at'), startsWith('2026-08-23T06:40'));
+  });
+}

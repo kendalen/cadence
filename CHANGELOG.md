@@ -21,3 +21,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `lefthook` pre-commit hook mirroring the CI gate: `dart format`,
   `flutter analyze`, `dart analyze` (boundaries), and `flutter test`
   (CLAUDE.md §8).
+- Domain: `Session` and `Reading` entities, typed `SessionId`/`ReadingId`,
+  `ReadingInput.validate()` with plausibility bounds (typo guards, not
+  clinical thresholds), a sealed `Result` type, and the `SessionRepository`
+  and `IdGenerator` interfaces (CLAUDE.md §4).
+- Data: drift schema v1 (`Sessions` one-to-many `Readings`, cascade delete),
+  timestamps stored as UTC ISO-8601 text, `DriftSessionRepository`, UUID v7
+  identifiers, the committed `drift_schema_v1.json` snapshot, and the
+  migration test harness (CLAUDE.md §5).

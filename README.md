@@ -31,6 +31,16 @@ Run the full gate manually at any time:
 lefthook run pre-commit
 ```
 
+The drift database code, the schema snapshot, and the migration-test helpers
+are generated and committed, so a fresh clone needs no code generation. After
+changing the tables, regenerate them and commit the result:
+
+```sh
+dart run build_runner build
+dart run drift_dev schema dump lib/data/database/app_database.dart lib/data/schema/
+dart run drift_dev schema generate lib/data/schema/ test/data/schema/generated/
+```
+
 The gate runs `dart format`, `flutter analyze`, `dart analyze` (which enforces the layered import boundaries), and `flutter test`.
 
 ## Licence

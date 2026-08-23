@@ -1,0 +1,12 @@
+# Code generation options (build_runner).
+#
+# `store_date_time_values_as_text` makes drift persist DateTime columns as UTC
+# ISO-8601 text rather than Unix seconds — drift's current recommendation, and
+# the only representation that survives timezone and DST changes intact. It is
+# a storage-format decision: changing it later needs a migration.
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          store_date_time_values_as_text: true

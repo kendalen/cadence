@@ -25,6 +25,8 @@ analyzer:
     - "**/*.freezed.dart"
     # Generated localisations (flutter gen-l10n writes these from the ARB files).
     - "lib/l10n/app_localizations*.dart"
+    # Generated drift migration helpers (drift_dev schema generate).
+    - "test/data/schema/generated/**"
     - build/**
     - android/**
     - ios/**
