@@ -21,6 +21,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `lefthook` pre-commit hook mirroring the CI gate: `dart format`,
   `flutter analyze`, `dart analyze` (boundaries), and `flutter test`
   (CLAUDE.md §8).
+- Log a session end-to-end: enter one reading on a form, store it, and see it
+  in a list that survives a restart. The first vertical slice, designed in
+  `docs/superpowers/specs/2026-08-23-log-session-end-to-end-design.md`.
 - Domain: `Session` and `Reading` entities, typed `SessionId`/`ReadingId`,
   `ReadingInput.validate()` with plausibility bounds (typo guards, not
   clinical thresholds), a sealed `Result` type, and the `SessionRepository`
@@ -29,3 +32,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   timestamps stored as UTC ISO-8601 text, `DriftSessionRepository`, UUID v7
   identifiers, the committed `drift_schema_v1.json` snapshot, and the
   migration test harness (CLAUDE.md §5).
+- UI: the readings list and the entry form, on `flutter_bloc` Cubits, with
+  every user-facing string in the ARB (CLAUDE.md §9).
+- Android backup disabled: `android:allowBackup="false"` plus a
+  `data_extraction_rules.xml` that also excludes device-to-device transfer,
+  which `allowBackup` alone does not cover on Android 12+ (CLAUDE.md §5).

@@ -3,5 +3,84 @@
   "appTitle": "Cadence",
   "@appTitle": {
     "description": "The application name, shown as the title of the app."
+  },
+  "sessionListEmpty": "No readings yet.",
+  "@sessionListEmpty": {
+    "description": "Shown on the readings list when nothing has been recorded yet."
+  },
+  "sessionListEmptyHint": "Add one with the button below.",
+  "@sessionListEmptyHint": {
+    "description": "Second line of the empty readings list, pointing at the add button."
+  },
+  "addReading": "Add a reading",
+  "@addReading": {
+    "description": "Label of the button that opens the entry form, and the title of that form."
+  },
+  "readingPressure": "{systolic}/{diastolic}",
+  "@readingPressure": {
+    "description": "Systolic over diastolic pressure in mmHg, as shown in the list.",
+    "placeholders": {
+      "systolic": { "type": "int" },
+      "diastolic": { "type": "int" }
+    }
+  },
+  "readingPulse": "{pulse} bpm",
+  "@readingPulse": {
+    "description": "Pulse in beats per minute, shown beside a reading when one was recorded.",
+    "placeholders": {
+      "pulse": { "type": "int" }
+    }
+  },
+  "systolicLabel": "Systolic (mmHg)",
+  "@systolicLabel": {
+    "description": "Label of the systolic pressure field in the entry form."
+  },
+  "diastolicLabel": "Diastolic (mmHg)",
+  "@diastolicLabel": {
+    "description": "Label of the diastolic pressure field in the entry form."
+  },
+  "pulseLabel": "Pulse (bpm, optional)",
+  "@pulseLabel": {
+    "description": "Label of the optional pulse field in the entry form."
+  },
+  "notesLabel": "Notes (optional)",
+  "@notesLabel": {
+    "description": "Label of the optional free-text note field in the entry form."
+  },
+  "takenAtLabel": "Taken at",
+  "@takenAtLabel": {
+    "description": "Label of the date and time the reading was taken."
+  },
+  "changeTakenAt": "Change",
+  "@changeTakenAt": {
+    "description": "Button that opens the date and time pickers for the entry form."
+  },
+  "saveReading": "Save",
+  "@saveReading": {
+    "description": "Button that saves the reading being entered."
+  },
+  "errorValueRequired": "Enter a value.",
+  "@errorValueRequired": {
+    "description": "Field error shown when a required field was left blank."
+  },
+  "errorWholeNumber": "Enter a whole number.",
+  "@errorWholeNumber": {
+    "description": "Field error shown when the text typed is not a whole number."
+  },
+  "errorOutOfRange": "Enter a number between {min} and {max}.",
+  "@errorOutOfRange": {
+    "description": "Field error shown when a number lies outside the range a monitor could report. Not a clinical judgement.",
+    "placeholders": {
+      "min": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "errorFutureTime": "Choose a time that has already passed.",
+  "@errorFutureTime": {
+    "description": "Field error shown when the chosen date and time lies in the future."
+  },
+  "errorSaveFailed": "Couldn''t save this reading. Please try again.",
+  "@errorSaveFailed": {
+    "description": "Message shown when writing the reading to the database failed."
   }
 }
