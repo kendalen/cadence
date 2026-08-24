@@ -195,6 +195,69 @@ void main() {
     });
   });
 
+  group('suggestedFirstReading recency window', () {
+    // now as UTC so the 14-day cutoff is exact regardless of the test
+    // machine's timezone; under [identity] its hour (08 -> morning) also
+    // drives the bucket.
+    final nowUtc = DateTime.utc(2026, 8, 24, 8);
+
+    Session morningDaysAgo(
+      int days, {
+      int systolic = 120,
+      int diastolic = 80,
+    }) => occasion(
+      systolic: systolic,
+      diastolic: diastolic,
+      takenAt: nowUtc.subtract(Duration(days: days)),
+    );
+
+    test('averages only occasions within the last 14 days', () {
+      // Recent 140/90 vs a month-old 120/80: an all-time mean would be 130/85,
+      // so returning 140/90 proves the old occasion is excluded.
+      final history = [
+        morningDaysAgo(5, systolic: 140, diastolic: 90),
+        morningDaysAgo(30, systolic: 120, diastolic: 80),
+      ];
+
+      expect(
+        suggestedFirstReading(history, now: nowUtc, toLocal: identity),
+        const SessionAverage(systolic: 140, diastolic: 90),
+      );
+    });
+
+    test('includes an occasion exactly 14 days old', () {
+      // The window boundary is inclusive.
+      final history = [morningDaysAgo(14, systolic: 134, diastolic: 86)];
+
+      expect(
+        suggestedFirstReading(history, now: nowUtc, toLocal: identity),
+        const SessionAverage(systolic: 134, diastolic: 86),
+      );
+    });
+
+    test('prefers older same-bucket history over recent other-bucket', () {
+      // Nothing recent in the morning bucket: an old morning occasion is a
+      // better guess for a morning reading than a recent evening one, because
+      // time of day drives the value.
+      final oldMorning = DateTime.utc(2026, 7, 20, 7); // ~35 days ago, morning
+      final recentEvening = DateTime.utc(
+        2026,
+        8,
+        22,
+        20,
+      ); // 2 days ago, evening
+      final history = [
+        occasion(systolic: 118, diastolic: 78, takenAt: oldMorning),
+        occasion(systolic: 150, diastolic: 95, takenAt: recentEvening),
+      ];
+
+      expect(
+        suggestedFirstReading(history, now: nowUtc, toLocal: identity),
+        const SessionAverage(systolic: 118, diastolic: 78),
+      );
+    });
+  });
+
   group('mostRecentReading', () {
     test('is null when there is no history', () {
       expect(mostRecentReading(const []), isNull);

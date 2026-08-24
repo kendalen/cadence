@@ -88,14 +88,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   first reading is the next slice (S3b).
 - History-aware first-reading prefill (S3b): a new occasion's first reading now
   opens on the user's own numbers instead of the fixed 120/80. The estimate is
-  the mean of past occasion averages in the same half of the day — morning
-  before local noon, evening after, matching the 7-2-2 two-occasions-a-day shape
-  — since readings cluster by time of day; when that bucket is empty it falls
-  back to all history, and 120/80 remains only when there is no history at all
-  (`suggestedFirstReading`, CLAUDE.md §4). The first reading's context (arm,
+  the mean of past occasion averages, preferring the most specific data
+  available: occasions from the last two weeks (`firstReadingWindow`) in the
+  same half of the day — morning before local noon, evening after — then the
+  same half-day at any age, then any occasion at all, with 120/80 remaining only
+  when there is no history (`suggestedFirstReading`, CLAUDE.md §4). Recency keeps
+  the guess close to the user's current level (blood pressure drifts with
+  medication and time, so a recent change shows through in a week or two rather
+  than being buried under years of readings); the morning/evening split keeps it
+  to the right time of day, since those pressures differ. The two-week window
+  matches the 7-2-2 protocol's own timescale. The first reading's context (arm,
   posture, before/after medication) is prefilled from the most recent stored
   reading. It is a gentle nudge, not a norm or a target: every value is the
   user's own data, shown and fully editable before it is saved. The form waits
-  for this one-shot history read (`SessionRepository.recentHistory`) before it
+  for a one-shot history read (`SessionRepository.recentHistory`) before it
   opens, so the numbers never change under the user (roadmap ease-of-use
   principle; the audience skews older).

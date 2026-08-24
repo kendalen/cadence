@@ -25,16 +25,33 @@ typedef ToLocal = DateTime Function(DateTime utc);
 
 DateTime _systemToLocal(DateTime utc) => utc.toLocal();
 
+/// How far back [suggestedFirstReading] looks for its estimate.
+///
+/// Blood pressure drifts — with medication, weight, season — so a recent window
+/// tracks the user's *current* level and lets a real change (starting a new
+/// medication) show through within a week or two, where an all-time average
+/// would stay anchored to old readings for months. Two weeks matches the 7-2-2
+/// protocol's own timescale (§4). Not a clinical constant; safe to tune, and a
+/// natural candidate to make user-configurable if Settings ever wants it.
+const Duration firstReadingWindow = Duration(days: 14);
+
 /// A starting estimate for the first reading of a new occasion, drawn from the
 /// user's own [history], or `null` when there is nothing to base one on.
 ///
 /// The estimate is the mean of past session averages — the session is the unit
-/// of analysis (§4), so a two-reading occasion counts once — taken over the
-/// occasions in the same day-bucket as [now]. Readings cluster by time of day,
-/// so the morning average is the better opening guess in the morning. When that
-/// bucket holds no history, it falls back to the mean over all history; when
-/// there is no history at all, it returns `null` and the caller supplies its
-/// own neutral default.
+/// of analysis (§4), so a two-reading occasion counts once. It prefers the most
+/// specific data available, falling through these tiers to the first that holds
+/// any occasion:
+///
+/// 1. within [firstReadingWindow] of [now] and in the same day-bucket;
+/// 2. the same day-bucket at any age;
+/// 3. any occasion at all.
+///
+/// Recency keeps the guess close to the user's current level; the day-bucket
+/// keeps it to the right time of day (morning and evening pressures differ), so
+/// an older same-bucket occasion is preferred over a recent other-bucket one.
+/// With no history at all it returns `null` and the caller supplies its own
+/// neutral default.
 ///
 /// It is a gentle nudge, not a norm or a target: the value shown is the user's
 /// own data, editable before it is saved (§4).
@@ -42,26 +59,34 @@ DateTime _systemToLocal(DateTime utc) => utc.toLocal();
 /// Bucketing is by local wall clock — morning and evening only mean anything
 /// there — so [toLocal] converts each occasion's UTC time before its hour is
 /// read. It defaults to the system zone; tests inject it so they stay
-/// timezone-independent. [now] is already local.
+/// timezone-independent. [now] is local; its instant bounds the recency window.
 SessionAverage? suggestedFirstReading(
   Iterable<Session> history, {
   required DateTime now,
   ToLocal toLocal = _systemToLocal,
 }) {
   final sessions = history.toList();
-  if (sessions.isEmpty) {
-    return null;
-  }
-
   final target = DayBucket.ofLocalTime(now);
-  final inBucket = sessions
-      .where(
-        (session) =>
-            DayBucket.ofLocalTime(toLocal(session.occurredAt)) == target,
-      )
-      .toList();
+  final cutoff = now.toUtc().subtract(firstReadingWindow);
 
-  return _meanOfAverages(inBucket.isNotEmpty ? inBucket : sessions);
+  bool inBucket(Session session) =>
+      DayBucket.ofLocalTime(toLocal(session.occurredAt)) == target;
+  bool isRecent(Session session) => !session.occurredAt.isBefore(cutoff);
+
+  // Most specific first. The first non-empty tier wins; an empty history falls
+  // through all of them to null, so no separate empty check is needed.
+  final tiers = <Iterable<Session>>[
+    sessions.where((session) => isRecent(session) && inBucket(session)),
+    sessions.where(inBucket),
+    sessions,
+  ];
+  for (final tier in tiers) {
+    final matched = tier.toList();
+    if (matched.isNotEmpty) {
+      return _meanOfAverages(matched);
+    }
+  }
+  return null;
 }
 
 /// The mean of [sessions]' averages, pulse included only where it was recorded.

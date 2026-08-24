@@ -43,12 +43,14 @@ stand and what's next*.
   "add another reading" carries the just-banked numbers + context into the next
   reading; pulse keeps its optional "—"/clear state — **S3a landed**.
   A new occasion's first reading now opens on the user's **own** numbers instead
-  of the fixed 120/80: the mean of past occasion averages in the current
-  day-bucket (morning before local noon / evening after), falling back to all
-  history, then to 120/80 only with no history at all
-  (`suggestedFirstReading`); its context is prefilled from the most recent
-  stored reading. The form waits on a one-shot `SessionRepository.recentHistory`
-  read before it opens, so nothing changes under the user — **S3b landed**.
+  of the fixed 120/80: the mean of past occasion averages, preferring the last
+  two weeks (`firstReadingWindow`) in the current day-bucket (morning before
+  local noon / evening after), then same-bucket at any age, then any occasion,
+  then 120/80 only with no history at all (`suggestedFirstReading`) — recency
+  tracks BP drift, the bucket the time-of-day difference; its context is
+  prefilled from the most recent stored reading. The form waits on a one-shot
+  `SessionRepository.recentHistory` read before it opens, so nothing changes
+  under the user — **S3b landed**.
 - **Tests:** domain + data covered; an end-to-end smoke test (incl. a
   two-reading occasion, a context round-trip, expanding a row, stepper defaults,
   carry-over prefill, a stepped value being what is saved, and a fresh occasion
@@ -107,22 +109,29 @@ stat, deferred to S3b), later readings from the last banked one; context prefill
 from the last actual reading, not an average.
 
 **Done (2026-08-24): S3b — history-aware first-reading prefill.** Replaced
-S3a's fixed 120/80 default with the user's own **morning/evening bucketed
-average** (split at local noon, aligned to the 7-2-2 two-occasions-a-day shape;
-per-hour was rejected as too data-sparse). New pure domain function
-`suggestedFirstReading` (in `first_reading_suggestion.dart`) computes the bucket
-mean of past **session averages** — session-as-unit (§4) — with the fallback
-chain bucket → all history → `null` (caller supplies 120/80); bucketing takes an
-injected `toLocal` so tests are timezone-independent, and a shared `roundedMean`
-was extracted into `session_average.dart` so it and `Session.average` round
-identically. A one-shot `SessionRepository.recentHistory()` feeds it (drift
-`.get()` reusing the join; the fake gets a settable `history`). Context is
-prefilled from `mostRecentReading`. Wiring: the cubit exposes a memoised
+S3a's fixed 120/80 default with the user's own **recent morning/evening bucketed
+average**. New pure domain function `suggestedFirstReading` (in
+`first_reading_suggestion.dart`) means past **session averages** —
+session-as-unit (§4) — over a tiered fallback: (1) last two weeks
+(`firstReadingWindow = 14d`) in the current day-bucket (split at local noon,
+7-2-2 shape; per-hour rejected as too sparse), (2) same bucket at any age, (3)
+any occasion, (4) `null` → caller supplies 120/80. Recency tracks BP drift
+(a med change surfaces in a week or two instead of being buried under years);
+the bucket keeps morning-vs-evening straight; an old same-bucket occasion beats
+a recent other-bucket one because time-of-day drives the value. Bucketing takes
+an injected `toLocal` so tests are timezone-independent; the recency cutoff is
+`now.toUtc() - window`. A shared `roundedMean` was extracted into
+`session_average.dart` so it and `Session.average` round identically. A one-shot
+`SessionRepository.recentHistory()` feeds it (drift `.get()` reusing the join;
+the fake gets a settable `history`). Context is prefilled from
+`mostRecentReading`. Wiring: the cubit exposes a memoised
 `Future<EntrySeed> initialSeed`; the entry form awaits it (spinner first) so the
 numbers never swap under the user — no new cubit state, no churn to existing
 cubit/state tests. Decisions taken in brainstorm: one-shot read over
 `watchAll().first` (the fake doesn't replay on subscribe, which would have
-fought ~20 tests) and load-then-show over show-then-swap.
+fought ~20 tests); load-then-show over show-then-swap; and the recent-window
+average (user's call) over an all-time one — 14 days, tunable, a candidate for a
+future Settings toggle.
 
 **Next up:** **S4 — Session detail + session average** (roadmap Phase 2). A
 screen showing one occasion's readings and their mean (`CLAUDE.md` §4);
