@@ -21,6 +21,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `lefthook` pre-commit hook mirroring the CI gate: `dart format`,
   `flutter analyze`, `dart analyze` (boundaries), and `flutter test`
   (CLAUDE.md §8).
+- Continuous integration: a GitHub Actions workflow
+  (`.github/workflows/ci.yml`) that runs the same gate as the pre-commit hook —
+  format, analyze, import boundaries, and tests — on Linux for pushes and pull
+  requests to `main` (CLAUDE.md §8).
 - Log a session end-to-end: enter one reading on a form, store it, and see it
   in a list that survives a restart. The first vertical slice, designed in
   `docs/superpowers/specs/2026-08-23-log-session-end-to-end-design.md`.

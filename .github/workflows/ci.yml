@@ -1,0 +1,61 @@
+# Continuous integration for Cadence.
+#
+# This mirrors the local lefthook pre-commit gate (see lefthook.yml) and the
+# definition of done in CLAUDE.md §8: format, analyze, the layered import-boundary
+# check, and the test suite. Keep the checks here in sync with lefthook.yml — a
+# change to one must be reflected in the other.
+#
+# Runs on Linux: none of these checks need the Android SDK (`flutter test` runs
+# on the Dart VM, not on a device), so the job stays fast. The committed drift
+# and localisation code means no code generation is required here — a fresh
+# checkout plus `flutter pub get` is enough (README, CLAUDE.md §5).
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: "format · analyze · boundaries · test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Flutter
+        # subosito/flutter-action is the de-facto standard Flutter CI action
+        # (MIT licence); there is no official Flutter-published action. Pinned to
+        # a commit SHA for supply-chain safety; Dependabot (.github/dependabot.yml)
+        # keeps it current. The Flutter version below tracks the local stable the
+        # project builds against — keep in sync with the README and bump it when
+        # you upgrade locally.
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: 3.47.1
+          channel: stable
+          cache: true
+
+      - name: Fetch dependencies (also generates localisations)
+        run: flutter pub get
+
+      # The four steps below mirror lefthook.yml exactly. Keep them in sync.
+      - name: Format
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze (Flutter)
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Analyze (import boundaries)
+        run: dart analyze --fatal-infos --fatal-warnings
+
+      - name: Test
+        run: flutter test
