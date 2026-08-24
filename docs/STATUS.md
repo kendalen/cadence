@@ -12,18 +12,23 @@ stand and what's next*.
 
 ## Current state
 
-Early scaffolding with one vertical slice complete: **log a session
-end-to-end**.
+"Log a session end-to-end" is complete; **S1 (reading context → schema v2)** has
+landed on top of it (roadmap slice, `docs/ROADMAP.md`).
 
 - **Domain:** `Session` / `Reading` entities, typed ids, `ReadingInput.validate()`
   (plausibility bounds — typo guards, not clinical thresholds), a sealed `Result`
-  type, and the `SessionRepository` / `IdGenerator` interfaces.
-- **Data:** drift schema v1 (`Sessions` 1‑to‑many `Readings`, cascade delete),
-  UTC ISO‑8601 timestamps, `DriftSessionRepository`, UUID v7 ids, committed
-  schema snapshot + migration test harness.
+  type, and the `SessionRepository` / `IdGenerator` interfaces. `Reading` carries
+  optional context — `MeasurementSite`, `Posture`, `MedicationTiming` (§4) —
+  persisted by enum name.
+- **Data:** drift **schema v2** (`Sessions` 1‑to‑many `Readings`, cascade delete;
+  v2 adds nullable context columns), UTC ISO‑8601 timestamps,
+  `DriftSessionRepository`, UUID v7 ids, committed v1 + v2 snapshots, and a
+  migration test proving v1 rows survive the upgrade with null context.
 - **UI:** readings list + entry form on `flutter_bloc` Cubits; all strings in ARB.
-- **Tests:** domain + data covered; an end-to-end smoke test. All green (49).
-- **Verified running:** debug APK builds and runs on a physical Android device.
+  No pickers for the new context yet — those arrive with S2/S3.
+- **Tests:** domain + data covered; an end-to-end smoke test. All green (59).
+- **Verified running:** debug APK builds and runs on a physical Android device
+  (as of the "log a session" slice).
 
 ## Environment & tooling
 
@@ -60,10 +65,16 @@ display stays deferred (a maintainer call — `CLAUDE.md` §1, §10). Ease of us
 a cross-cutting requirement because the audience skews older; see the roadmap's
 principle section.
 
-**Next up:** **S1 — context fields → schema v2** (arm / posture / before-after
-medication on `Reading`), the first slice, chosen to do the schema migration
-while no real user data is at risk. Design it as its own slice (brainstorm
-first, TDD the domain per `CLAUDE.md` §7).
+**Done:** **S1 — context fields → schema v2**. `MeasurementSite {leftArm,
+rightArm, leftWrist, rightWrist}`, `Posture {sitting, standing, lying}`,
+`MedicationTiming {before, after}` — all optional, stored by name, no UI. Thin
+migration slice (schema + domain + tests only); the entry pickers come with the
+form rework.
+
+**Next up:** **S2 — multiple readings per session** in the entry flow (the
+protocol's two-per-occasion). Design it as its own slice (brainstorm first, TDD
+per `CLAUDE.md` §7). Note S3 (fast entry) touches the same form, so consider the
+order when scoping.
 
 ## Working reminders
 

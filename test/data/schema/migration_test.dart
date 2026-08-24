@@ -11,6 +11,7 @@ import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'generated/schema.dart';
+import 'generated/schema_v1.dart' as v1;
 
 void main() {
   late SchemaVerifier verifier;
@@ -27,4 +28,48 @@ void main() {
 
     await database.close();
   });
+
+  test('a fresh database matches the committed v2 snapshot', () async {
+    final connection = await verifier.startAt(2);
+    final database = AppDatabase.forTesting(connection);
+
+    await verifier.migrateAndValidate(database, 2);
+
+    await database.close();
+  });
+
+  test(
+    'migrating v1 to v2 keeps existing readings and leaves context null',
+    () async {
+      // A reading written before the context fields existed must survive the
+      // upgrade untouched, with the three new columns defaulting to null.
+      final schema = await verifier.schemaAt(1);
+      final oldDatabase = v1.DatabaseAtV1(schema.newConnection());
+      await oldDatabase.customStatement(
+        "INSERT INTO sessions (id) VALUES ('s1')",
+      );
+      await oldDatabase.customStatement(
+        "INSERT INTO readings (id, session_id, systolic, diastolic, taken_at) "
+        "VALUES ('r1', 's1', 120, 80, '2026-08-23T06:40:00.000Z')",
+      );
+      await oldDatabase.close();
+
+      final database = AppDatabase.forTesting(schema.newConnection());
+      await verifier.migrateAndValidate(database, 2);
+
+      final row = await database
+          .customSelect(
+            "SELECT systolic, site, posture, medication_timing "
+            "FROM readings WHERE id = 'r1'",
+          )
+          .getSingle();
+
+      expect(row.read<int>('systolic'), 120);
+      expect(row.readNullable<String>('site'), isNull);
+      expect(row.readNullable<String>('posture'), isNull);
+      expect(row.readNullable<String>('medication_timing'), isNull);
+
+      await database.close();
+    },
+  );
 }

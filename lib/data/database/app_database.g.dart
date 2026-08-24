@@ -234,6 +234,37 @@ class $ReadingsTable extends Readings
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _siteMeta = const VerificationMeta('site');
+  @override
+  late final GeneratedColumn<String> site = GeneratedColumn<String>(
+    'site',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _postureMeta = const VerificationMeta(
+    'posture',
+  );
+  @override
+  late final GeneratedColumn<String> posture = GeneratedColumn<String>(
+    'posture',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _medicationTimingMeta = const VerificationMeta(
+    'medicationTiming',
+  );
+  @override
+  late final GeneratedColumn<String> medicationTiming = GeneratedColumn<String>(
+    'medication_timing',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -243,6 +274,9 @@ class $ReadingsTable extends Readings
     pulse,
     takenAt,
     notes,
+    site,
+    posture,
+    medicationTiming,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -305,6 +339,27 @@ class $ReadingsTable extends Readings
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('site')) {
+      context.handle(
+        _siteMeta,
+        site.isAcceptableOrUnknown(data['site']!, _siteMeta),
+      );
+    }
+    if (data.containsKey('posture')) {
+      context.handle(
+        _postureMeta,
+        posture.isAcceptableOrUnknown(data['posture']!, _postureMeta),
+      );
+    }
+    if (data.containsKey('medication_timing')) {
+      context.handle(
+        _medicationTimingMeta,
+        medicationTiming.isAcceptableOrUnknown(
+          data['medication_timing']!,
+          _medicationTimingMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -342,6 +397,18 @@ class $ReadingsTable extends Readings
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      site: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}site'],
+      ),
+      posture: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}posture'],
+      ),
+      medicationTiming: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}medication_timing'],
+      ),
     );
   }
 
@@ -372,6 +439,17 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
 
   /// The note the user attached, absent when they wrote none.
   final String? notes;
+
+  /// Where the cuff was placed, stored as the `MeasurementSite` name; absent
+  /// when the user did not record it (CLAUDE.md §4).
+  final String? site;
+
+  /// The body position, stored as the `Posture` name; absent when unrecorded.
+  final String? posture;
+
+  /// Whether the reading was before or after medication, stored as the
+  /// `MedicationTiming` name; absent when unrecorded.
+  final String? medicationTiming;
   const ReadingRow({
     required this.id,
     required this.sessionId,
@@ -380,6 +458,9 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
     this.pulse,
     required this.takenAt,
     this.notes,
+    this.site,
+    this.posture,
+    this.medicationTiming,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -394,6 +475,15 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
     map['taken_at'] = Variable<DateTime>(takenAt);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || site != null) {
+      map['site'] = Variable<String>(site);
+    }
+    if (!nullToAbsent || posture != null) {
+      map['posture'] = Variable<String>(posture);
+    }
+    if (!nullToAbsent || medicationTiming != null) {
+      map['medication_timing'] = Variable<String>(medicationTiming);
     }
     return map;
   }
@@ -411,6 +501,13 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      site: site == null && nullToAbsent ? const Value.absent() : Value(site),
+      posture: posture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(posture),
+      medicationTiming: medicationTiming == null && nullToAbsent
+          ? const Value.absent()
+          : Value(medicationTiming),
     );
   }
 
@@ -427,6 +524,9 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
       pulse: serializer.fromJson<int?>(json['pulse']),
       takenAt: serializer.fromJson<DateTime>(json['takenAt']),
       notes: serializer.fromJson<String?>(json['notes']),
+      site: serializer.fromJson<String?>(json['site']),
+      posture: serializer.fromJson<String?>(json['posture']),
+      medicationTiming: serializer.fromJson<String?>(json['medicationTiming']),
     );
   }
   @override
@@ -440,6 +540,9 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
       'pulse': serializer.toJson<int?>(pulse),
       'takenAt': serializer.toJson<DateTime>(takenAt),
       'notes': serializer.toJson<String?>(notes),
+      'site': serializer.toJson<String?>(site),
+      'posture': serializer.toJson<String?>(posture),
+      'medicationTiming': serializer.toJson<String?>(medicationTiming),
     };
   }
 
@@ -451,6 +554,9 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
     Value<int?> pulse = const Value.absent(),
     DateTime? takenAt,
     Value<String?> notes = const Value.absent(),
+    Value<String?> site = const Value.absent(),
+    Value<String?> posture = const Value.absent(),
+    Value<String?> medicationTiming = const Value.absent(),
   }) => ReadingRow(
     id: id ?? this.id,
     sessionId: sessionId ?? this.sessionId,
@@ -459,6 +565,11 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
     pulse: pulse.present ? pulse.value : this.pulse,
     takenAt: takenAt ?? this.takenAt,
     notes: notes.present ? notes.value : this.notes,
+    site: site.present ? site.value : this.site,
+    posture: posture.present ? posture.value : this.posture,
+    medicationTiming: medicationTiming.present
+        ? medicationTiming.value
+        : this.medicationTiming,
   );
   ReadingRow copyWithCompanion(ReadingsCompanion data) {
     return ReadingRow(
@@ -469,6 +580,11 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
       pulse: data.pulse.present ? data.pulse.value : this.pulse,
       takenAt: data.takenAt.present ? data.takenAt.value : this.takenAt,
       notes: data.notes.present ? data.notes.value : this.notes,
+      site: data.site.present ? data.site.value : this.site,
+      posture: data.posture.present ? data.posture.value : this.posture,
+      medicationTiming: data.medicationTiming.present
+          ? data.medicationTiming.value
+          : this.medicationTiming,
     );
   }
 
@@ -481,14 +597,27 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
           ..write('diastolic: $diastolic, ')
           ..write('pulse: $pulse, ')
           ..write('takenAt: $takenAt, ')
-          ..write('notes: $notes')
+          ..write('notes: $notes, ')
+          ..write('site: $site, ')
+          ..write('posture: $posture, ')
+          ..write('medicationTiming: $medicationTiming')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, sessionId, systolic, diastolic, pulse, takenAt, notes);
+  int get hashCode => Object.hash(
+    id,
+    sessionId,
+    systolic,
+    diastolic,
+    pulse,
+    takenAt,
+    notes,
+    site,
+    posture,
+    medicationTiming,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -499,7 +628,10 @@ class ReadingRow extends DataClass implements Insertable<ReadingRow> {
           other.diastolic == this.diastolic &&
           other.pulse == this.pulse &&
           other.takenAt == this.takenAt &&
-          other.notes == this.notes);
+          other.notes == this.notes &&
+          other.site == this.site &&
+          other.posture == this.posture &&
+          other.medicationTiming == this.medicationTiming);
 }
 
 class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
@@ -510,6 +642,9 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
   final Value<int?> pulse;
   final Value<DateTime> takenAt;
   final Value<String?> notes;
+  final Value<String?> site;
+  final Value<String?> posture;
+  final Value<String?> medicationTiming;
   final Value<int> rowid;
   const ReadingsCompanion({
     this.id = const Value.absent(),
@@ -519,6 +654,9 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
     this.pulse = const Value.absent(),
     this.takenAt = const Value.absent(),
     this.notes = const Value.absent(),
+    this.site = const Value.absent(),
+    this.posture = const Value.absent(),
+    this.medicationTiming = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ReadingsCompanion.insert({
@@ -529,6 +667,9 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
     this.pulse = const Value.absent(),
     required DateTime takenAt,
     this.notes = const Value.absent(),
+    this.site = const Value.absent(),
+    this.posture = const Value.absent(),
+    this.medicationTiming = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        sessionId = Value(sessionId),
@@ -543,6 +684,9 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
     Expression<int>? pulse,
     Expression<DateTime>? takenAt,
     Expression<String>? notes,
+    Expression<String>? site,
+    Expression<String>? posture,
+    Expression<String>? medicationTiming,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -553,6 +697,9 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
       if (pulse != null) 'pulse': pulse,
       if (takenAt != null) 'taken_at': takenAt,
       if (notes != null) 'notes': notes,
+      if (site != null) 'site': site,
+      if (posture != null) 'posture': posture,
+      if (medicationTiming != null) 'medication_timing': medicationTiming,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -565,6 +712,9 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
     Value<int?>? pulse,
     Value<DateTime>? takenAt,
     Value<String?>? notes,
+    Value<String?>? site,
+    Value<String?>? posture,
+    Value<String?>? medicationTiming,
     Value<int>? rowid,
   }) {
     return ReadingsCompanion(
@@ -575,6 +725,9 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
       pulse: pulse ?? this.pulse,
       takenAt: takenAt ?? this.takenAt,
       notes: notes ?? this.notes,
+      site: site ?? this.site,
+      posture: posture ?? this.posture,
+      medicationTiming: medicationTiming ?? this.medicationTiming,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -603,6 +756,15 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (site.present) {
+      map['site'] = Variable<String>(site.value);
+    }
+    if (posture.present) {
+      map['posture'] = Variable<String>(posture.value);
+    }
+    if (medicationTiming.present) {
+      map['medication_timing'] = Variable<String>(medicationTiming.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -619,6 +781,9 @@ class ReadingsCompanion extends UpdateCompanion<ReadingRow> {
           ..write('pulse: $pulse, ')
           ..write('takenAt: $takenAt, ')
           ..write('notes: $notes, ')
+          ..write('site: $site, ')
+          ..write('posture: $posture, ')
+          ..write('medicationTiming: $medicationTiming, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -869,6 +1034,9 @@ typedef $$ReadingsTableCreateCompanionBuilder = ReadingsCompanion Function({
   Value<int?> pulse,
   required DateTime takenAt,
   Value<String?> notes,
+  Value<String?> site,
+  Value<String?> posture,
+  Value<String?> medicationTiming,
   Value<int> rowid,
 });
 typedef $$ReadingsTableUpdateCompanionBuilder = ReadingsCompanion Function({
@@ -879,6 +1047,9 @@ typedef $$ReadingsTableUpdateCompanionBuilder = ReadingsCompanion Function({
   Value<int?> pulse,
   Value<DateTime> takenAt,
   Value<String?> notes,
+  Value<String?> site,
+  Value<String?> posture,
+  Value<String?> medicationTiming,
   Value<int> rowid,
 });
 
@@ -940,6 +1111,21 @@ class $$ReadingsTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get site => $composableBuilder(
+    column: $table.site,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get posture => $composableBuilder(
+    column: $table.posture,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get medicationTiming => $composableBuilder(
+    column: $table.medicationTiming,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1006,6 +1192,21 @@ class $$ReadingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get site => $composableBuilder(
+    column: $table.site,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get posture => $composableBuilder(
+    column: $table.posture,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get medicationTiming => $composableBuilder(
+    column: $table.medicationTiming,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$SessionsTableOrderingComposer get sessionId {
     final $$SessionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -1056,6 +1257,17 @@ class $$ReadingsTableAnnotationComposer
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get site =>
+      $composableBuilder(column: $table.site, builder: (column) => column);
+
+  GeneratedColumn<String> get posture =>
+      $composableBuilder(column: $table.posture, builder: (column) => column);
+
+  GeneratedColumn<String> get medicationTiming => $composableBuilder(
+    column: $table.medicationTiming,
+    builder: (column) => column,
+  );
 
   $$SessionsTableAnnotationComposer get sessionId {
     final $$SessionsTableAnnotationComposer composer = $composerBuilder(
@@ -1116,6 +1328,9 @@ class $$ReadingsTableTableManager
                 Value<int?> pulse = const Value.absent(),
                 Value<DateTime> takenAt = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String?> site = const Value.absent(),
+                Value<String?> posture = const Value.absent(),
+                Value<String?> medicationTiming = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ReadingsCompanion(
                 id: id,
@@ -1125,6 +1340,9 @@ class $$ReadingsTableTableManager
                 pulse: pulse,
                 takenAt: takenAt,
                 notes: notes,
+                site: site,
+                posture: posture,
+                medicationTiming: medicationTiming,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1136,6 +1354,9 @@ class $$ReadingsTableTableManager
                 Value<int?> pulse = const Value.absent(),
                 required DateTime takenAt,
                 Value<String?> notes = const Value.absent(),
+                Value<String?> site = const Value.absent(),
+                Value<String?> posture = const Value.absent(),
+                Value<String?> medicationTiming = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ReadingsCompanion.insert(
                 id: id,
@@ -1145,6 +1366,9 @@ class $$ReadingsTableTableManager
                 pulse: pulse,
                 takenAt: takenAt,
                 notes: notes,
+                site: site,
+                posture: posture,
+                medicationTiming: medicationTiming,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

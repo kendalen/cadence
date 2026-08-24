@@ -39,6 +39,17 @@ class Readings extends Table {
   /// The note the user attached, absent when they wrote none.
   TextColumn get notes => text().nullable()();
 
+  /// Where the cuff was placed, stored as the `MeasurementSite` name; absent
+  /// when the user did not record it (CLAUDE.md §4).
+  TextColumn get site => text().nullable()();
+
+  /// The body position, stored as the `Posture` name; absent when unrecorded.
+  TextColumn get posture => text().nullable()();
+
+  /// Whether the reading was before or after medication, stored as the
+  /// `MedicationTiming` name; absent when unrecorded.
+  TextColumn get medicationTiming => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

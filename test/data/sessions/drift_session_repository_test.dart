@@ -5,6 +5,7 @@ import 'package:cadence/domain/core/unit.dart';
 import 'package:cadence/domain/sessions/ids.dart';
 import 'package:cadence/domain/sessions/persistence_failure.dart';
 import 'package:cadence/domain/sessions/reading.dart';
+import 'package:cadence/domain/sessions/reading_context.dart';
 import 'package:cadence/domain/sessions/session.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +20,9 @@ Reading readingOf(
   int diastolic = 84,
   int? pulse,
   String? notes,
+  MeasurementSite? site,
+  Posture? posture,
+  MedicationTiming? medicationTiming,
 }) => Reading(
   id: ReadingId(id),
   systolic: systolic,
@@ -26,6 +30,9 @@ Reading readingOf(
   pulse: pulse,
   takenAt: takenAt,
   notes: notes,
+  site: site,
+  posture: posture,
+  medicationTiming: medicationTiming,
 );
 
 void main() {
@@ -64,6 +71,36 @@ void main() {
 
     expect(stored.pulse, isNull);
     expect(stored.notes, isNull);
+  });
+
+  test("a reading's context round-trips intact", () async {
+    await repository.add(
+      sessionOf('s1', [
+        readingOf(
+          'r1',
+          morning,
+          site: MeasurementSite.leftArm,
+          posture: Posture.sitting,
+          medicationTiming: MedicationTiming.before,
+        ),
+      ]),
+    );
+
+    final stored = (await repository.watchAll().first).single.readings.single;
+
+    expect(stored.site, MeasurementSite.leftArm);
+    expect(stored.posture, Posture.sitting);
+    expect(stored.medicationTiming, MedicationTiming.before);
+  });
+
+  test('unrecorded context round-trips as null', () async {
+    await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
+
+    final stored = (await repository.watchAll().first).single.readings.single;
+
+    expect(stored.site, isNull);
+    expect(stored.posture, isNull);
+    expect(stored.medicationTiming, isNull);
   });
 
   test('sessions are emitted newest occasion first', () async {

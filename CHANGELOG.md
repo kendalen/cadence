@@ -38,6 +38,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   migration test harness (CLAUDE.md §5).
 - UI: the readings list and the entry form, on `flutter_bloc` Cubits, with
   every user-facing string in the ARB (CLAUDE.md §9).
+- Optional reading context (CLAUDE.md §4): `MeasurementSite` (left/right arm or
+  wrist), `Posture` (sitting/standing/lying), and `MedicationTiming`
+  (before/after) on each `Reading`, all nullable and defaulting to unrecorded.
+  Persisted by enum name in drift schema v2; existing readings survive the
+  v1→v2 migration with null context, covered by a committed
+  `drift_schema_v2.json` snapshot and migration tests (CLAUDE.md §5). No UI yet
+  — the entry pickers arrive with the entry-form slices.
 - Android backup disabled: `android:allowBackup="false"` plus a
   `data_extraction_rules.xml` that also excludes device-to-device transfer,
   which `allowBackup` alone does not cover on Android 12+ (CLAUDE.md §5).

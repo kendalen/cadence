@@ -27,7 +27,7 @@ class AppDatabase extends _$AppDatabase {
   static const String _databaseName = 'cadence';
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   /// How the schema is created and migrated.
   ///
@@ -36,6 +36,16 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      // v1 -> v2: the optional reading context (site, posture, medication
+      // timing — CLAUDE.md §4). All three are nullable, so existing readings
+      // keep their values and gain nulls; no data is at risk.
+      if (from < 2) {
+        await m.addColumn(readings, readings.site);
+        await m.addColumn(readings, readings.posture);
+        await m.addColumn(readings, readings.medicationTiming);
+      }
+    },
     beforeOpen: (details) async {
       // Off by default in SQLite, so the cascade on Readings.sessionId only
       // takes effect once this is on. Must be set outside a transaction.
