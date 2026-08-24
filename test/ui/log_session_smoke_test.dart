@@ -73,7 +73,19 @@ void main() {
   }
 
   Future<void> save(WidgetTester tester) async {
-    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    final button = find.widgetWithText(FilledButton, 'Save');
+    // The banked-readings list can push Save below the test viewport; scroll it
+    // into view first so the tap lands (a no-op when it is already visible).
+    await tester.ensureVisible(button);
+    await settle(tester);
+    await tester.tap(button);
+    await settle(tester);
+  }
+
+  Future<void> addAnother(WidgetTester tester) async {
+    await tester.tap(
+      find.widgetWithText(OutlinedButton, 'Add another reading'),
+    );
     await settle(tester);
   }
 
@@ -125,6 +137,27 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await settle(tester);
     expect(find.text('No readings yet.'), findsOneWidget);
+
+    await disposeApp(tester);
+  });
+
+  testWidgets('an occasion can hold two readings', (tester) async {
+    await pumpApp(tester);
+    await openEntryForm(tester);
+
+    await enter(tester, 'Systolic (mmHg)', '120');
+    await enter(tester, 'Diastolic (mmHg)', '80');
+    await addAnother(tester);
+
+    await enter(tester, 'Systolic (mmHg)', '118');
+    await enter(tester, 'Diastolic (mmHg)', '79');
+    await save(tester);
+
+    // One occasion in the list, holding two reading rows in storage.
+    final sessions = await database.select(database.sessions).get();
+    final readings = await database.select(database.readings).get();
+    expect(sessions, hasLength(1));
+    expect(readings, hasLength(2));
 
     await disposeApp(tester);
   });

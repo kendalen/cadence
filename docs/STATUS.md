@@ -25,8 +25,11 @@ landed on top of it (roadmap slice, `docs/ROADMAP.md`).
   `DriftSessionRepository`, UUID v7 ids, committed v1 + v2 snapshots, and a
   migration test proving v1 rows survive the upgrade with null context.
 - **UI:** readings list + entry form on `flutter_bloc` Cubits; all strings in ARB.
-  No pickers for the new context yet — those arrive with S2/S3.
-- **Tests:** domain + data covered; an end-to-end smoke test. All green (59).
+  The entry form now builds up an occasion of one or more readings (bank with
+  "add another reading", remove a banked one, save the lot as one session) —
+  **S2a landed**. No context pickers yet; those are S2b.
+- **Tests:** domain + data covered; an end-to-end smoke test (incl. a
+  two-reading occasion). All green (71).
 - **Verified running:** debug APK builds and runs on a physical Android device
   (as of the "log a session" slice).
 
@@ -71,10 +74,11 @@ rightArm, leftWrist, rightWrist}`, `Posture {sitting, standing, lying}`,
 migration slice (schema + domain + tests only); the entry pickers come with the
 form rework.
 
-**Next up:** **S2 — multiple readings per session** in the entry flow (the
-protocol's two-per-occasion). Design it as its own slice (brainstorm first, TDD
-per `CLAUDE.md` §7). Note S3 (fast entry) touches the same form, so consider the
-order when scoping.
+**Next up:** **S2b — reading context pickers** in the entry form: a collapsible
+"Add details" section per reading (arm/wrist, body position, before/after
+medication), wired into the occasion's readings and defaulting to not-recorded.
+S2a (multiple readings per occasion) has landed. Note S3 (fast entry) touches
+the same form, so consider the order when scoping.
 
 ## Working reminders
 

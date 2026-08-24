@@ -82,5 +82,17 @@
   "errorSaveFailed": "Couldn''t save this reading. Please try again.",
   "@errorSaveFailed": {
     "description": "Message shown when writing the reading to the database failed."
+  },
+  "addAnotherReading": "Add another reading",
+  "@addAnotherReading": {
+    "description": "Button that banks the current reading and starts another one in the same occasion."
+  },
+  "readingsSoFar": "Readings so far",
+  "@readingsSoFar": {
+    "description": "Header above the list of readings already added to the occasion being entered."
+  },
+  "removeReading": "Remove",
+  "@removeReading": {
+    "description": "Tooltip of the button that removes a reading from the occasion before it is saved."
   }
 }

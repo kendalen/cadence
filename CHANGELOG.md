@@ -51,3 +51,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - An end-to-end smoke test driving the real app against an in-memory
   database: enter a reading, save it, and find it in the list, including
   after the widget tree is rebuilt.
+- Multiple readings per occasion in the entry flow: bank a reading with "add
+  another reading", review and remove banked readings, and save the occasion as
+  one multi-reading session (CLAUDE.md §4). Logging a single reading is
+  unchanged — fill and save.

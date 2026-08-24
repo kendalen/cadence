@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/sessions/id_generator.dart';
+import '../../../domain/sessions/ids.dart';
+import '../../../domain/sessions/reading.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import '../../../l10n/app_localizations.dart';
@@ -39,6 +41,10 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
   final _diastolic = TextEditingController();
   final _pulse = TextEditingController();
   final _notes = TextEditingController();
+
+  /// How many readings were banked at the last state we reacted to, so growth
+  /// (a reading was just banked) can be told from any other state change.
+  int _bankedCount = 0;
 
   @override
   void dispose() {
@@ -92,6 +98,17 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
                 error: messageForField(ReadingField.takenAt, failures, l10n),
                 onChange: () => _pickTakenAt(state.takenAt),
               ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: submitting ? null : _addReading,
+                icon: const Icon(Icons.add),
+                label: Text(l10n.addAnotherReading),
+              ),
+              _BankedReadings(
+                readings: state.bankedReadings,
+                onRemove: (id) =>
+                    context.read<SessionEntryCubit>().removeBankedReading(id),
+              ),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: submitting ? null : _save,
@@ -116,6 +133,11 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
 
   void _onStateChanged(BuildContext context, SessionEntryState state) {
     final l10n = AppLocalizations.of(context)!;
+    if (state.bankedReadings.length > _bankedCount) {
+      _clearInputs();
+    }
+    _bankedCount = state.bankedReadings.length;
+
     switch (state) {
       case SessionEntrySaved():
         Navigator.of(context).pop();
@@ -128,6 +150,20 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
         break;
     }
   }
+
+  void _clearInputs() {
+    _systolic.clear();
+    _diastolic.clear();
+    _pulse.clear();
+    _notes.clear();
+  }
+
+  void _addReading() => context.read<SessionEntryCubit>().addReading(
+    systolic: _systolic.text,
+    diastolic: _diastolic.text,
+    pulse: _pulse.text,
+    notes: _notes.text,
+  );
 
   void _save() => unawaited(
     context.read<SessionEntryCubit>().save(
@@ -199,6 +235,45 @@ class _TakenAtField extends StatelessWidget {
         onPressed: onChange,
         child: Text(l10n.changeTakenAt),
       ),
+    );
+  }
+}
+
+/// The readings already banked for this occasion, each removable.
+class _BankedReadings extends StatelessWidget {
+  const _BankedReadings({required this.readings, required this.onRemove});
+
+  final List<Reading> readings;
+  final void Function(ReadingId id) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    if (readings.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
+    final time = DateFormat.jm(locale);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(l10n.readingsSoFar, style: Theme.of(context).textTheme.titleSmall),
+        for (final reading in readings)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              l10n.readingPressure(reading.systolic, reading.diastolic),
+            ),
+            subtitle: Text(time.format(reading.takenAt.toLocal())),
+            trailing: IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: l10n.removeReading,
+              onPressed: () => onRemove(reading.id),
+            ),
+          ),
+      ],
     );
   }
 }
