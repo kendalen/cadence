@@ -76,7 +76,11 @@ class _EmptyList extends StatelessWidget {
   }
 }
 
-/// One occasion in the list.
+/// One occasion in the list, shown as the average of its readings (CLAUDE.md §4).
+///
+/// The average of a single reading is that reading, so a one-off entry reads
+/// exactly as before; a badge marks the occasions holding more than one so the
+/// averaged row is never mistaken for a single measurement.
 class _SessionTile extends StatelessWidget {
   const _SessionTile(this.session);
 
@@ -85,20 +89,65 @@ class _SessionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    // This slice records exactly one reading per occasion. When multi-reading
-    // entry lands, this row shows the session rather than its first reading.
-    final reading = session.readings.first;
+    final average = session.average;
+    final readingCount = session.readings.length;
     final locale = Localizations.localeOf(context).toString();
     final takenAt = DateFormat.yMMMd(locale)
         .add_jm()
         .format(session.occurredAt.toLocal());
 
     return ListTile(
-      title: Text(l10n.readingPressure(reading.systolic, reading.diastolic)),
+      title: Row(
+        children: [
+          Text(l10n.readingPressure(average.systolic, average.diastolic)),
+          if (readingCount > 1) ...[
+            const SizedBox(width: 8),
+            _ReadingCountBadge(readingCount),
+          ],
+        ],
+      ),
       subtitle: Text(takenAt),
-      trailing: reading.pulse == null
+      trailing: average.pulse == null
           ? null
-          : Text(l10n.readingPulse(reading.pulse!)),
+          : Text(l10n.readingPulse(average.pulse!)),
+    );
+  }
+}
+
+/// A small pill showing how many readings an occasion holds.
+///
+/// The count is a numeral; the word "readings" lives in the accessible label
+/// and tooltip, so screen-reader and long-press users hear "N readings" while
+/// the row stays compact.
+class _ReadingCountBadge extends StatelessWidget {
+  const _ReadingCountBadge(this.count);
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final label = l10n.readingCount(count);
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: label,
+        excludeSemantics: true,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            '$count',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSecondaryContainer,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

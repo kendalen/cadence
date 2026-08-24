@@ -31,6 +31,13 @@
       "pulse": { "type": "int" }
     }
   },
+  "readingCount": "{count, plural, =1{1 reading} other{{count} readings}}",
+  "@readingCount": {
+    "description": "How many readings back an occasion's average, used as the accessible label and tooltip of the count badge on a multi-reading row in the list.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "systolicLabel": "Systolic (mmHg)",
   "@systolicLabel": {
     "description": "Label of the systolic pressure field in the entry form."

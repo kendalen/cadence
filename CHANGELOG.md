@@ -58,3 +58,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Optional context pickers in the entry form: per reading, choose where it was
   measured (arm/wrist), the body position, and before/after medication, in a
   collapsible "Add details" section defaulting to not-recorded (CLAUDE.md §4).
+- `Session.average`: the mean of an occasion's readings as a `SessionAverage`
+  value object (CLAUDE.md §4). Systolic and diastolic are averaged separately,
+  each rounded to the nearest whole mmHg (a half rounds up); pulse is the mean
+  of only the readings that recorded one, or absent when none did. Derived,
+  never stored.
+- The readings list now shows each occasion as its average rather than its
+  first reading, with a badge counting the readings behind a multi-reading
+  average so it is never mistaken for a single measurement. A single-reading
+  occasion looks unchanged.
