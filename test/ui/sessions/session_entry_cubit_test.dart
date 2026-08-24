@@ -1,4 +1,5 @@
 import 'package:cadence/domain/sessions/persistence_failure.dart';
+import 'package:cadence/domain/sessions/reading_context.dart';
 import 'package:cadence/domain/sessions/validation_failure.dart';
 import 'package:cadence/ui/sessions/entry/session_entry_cubit.dart';
 import 'package:cadence/ui/sessions/entry/session_entry_state.dart';
@@ -225,5 +226,35 @@ void main() {
 
     expect(cubit.state, isA<SessionEntrySaveFailed>());
     expect(cubit.state.bankedReadings, hasLength(1));
+  });
+
+  test('a banked reading carries the chosen context', () async {
+    cubit.addReading(
+      systolic: '120',
+      diastolic: '80',
+      pulse: '',
+      notes: '',
+      site: MeasurementSite.rightArm,
+      posture: Posture.sitting,
+      medicationTiming: MedicationTiming.after,
+    );
+
+    final reading = cubit.state.bankedReadings.single;
+    expect(reading.site, MeasurementSite.rightArm);
+    expect(reading.posture, Posture.sitting);
+    expect(reading.medicationTiming, MedicationTiming.after);
+  });
+
+  test('context on the current form flows into the saved session', () async {
+    await cubit.save(
+      systolic: '120',
+      diastolic: '80',
+      pulse: '',
+      notes: '',
+      site: MeasurementSite.leftWrist,
+    );
+
+    final reading = repository.added.single.readings.single;
+    expect(reading.site, MeasurementSite.leftWrist);
   });
 }

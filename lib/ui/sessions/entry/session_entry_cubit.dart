@@ -4,6 +4,7 @@ import '../../../domain/core/result.dart';
 import '../../../domain/sessions/id_generator.dart';
 import '../../../domain/sessions/ids.dart';
 import '../../../domain/sessions/reading.dart';
+import '../../../domain/sessions/reading_context.dart';
 import '../../../domain/sessions/reading_input.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
@@ -49,12 +50,17 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
   /// form is cleared of errors, and the moment resets to one minute after the
   /// banked reading — but never past [now], so the prefilled time is never
   /// already in the future. On invalid input nothing is banked and the
-  /// failures are reported so the form can mark the bad fields.
+  /// failures are reported so the form can mark the bad fields. The optional
+  /// context ([site], [posture], [medicationTiming]) is carried through to the
+  /// banked reading.
   void addReading({
     required String systolic,
     required String diastolic,
     required String pulse,
     required String notes,
+    MeasurementSite? site,
+    Posture? posture,
+    MedicationTiming? medicationTiming,
   }) {
     final takenAt = state.takenAt;
     final input = ReadingInput(
@@ -63,6 +69,9 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
       pulse: pulse,
       notes: notes,
       takenAt: takenAt,
+      site: site,
+      posture: posture,
+      medicationTiming: medicationTiming,
     );
 
     final validated = input.validate(_idGenerator, now: _now());
@@ -106,15 +115,20 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
   ///
   /// The form is "started" when a systolic or diastolic has been typed; a
   /// started form is validated and included, so logging a single reading stays
-  /// one action (fill, save). Emits [SessionEntryEditing] with failures if a
-  /// started form is invalid or there is nothing to save; [SessionEntrySaved]
-  /// or [SessionEntrySaveFailed] once the write has been attempted. Does
-  /// nothing while a write is already in flight.
+  /// one action (fill, save). The optional context ([site], [posture],
+  /// [medicationTiming]) applies to that started form reading. Emits
+  /// [SessionEntryEditing] with failures if a started form is invalid or there
+  /// is nothing to save; [SessionEntrySaved] or [SessionEntrySaveFailed] once
+  /// the write has been attempted. Does nothing while a write is already in
+  /// flight.
   Future<void> save({
     required String systolic,
     required String diastolic,
     required String pulse,
     required String notes,
+    MeasurementSite? site,
+    Posture? posture,
+    MedicationTiming? medicationTiming,
   }) async {
     if (state is SessionEntrySubmitting) {
       return;
@@ -132,6 +146,9 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
         pulse: pulse,
         notes: notes,
         takenAt: takenAt,
+        site: site,
+        posture: posture,
+        medicationTiming: medicationTiming,
       );
       final validated = input.validate(_idGenerator, now: _now());
       if (validated case Err<Reading, List<ValidationFailure>>(:final error)) {
