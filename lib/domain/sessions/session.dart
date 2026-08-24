@@ -19,6 +19,14 @@ final class Session extends Equatable {
   /// The readings taken on this occasion, in the order they were taken.
   final List<Reading> readings;
 
+  /// This session's [readings] ordered by [Reading.takenAt], earliest first.
+  ///
+  /// A new list; [readings] is left untouched. Storage does not guarantee the
+  /// order readings are read back in, so ordering for display is done here, in
+  /// one tested place.
+  List<Reading> get readingsByTime =>
+      [...readings]..sort((a, b) => a.takenAt.compareTo(b.takenAt));
+
   /// When the occasion started: the earliest [Reading.takenAt], in UTC.
   ///
   /// Derived, never stored (CLAUDE.md §4).

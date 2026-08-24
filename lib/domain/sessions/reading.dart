@@ -53,6 +53,13 @@ final class Reading extends Equatable {
   /// unrecorded.
   final MedicationTiming? medicationTiming;
 
+  /// Whether any measurement context was recorded for this reading.
+  ///
+  /// True when [site], [posture] or [medicationTiming] is set. Notes are not
+  /// context (CLAUDE.md §4) and do not count here.
+  bool get hasContext =>
+      site != null || posture != null || medicationTiming != null;
+
   @override
   List<Object?> get props => [
     id,

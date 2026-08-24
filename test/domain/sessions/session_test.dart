@@ -1,5 +1,6 @@
 import 'package:cadence/domain/sessions/ids.dart';
 import 'package:cadence/domain/sessions/reading.dart';
+import 'package:cadence/domain/sessions/reading_context.dart';
 import 'package:cadence/domain/sessions/session.dart';
 import 'package:cadence/domain/sessions/session_average.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,12 +13,21 @@ Reading readingOf({
   int systolic = 120,
   int diastolic = 80,
   int? pulse,
+  DateTime? takenAt,
+  MeasurementSite? site,
+  Posture? posture,
+  MedicationTiming? medicationTiming,
+  String? notes,
 }) => Reading(
   id: ReadingId(id),
   systolic: systolic,
   diastolic: diastolic,
   pulse: pulse,
-  takenAt: DateTime.utc(2026, 8, 23, 7, 30),
+  takenAt: takenAt ?? DateTime.utc(2026, 8, 23, 7, 30),
+  site: site,
+  posture: posture,
+  medicationTiming: medicationTiming,
+  notes: notes,
 );
 
 Session sessionOf(List<Reading> readings) =>
@@ -138,6 +148,43 @@ void main() {
     });
   });
 
+  group('Session.readingsByTime', () {
+    test(
+      'is the readings in ascending time order, whatever the list order',
+      () {
+        final first = readingOf(
+          id: 'r1',
+          takenAt: DateTime.utc(2026, 8, 23, 7),
+        );
+        final second = readingOf(
+          id: 'r2',
+          takenAt: DateTime.utc(2026, 8, 23, 8),
+        );
+        final third = readingOf(
+          id: 'r3',
+          takenAt: DateTime.utc(2026, 8, 23, 9),
+        );
+        final session = sessionOf([third, first, second]);
+
+        expect(session.readingsByTime, [first, second, third]);
+      },
+    );
+
+    test('leaves the original readings list untouched', () {
+      final later = readingOf(id: 'r1', takenAt: DateTime.utc(2026, 8, 23, 9));
+      final earlier = readingOf(
+        id: 'r2',
+        takenAt: DateTime.utc(2026, 8, 23, 7),
+      );
+      final readings = [later, earlier];
+      final session = sessionOf(readings);
+
+      session.readingsByTime;
+
+      expect(readings, [later, earlier]);
+    });
+  });
+
   group('Reading', () {
     test('compares by value', () {
       expect(readingAt('r1', earlier), readingAt('r1', earlier));
@@ -149,6 +196,29 @@ void main() {
         () => readingAt('r1', DateTime(2026, 8, 23, 7, 30)),
         throwsA(isA<AssertionError>()),
       );
+    });
+
+    test('hasContext is false when no context was recorded', () {
+      expect(readingOf().hasContext, isFalse);
+    });
+
+    test('hasContext is true when the site was recorded', () {
+      expect(readingOf(site: MeasurementSite.leftArm).hasContext, isTrue);
+    });
+
+    test('hasContext is true when the posture was recorded', () {
+      expect(readingOf(posture: Posture.sitting).hasContext, isTrue);
+    });
+
+    test('hasContext is true when the medication timing was recorded', () {
+      expect(
+        readingOf(medicationTiming: MedicationTiming.before).hasContext,
+        isTrue,
+      );
+    });
+
+    test('hasContext ignores notes: a note alone is not context', () {
+      expect(readingOf(notes: 'felt fine').hasContext, isFalse);
     });
   });
 }

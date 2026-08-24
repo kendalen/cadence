@@ -177,6 +177,36 @@ void main() {
     await disposeApp(tester);
   });
 
+  testWidgets('an occasion expands to show its individual readings', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    await openEntryForm(tester);
+
+    await enter(tester, 'Systolic (mmHg)', '120');
+    await enter(tester, 'Diastolic (mmHg)', '80');
+    await addAnother(tester);
+
+    await enter(tester, 'Systolic (mmHg)', '118');
+    await enter(tester, 'Diastolic (mmHg)', '79');
+    await save(tester);
+
+    // The row shows the average (mean of 120/80 and 118/79) and stays
+    // collapsed: the individual readings are not on screen yet.
+    expect(find.text('119/80'), findsOneWidget);
+    expect(find.text('120/80'), findsNothing);
+    expect(find.text('118/79'), findsNothing);
+
+    await tester.tap(find.text('119/80'));
+    await settle(tester);
+
+    // Expanded: both readings behind the average are now shown.
+    expect(find.text('120/80'), findsOneWidget);
+    expect(find.text('118/79'), findsOneWidget);
+
+    await disposeApp(tester);
+  });
+
   testWidgets('a reading keeps the context chosen for it', (tester) async {
     await pumpApp(tester);
     await openEntryForm(tester);

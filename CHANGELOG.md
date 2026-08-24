@@ -67,3 +67,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   first reading, with a badge counting the readings behind a multi-reading
   average so it is never mistaken for a single measurement. A single-reading
   occasion looks unchanged.
+- Tap an occasion in the list to expand it in place and see its individual
+  readings, each with its own time, pulse, and any recorded context (arm,
+  posture, before/after medication) and note (CLAUDE.md §4) — the first place
+  reading context surfaces in the UI, shown as fact, not interpreted. Readings
+  are ordered by time (`Session.readingsByTime`). A lone reading with no such
+  detail does not expand, since it would only repeat the row. Read-only;
+  editing and deleting remain a later slice.

@@ -32,9 +32,13 @@ stand and what's next*.
   (arm/wrist, body position, before/after medication) — **S2 landed (a + b)**.
   The list shows each occasion as its **average** (`Session.average`, §4) with a
   reading-count badge on multi-reading rows — **S2c** (it closed a gap S2 left:
-  the tile still showed only the first reading).
+  the tile still showed only the first reading). A row **expands in place** to
+  show its individual readings, each with its own time, pulse and any recorded
+  context/note (`Session.readingsByTime`; first place context surfaces in the
+  UI) — **S2d**; a lone reading with no extra detail does not expand.
 - **Tests:** domain + data covered; an end-to-end smoke test (incl. a
-  two-reading occasion and a context round-trip). All green (82).
+  two-reading occasion, a context round-trip, and expanding a row to reveal its
+  readings). All green (90).
 - **Verified running:** debug APK builds and runs on a physical Android device
   (as of the "log a session" slice).
 
@@ -79,11 +83,9 @@ rightArm, leftWrist, rightWrist}`, `Posture {sitting, standing, lying}`,
 migration slice (schema + domain + tests only); the entry pickers come with the
 form rework.
 
-**Next up:** an agreed follow-on to S2c — make a list row **tappable to expand
-its individual readings** (the average stays the collapsed summary). Then **S3 —
-fast entry** per the roadmap; it touches the same entry form S2 just reworked, so
-mind the overlap when scoping. The entry form's sub-widgets are split out
-(`banked_readings.dart`, `reading_context_details.dart`) to keep
+**Next up:** **S3 — fast entry** per the roadmap; it touches the same entry form
+S2 just reworked, so mind the overlap when scoping. The entry form's sub-widgets
+are split out (`banked_readings.dart`, `reading_context_details.dart`) to keep
 `session_entry_screen.dart` under the ~300-line smell line (CLAUDE.md §6).
 
 ## Working reminders
