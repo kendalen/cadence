@@ -173,4 +173,57 @@ void main() {
     expect(remaining, hasLength(1));
     expect(remaining.single.systolic, 118);
   });
+
+  test(
+    'saves the banked readings and the current form as one session',
+    () async {
+      cubit.addReading(systolic: '120', diastolic: '80', pulse: '', notes: '');
+
+      // The current form holds a second, not-yet-banked reading.
+      await cubit.save(systolic: '118', diastolic: '79', pulse: '', notes: '');
+
+      final session = repository.added.single;
+      expect(session.readings, hasLength(2));
+      expect(session.readings.map((r) => r.systolic), containsAll([120, 118]));
+    },
+  );
+
+  test('saves the banked readings alone when the form is empty', () async {
+    cubit.addReading(systolic: '120', diastolic: '80', pulse: '', notes: '');
+    cubit.addReading(systolic: '118', diastolic: '79', pulse: '', notes: '');
+
+    await cubit.save(systolic: '', diastolic: '', pulse: '', notes: '');
+
+    expect(repository.added.single.readings, hasLength(2));
+  });
+
+  test(
+    'rejects a started-but-invalid form even when readings are banked',
+    () async {
+      cubit.addReading(systolic: '120', diastolic: '80', pulse: '', notes: '');
+
+      await cubit.save(systolic: '400', diastolic: '', pulse: '', notes: '');
+
+      expect(repository.added, isEmpty);
+      expect((cubit.state as SessionEntryEditing).failures, isNotEmpty);
+      expect(cubit.state.bankedReadings, hasLength(1));
+    },
+  );
+
+  test('refuses to save an empty occasion', () async {
+    await cubit.save(systolic: '', diastolic: '', pulse: '', notes: '');
+
+    expect(repository.added, isEmpty);
+    expect((cubit.state as SessionEntryEditing).failures, isNotEmpty);
+  });
+
+  test('a refused write keeps the banked readings', () async {
+    repository.refuseWith = const WriteFailed('disk full');
+    cubit.addReading(systolic: '120', diastolic: '80', pulse: '', notes: '');
+
+    await cubit.save(systolic: '118', diastolic: '79', pulse: '', notes: '');
+
+    expect(cubit.state, isA<SessionEntrySaveFailed>());
+    expect(cubit.state.bankedReadings, hasLength(1));
+  });
 }

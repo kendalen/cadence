@@ -101,11 +101,15 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
     ),
   );
 
-  /// Validates the typed values and, if they hold, stores the reading.
+  /// Validates and writes the occasion: the banked readings plus the reading
+  /// currently in the form, if one has been started.
   ///
-  /// Emits [SessionEntryEditing] with the failures if validation rejects the
-  /// input, and [SessionEntrySaved] or [SessionEntrySaveFailed] once the write
-  /// has been attempted. Does nothing while a write is already in flight.
+  /// The form is "started" when a systolic or diastolic has been typed; a
+  /// started form is validated and included, so logging a single reading stays
+  /// one action (fill, save). Emits [SessionEntryEditing] with failures if a
+  /// started form is invalid or there is nothing to save; [SessionEntrySaved]
+  /// or [SessionEntrySaveFailed] once the write has been attempted. Does
+  /// nothing while a write is already in flight.
   Future<void> save({
     required String systolic,
     required String diastolic,
@@ -117,32 +121,39 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
     }
 
     final takenAt = state.takenAt;
-    final input = ReadingInput(
-      systolic: systolic,
-      diastolic: diastolic,
-      pulse: pulse,
-      notes: notes,
-      takenAt: takenAt,
-    );
+    final banked = state.bankedReadings;
+    final started = systolic.trim().isNotEmpty || diastolic.trim().isNotEmpty;
 
-    final validated = input.validate(_idGenerator, now: _now());
-    if (validated case Err<Reading, List<ValidationFailure>>(:final error)) {
-      emit(SessionEntryEditing(takenAt, failures: error));
-      return;
+    final readings = [...banked];
+    if (started || banked.isEmpty) {
+      final input = ReadingInput(
+        systolic: systolic,
+        diastolic: diastolic,
+        pulse: pulse,
+        notes: notes,
+        takenAt: takenAt,
+      );
+      final validated = input.validate(_idGenerator, now: _now());
+      if (validated case Err<Reading, List<ValidationFailure>>(:final error)) {
+        emit(
+          SessionEntryEditing(takenAt, bankedReadings: banked, failures: error),
+        );
+        return;
+      }
+      readings.add((validated as Ok<Reading, List<ValidationFailure>>).value);
     }
 
-    final reading = (validated as Ok<Reading, List<ValidationFailure>>).value;
-    emit(SessionEntrySubmitting(takenAt));
+    emit(SessionEntrySubmitting(takenAt, bankedReadings: banked));
 
     final session = Session(
       id: SessionId(_idGenerator.newId()),
-      readings: [reading],
+      readings: readings,
     );
     final stored = await _repository.add(session);
 
     emit(switch (stored) {
       Ok() => SessionEntrySaved(takenAt),
-      Err() => SessionEntrySaveFailed(takenAt),
+      Err() => SessionEntrySaveFailed(takenAt, bankedReadings: banked),
     });
   }
 }
