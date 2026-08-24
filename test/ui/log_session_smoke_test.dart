@@ -178,6 +178,28 @@ void main() {
     await disposeApp(tester);
   });
 
+  testWidgets('a new occasion is pre-filled from the user history', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    await openEntryForm(tester);
+
+    // Log a reading well away from the neutral 120/80 default.
+    await setValue(tester, systolicStepper, '145');
+    await setValue(tester, diastolicStepper, '95');
+    await setValue(tester, pulseStepper, '77');
+    await save(tester);
+
+    // A fresh occasion now opens on the user's own numbers, not 120/80: the
+    // first reading is seeded from history (ROADMAP S3b).
+    await openEntryForm(tester);
+    expect(await readField(tester, systolicStepper), '145');
+    expect(await readField(tester, diastolicStepper), '95');
+    expect(await readField(tester, pulseStepper), '77');
+
+    await disposeApp(tester);
+  });
+
   testWidgets('a stepped value is what gets saved', (tester) async {
     await pumpApp(tester);
     await openEntryForm(tester);

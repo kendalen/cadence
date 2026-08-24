@@ -43,15 +43,25 @@ class DriftSessionRepository implements SessionRepository {
   }
 
   @override
-  Stream<List<Session>> watchAll() {
-    final query = _database.select(_database.sessions).join([
-      innerJoin(
-        _database.readings,
-        _database.readings.sessionId.equalsExp(_database.sessions.id),
-      ),
-    ]);
-    return query.watch().map(_toSessions);
-  }
+  Stream<List<Session>> watchAll() =>
+      _sessionsWithReadings().watch().map(_toSessions);
+
+  @override
+  Future<List<Session>> recentHistory() async =>
+      _toSessions(await _sessionsWithReadings().get());
+
+  /// Every session joined to its readings, one row per reading.
+  ///
+  /// Shared by the reactive [watchAll] and the one-shot [recentHistory] so both
+  /// read the same shape; grouping the rows into sessions is done in
+  /// [_toSessions].
+  Selectable<TypedResult> _sessionsWithReadings() =>
+      _database.select(_database.sessions).join([
+        innerJoin(
+          _database.readings,
+          _database.readings.sessionId.equalsExp(_database.sessions.id),
+        ),
+      ]);
 
   /// Groups joined rows into sessions, newest occasion first.
   ///

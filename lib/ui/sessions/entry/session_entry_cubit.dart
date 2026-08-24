@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/core/result.dart';
+import '../../../domain/sessions/first_reading_suggestion.dart';
 import '../../../domain/sessions/id_generator.dart';
 import '../../../domain/sessions/ids.dart';
 import '../../../domain/sessions/reading.dart';
@@ -9,6 +10,7 @@ import '../../../domain/sessions/reading_input.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/validation_failure.dart';
+import 'entry_seed.dart';
 import 'session_entry_state.dart';
 
 /// Drives the entry form: build up an occasion of one or more readings, then
@@ -34,6 +36,43 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
 
   /// The clock, injected so tests can pin "now" and the future check with it.
   final DateTime Function() _now;
+
+  /// Neutral values the first reading opens on when there is no history to draw
+  /// on. A starting point for data entry, not a norm or a target (§4).
+  static const _defaultSeed = EntrySeed(systolic: 120, diastolic: 80);
+
+  /// The values the first reading of this occasion should open on, resolved once
+  /// from the user's history (see [suggestedFirstReading]) or the neutral
+  /// default when there is none. The entry form awaits it before seeding its
+  /// fields, so nothing changes under the user.
+  Future<EntrySeed> get initialSeed => _initialSeed;
+
+  // Memoised so the one-shot history read happens once, however often it is
+  // asked for, and only when the form is actually opened.
+  late final Future<EntrySeed> _initialSeed = _loadInitialSeed();
+
+  /// Reads history once and turns it into the first reading's opening values:
+  /// numbers (and pulse) from the same-bucket average, context from the most
+  /// recent stored reading. A read failure is not allowed to stop the user
+  /// logging a reading, so it degrades to the neutral default, exactly as an
+  /// empty history does.
+  Future<EntrySeed> _loadInitialSeed() async {
+    try {
+      final history = await _repository.recentHistory();
+      final average = suggestedFirstReading(history, now: _now());
+      final recent = mostRecentReading(history);
+      return EntrySeed(
+        systolic: average?.systolic ?? _defaultSeed.systolic,
+        diastolic: average?.diastolic ?? _defaultSeed.diastolic,
+        pulse: average?.pulse,
+        site: recent?.site,
+        posture: recent?.posture,
+        medicationTiming: recent?.medicationTiming,
+      );
+    } on Exception {
+      return _defaultSeed;
+    }
+  }
 
   /// Records the moment picked in the date and time pickers, keeping any
   /// readings already banked and clearing failures shown for the old form.

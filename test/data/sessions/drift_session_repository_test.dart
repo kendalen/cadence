@@ -164,6 +164,35 @@ void main() {
     expect(await database.select(database.readings).get(), isEmpty);
   });
 
+  test('recentHistory is empty when nothing is stored', () async {
+    expect(await repository.recentHistory(), isEmpty);
+  });
+
+  test(
+    'recentHistory returns stored sessions, newest occasion first',
+    () async {
+      await repository.add(sessionOf('morning', [readingOf('r1', morning)]));
+      await repository.add(sessionOf('evening', [readingOf('r2', evening)]));
+
+      final ids = (await repository.recentHistory())
+          .map((session) => session.id.value)
+          .toList();
+
+      expect(ids, ['evening', 'morning']);
+    },
+  );
+
+  test('recentHistory groups a session\'s readings together', () async {
+    final second = morning.add(const Duration(minutes: 1));
+    await repository.add(
+      sessionOf('s1', [readingOf('r1', morning), readingOf('r2', second)]),
+    );
+
+    final history = await repository.recentHistory();
+
+    expect(history.single.readings, hasLength(2));
+  });
+
   test('takenAt is stored as UTC ISO-8601 text', () async {
     await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
 

@@ -19,4 +19,11 @@ abstract interface class SessionRepository {
   ///
   /// Emits an empty list when nothing is stored.
   Stream<List<Session>> watchAll();
+
+  /// A one-shot snapshot of every stored session, newest [Session.occurredAt]
+  /// first; an empty list when nothing is stored.
+  ///
+  /// The non-reactive read behind history-aware features such as seeding the
+  /// entry form; use [watchAll] for anything that must track later changes.
+  Future<List<Session>> recentHistory();
 }

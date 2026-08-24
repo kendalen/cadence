@@ -1,12 +1,37 @@
+import 'package:cadence/domain/sessions/ids.dart';
 import 'package:cadence/domain/sessions/persistence_failure.dart';
+import 'package:cadence/domain/sessions/reading.dart';
 import 'package:cadence/domain/sessions/reading_context.dart';
+import 'package:cadence/domain/sessions/session.dart';
 import 'package:cadence/domain/sessions/validation_failure.dart';
+import 'package:cadence/ui/sessions/entry/entry_seed.dart';
 import 'package:cadence/ui/sessions/entry/session_entry_cubit.dart';
 import 'package:cadence/ui/sessions/entry/session_entry_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/fake_id_generator.dart';
 import '../../support/fake_session_repository.dart';
+
+Session historyOf(Reading reading, {String id = 'past'}) =>
+    Session(id: SessionId(id), readings: [reading]);
+
+Reading pastReading({
+  int systolic = 120,
+  int diastolic = 80,
+  int? pulse,
+  MeasurementSite? site,
+  Posture? posture,
+  MedicationTiming? medicationTiming,
+}) => Reading(
+  id: const ReadingId('past-r'),
+  systolic: systolic,
+  diastolic: diastolic,
+  pulse: pulse,
+  takenAt: DateTime.utc(2026, 8, 23, 7),
+  site: site,
+  posture: posture,
+  medicationTiming: medicationTiming,
+);
 
 void main() {
   final now = DateTime(2026, 8, 23, 18);
@@ -256,5 +281,58 @@ void main() {
 
     final reading = repository.added.single.readings.single;
     expect(reading.site, MeasurementSite.leftWrist);
+  });
+
+  group('initialSeed', () {
+    test('is the neutral default when there is no history', () async {
+      expect(
+        await cubit.initialSeed,
+        const EntrySeed(systolic: 120, diastolic: 80),
+      );
+    });
+
+    test('takes its numbers from the user history', () async {
+      repository.history = [
+        historyOf(pastReading(systolic: 134, diastolic: 86)),
+      ];
+
+      final seed = await cubit.initialSeed;
+
+      expect(seed.systolic, 134);
+      expect(seed.diastolic, 86);
+    });
+
+    test('takes the pulse from history when one was recorded', () async {
+      repository.history = [historyOf(pastReading(pulse: 70))];
+
+      expect((await cubit.initialSeed).pulse, 70);
+    });
+
+    test('takes the context from the most recent stored reading', () async {
+      repository.history = [
+        historyOf(
+          pastReading(
+            site: MeasurementSite.rightArm,
+            posture: Posture.lying,
+            medicationTiming: MedicationTiming.after,
+          ),
+        ),
+      ];
+
+      final seed = await cubit.initialSeed;
+
+      expect(seed.site, MeasurementSite.rightArm);
+      expect(seed.posture, Posture.lying);
+      expect(seed.medicationTiming, MedicationTiming.after);
+    });
+
+    test('leaves the default clear of pulse and context', () async {
+      final seed = await cubit.initialSeed;
+
+      expect(seed.pulse, isNull);
+      expect(seed.site, isNull);
+      expect(seed.posture, isNull);
+      expect(seed.medicationTiming, isNull);
+    });
   });
 }

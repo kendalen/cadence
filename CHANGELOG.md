@@ -86,3 +86,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Pulse stays optional: it shows a dash until set and has a clear button back to
   "not recorded" (CLAUDE.md §4). The morning/evening-average prefill for the
   first reading is the next slice (S3b).
+- History-aware first-reading prefill (S3b): a new occasion's first reading now
+  opens on the user's own numbers instead of the fixed 120/80. The estimate is
+  the mean of past occasion averages in the same half of the day — morning
+  before local noon, evening after, matching the 7-2-2 two-occasions-a-day shape
+  — since readings cluster by time of day; when that bucket is empty it falls
+  back to all history, and 120/80 remains only when there is no history at all
+  (`suggestedFirstReading`, CLAUDE.md §4). The first reading's context (arm,
+  posture, before/after medication) is prefilled from the most recent stored
+  reading. It is a gentle nudge, not a norm or a target: every value is the
+  user's own data, shown and fully editable before it is saved. The form waits
+  for this one-shot history read (`SessionRepository.recentHistory`) before it
+  opens, so the numbers never change under the user (roadmap ease-of-use
+  principle; the audience skews older).

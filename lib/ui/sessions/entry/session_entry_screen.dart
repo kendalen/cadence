@@ -41,13 +41,6 @@ class _SessionEntryForm extends StatefulWidget {
 }
 
 class _SessionEntryFormState extends State<_SessionEntryForm> {
-  /// Neutral values the first reading of an occasion opens on, so the steppers
-  /// always have somewhere to step from. They are a starting point for data
-  /// entry, not a norm or a target (CLAUDE.md §4); S3b replaces them with the
-  /// user's own morning/evening average.
-  static const _defaultSystolic = 120;
-  static const _defaultDiastolic = 80;
-
   /// The value pulse jumps to when the field is empty and + is first tapped — a
   /// neutral starting point, not a norm.
   static const _pulseStartWhenEmpty = 60;
@@ -56,6 +49,12 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
   final _diastolic = TextEditingController();
   final _pulse = TextEditingController();
   final _notes = TextEditingController();
+
+  /// False until the history-based seed has been read and applied. The form
+  /// waits for it rather than opening on a placeholder and swapping the numbers
+  /// under the user (CLAUDE.md §4: the audience skews older — nothing the user
+  /// is looking at should change on its own).
+  bool _seeded = false;
 
   /// How many readings were banked at the last state we reacted to, so growth
   /// (a reading was just banked) can be told from any other state change.
@@ -68,10 +67,26 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
   @override
   void initState() {
     super.initState();
-    // Seed the first reading with the neutral default. Pulse and notes stay
-    // empty: pulse is optional (CLAUDE.md §4) and a note is per-reading.
-    _systolic.text = '$_defaultSystolic';
-    _diastolic.text = '$_defaultDiastolic';
+    _applyInitialSeed();
+  }
+
+  /// Waits for the first reading's opening values and fills the fields with
+  /// them. Numbers come from the user's own history, pulse and context too when
+  /// there is any; all of it stays editable before it is saved.
+  Future<void> _applyInitialSeed() async {
+    final seed = await context.read<SessionEntryCubit>().initialSeed;
+    if (!mounted) {
+      return;
+    }
+    _systolic.text = '${seed.systolic}';
+    _diastolic.text = '${seed.diastolic}';
+    _pulse.text = seed.pulse?.toString() ?? '';
+    setState(() {
+      _seeded = true;
+      _site = seed.site;
+      _posture = seed.posture;
+      _medicationTiming = seed.medicationTiming;
+    });
   }
 
   @override
@@ -86,6 +101,13 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    if (!_seeded) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.addReading)),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return BlocConsumer<SessionEntryCubit, SessionEntryState>(
       listener: _onStateChanged,

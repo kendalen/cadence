@@ -31,6 +31,13 @@ class FakeSessionRepository implements SessionRepository {
   @override
   Stream<List<Session>> watchAll() => _sessions.stream;
 
+  /// Sessions seeded for a history read to return, newest occasion first. Tests
+  /// that care about the seed set this; it is independent of what [add] records.
+  List<Session> history = [];
+
+  @override
+  Future<List<Session>> recentHistory() async => List.of(history);
+
   /// Pushes [sessions] to everyone watching, as a store change would.
   void emit(List<Session> sessions) => _sessions.add(sessions);
 

@@ -43,21 +43,10 @@ final class Session extends Equatable {
   SessionAverage get average {
     final pulses = readings.map((reading) => reading.pulse).whereType<int>();
     return SessionAverage(
-      systolic: _meanRounded(readings.map((reading) => reading.systolic)),
-      diastolic: _meanRounded(readings.map((reading) => reading.diastolic)),
-      pulse: pulses.isEmpty ? null : _meanRounded(pulses),
+      systolic: roundedMean(readings.map((reading) => reading.systolic)),
+      diastolic: roundedMean(readings.map((reading) => reading.diastolic)),
+      pulse: pulses.isEmpty ? null : roundedMean(pulses),
     );
-  }
-
-  /// Mean of [values], rounded to the nearest whole number with a half rounding
-  /// up. [values] must be non-empty.
-  ///
-  /// `double.round()` rounds a half away from zero; every value here is a
-  /// positive measurement, so that is "half up".
-  static int _meanRounded(Iterable<int> values) {
-    final list = values.toList();
-    final sum = list.reduce((total, value) => total + value);
-    return (sum / list.length).round();
   }
 
   @override

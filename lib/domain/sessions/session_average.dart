@@ -30,3 +30,16 @@ final class SessionAverage extends Equatable {
   @override
   List<Object?> get props => [systolic, diastolic, pulse];
 }
+
+/// The mean of [values], rounded to the nearest whole number with a half
+/// rounding up. [values] must be non-empty.
+///
+/// Kept in one place so a single session's average and an average of session
+/// averages round identically. `double.round()` rounds a half away from zero;
+/// every value here is a positive whole-mmHg or whole-bpm measurement, so that
+/// is "half up".
+int roundedMean(Iterable<int> values) {
+  final list = values.toList();
+  final sum = list.reduce((total, value) => total + value);
+  return (sum / list.length).round();
+}

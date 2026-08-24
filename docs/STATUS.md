@@ -42,10 +42,19 @@ stand and what's next*.
   one typo guard. A new occasion opens on a neutral default (120/80, no pulse);
   "add another reading" carries the just-banked numbers + context into the next
   reading; pulse keeps its optional "—"/clear state — **S3a landed**.
+  A new occasion's first reading now opens on the user's **own** numbers instead
+  of the fixed 120/80: the mean of past occasion averages in the current
+  day-bucket (morning before local noon / evening after), falling back to all
+  history, then to 120/80 only with no history at all
+  (`suggestedFirstReading`); its context is prefilled from the most recent
+  stored reading. The form waits on a one-shot `SessionRepository.recentHistory`
+  read before it opens, so nothing changes under the user — **S3b landed**.
 - **Tests:** domain + data covered; an end-to-end smoke test (incl. a
   two-reading occasion, a context round-trip, expanding a row, stepper defaults,
-  carry-over prefill, and a stepped value being what is saved), plus
-  `NumberStepper` behaviour tests. All green (100).
+  carry-over prefill, a stepped value being what is saved, and a fresh occasion
+  prefilled from history), plus `NumberStepper` behaviour tests, the
+  `suggestedFirstReading` / `mostRecentReading` domain stats, `recentHistory`,
+  and the cubit's `initialSeed`. All green (121).
 - **Verified running:** debug APK builds and runs on a physical Android device
   (as of the "log a session" slice).
 
@@ -97,16 +106,28 @@ reading prefills from the **average of the morning/evening bucket** (a new domai
 stat, deferred to S3b), later readings from the last banked one; context prefills
 from the last actual reading, not an average.
 
-**Next up:** **S3b — history-aware first-reading prefill.** Replace S3a's fixed
-120/80 default with the user's own **morning/evening bucketed average** (split at
-noon, aligned to the 7-2-2 two-occasions-a-day shape; per-hour was rejected as
-too data-sparse). This is the domain-stat + data-query half: a new tested domain
-function computing the bucket average (reuse/extend `session_average.dart` where
-it fits), a repository read of history to feed it, a fallback chain when a bucket
-is empty (→ overall history → the 120/80 default), and prefilling the first
-reading's **context** from the most recent stored reading. Mind: prefilling a
-computed average as a to-be-saved reading is a gentle nudge — it is the user's own
-data, shown and editable before save.
+**Done (2026-08-24): S3b — history-aware first-reading prefill.** Replaced
+S3a's fixed 120/80 default with the user's own **morning/evening bucketed
+average** (split at local noon, aligned to the 7-2-2 two-occasions-a-day shape;
+per-hour was rejected as too data-sparse). New pure domain function
+`suggestedFirstReading` (in `first_reading_suggestion.dart`) computes the bucket
+mean of past **session averages** — session-as-unit (§4) — with the fallback
+chain bucket → all history → `null` (caller supplies 120/80); bucketing takes an
+injected `toLocal` so tests are timezone-independent, and a shared `roundedMean`
+was extracted into `session_average.dart` so it and `Session.average` round
+identically. A one-shot `SessionRepository.recentHistory()` feeds it (drift
+`.get()` reusing the join; the fake gets a settable `history`). Context is
+prefilled from `mostRecentReading`. Wiring: the cubit exposes a memoised
+`Future<EntrySeed> initialSeed`; the entry form awaits it (spinner first) so the
+numbers never swap under the user — no new cubit state, no churn to existing
+cubit/state tests. Decisions taken in brainstorm: one-shot read over
+`watchAll().first` (the fake doesn't replay on subscribe, which would have
+fought ~20 tests) and load-then-show over show-then-swap.
+
+**Next up:** **S4 — Session detail + session average** (roadmap Phase 2). A
+screen showing one occasion's readings and their mean (`CLAUDE.md` §4);
+`Session.average` already exists, so this is largely a read-only detail screen
+over it.
 
 ## Working reminders
 
