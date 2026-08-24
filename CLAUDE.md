@@ -4,6 +4,11 @@ Read this file fully before answering anything about this repository. These are
 constraints, not suggestions. When a constraint blocks you, say so and ask — do
 not work around it.
 
+**Current status & next steps:** after this file, read
+[`docs/STATUS.md`](docs/STATUS.md) — the shared, git-tracked handoff note (where
+things stand, recent decisions, and candidate next slices), kept current across
+machines and sessions.
+
 ---
 
 ## 1. What this project is
