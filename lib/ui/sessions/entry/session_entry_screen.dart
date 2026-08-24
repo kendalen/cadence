@@ -5,14 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/sessions/id_generator.dart';
-import '../../../domain/sessions/ids.dart';
-import '../../../domain/sessions/reading.dart';
 import '../../../domain/sessions/reading_context.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import '../../../l10n/app_localizations.dart';
-import '../reading_context_labels.dart';
 import '../validation_messages.dart';
+import 'banked_readings.dart';
+import 'reading_context_details.dart';
 import 'session_entry_cubit.dart';
 import 'session_entry_state.dart';
 
@@ -98,7 +97,7 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
                 decoration: InputDecoration(labelText: l10n.notesLabel),
                 maxLines: 2,
               ),
-              _ContextDetails(
+              ReadingContextDetails(
                 site: _site,
                 posture: _posture,
                 medicationTiming: _medicationTiming,
@@ -119,7 +118,7 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
                 icon: const Icon(Icons.add),
                 label: Text(l10n.addAnotherReading),
               ),
-              _BankedReadings(
+              BankedReadings(
                 readings: state.bankedReadings,
                 onRemove: (id) =>
                     context.read<SessionEntryCubit>().removeBankedReading(id),
@@ -263,124 +262,4 @@ class _TakenAtField extends StatelessWidget {
       ),
     );
   }
-}
-
-/// The readings already banked for this occasion, each removable.
-class _BankedReadings extends StatelessWidget {
-  const _BankedReadings({required this.readings, required this.onRemove});
-
-  final List<Reading> readings;
-  final void Function(ReadingId id) onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    if (readings.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    final l10n = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context).toString();
-    final time = DateFormat.jm(locale);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        Text(l10n.readingsSoFar, style: Theme.of(context).textTheme.titleSmall),
-        for (final reading in readings)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              l10n.readingPressure(reading.systolic, reading.diastolic),
-            ),
-            subtitle: Text(time.format(reading.takenAt.toLocal())),
-            trailing: IconButton(
-              icon: const Icon(Icons.close),
-              tooltip: l10n.removeReading,
-              onPressed: () => onRemove(reading.id),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// The optional arm / body-position / medication fields, collapsed by default
-/// so the fast path (just the numbers) stays uncluttered.
-class _ContextDetails extends StatelessWidget {
-  const _ContextDetails({
-    required this.site,
-    required this.posture,
-    required this.medicationTiming,
-    required this.onSite,
-    required this.onPosture,
-    required this.onMedication,
-  });
-
-  final MeasurementSite? site;
-  final Posture? posture;
-  final MedicationTiming? medicationTiming;
-  final ValueChanged<MeasurementSite?> onSite;
-  final ValueChanged<Posture?> onPosture;
-  final ValueChanged<MedicationTiming?> onMedication;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return ExpansionTile(
-      title: Text(l10n.contextDetails),
-      tilePadding: EdgeInsets.zero,
-      childrenPadding: const EdgeInsets.only(bottom: 8),
-      children: [
-        _dropdown<MeasurementSite>(
-          key: const Key('siteDropdown'),
-          label: l10n.siteFieldLabel,
-          value: site,
-          values: MeasurementSite.values,
-          labelOf: (value) => siteLabel(value, l10n),
-          notRecorded: l10n.contextNotRecorded,
-          onChanged: onSite,
-        ),
-        const SizedBox(height: 8),
-        _dropdown<Posture>(
-          key: const Key('postureDropdown'),
-          label: l10n.postureFieldLabel,
-          value: posture,
-          values: Posture.values,
-          labelOf: (value) => postureLabel(value, l10n),
-          notRecorded: l10n.contextNotRecorded,
-          onChanged: onPosture,
-        ),
-        const SizedBox(height: 8),
-        _dropdown<MedicationTiming>(
-          key: const Key('medicationDropdown'),
-          label: l10n.medicationFieldLabel,
-          value: medicationTiming,
-          values: MedicationTiming.values,
-          labelOf: (value) => medicationTimingLabel(value, l10n),
-          notRecorded: l10n.contextNotRecorded,
-          onChanged: onMedication,
-        ),
-      ],
-    );
-  }
-
-  Widget _dropdown<T extends Enum>({
-    required Key key,
-    required String label,
-    required T? value,
-    required List<T> values,
-    required String Function(T) labelOf,
-    required String notRecorded,
-    required ValueChanged<T?> onChanged,
-  }) => DropdownButtonFormField<T?>(
-    key: key,
-    initialValue: value,
-    decoration: InputDecoration(labelText: label),
-    items: [
-      DropdownMenuItem<T?>(value: null, child: Text(notRecorded)),
-      for (final option in values)
-        DropdownMenuItem<T?>(value: option, child: Text(labelOf(option))),
-    ],
-    onChanged: onChanged,
-  );
 }

@@ -77,10 +77,9 @@ migration slice (schema + domain + tests only); the entry pickers come with the
 form rework.
 
 **Next up:** **S3 — fast entry** per the roadmap. It touches the same entry form
-S2 just reworked, so mind the overlap when scoping. Heads-up for whoever picks it
-up: `lib/ui/sessions/entry/session_entry_screen.dart` is now ~386 lines (over the
-~300 smell line, CLAUDE.md §6) — the private `_BankedReadings` / `_ContextDetails`
-widgets are good extraction candidates into their own files.
+S2 just reworked, so mind the overlap when scoping. The entry form's sub-widgets
+are split out (`banked_readings.dart`, `reading_context_details.dart`) to keep
+`session_entry_screen.dart` under the ~300-line smell line (CLAUDE.md §6).
 
 ## Working reminders
 
