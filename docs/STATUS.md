@@ -59,6 +59,18 @@ stand and what's next*.
   and the cubit's `initialSeed`. All green (121).
 - **Verified running:** debug APK builds and runs on a physical Android device
   (as of the "log a session" slice).
+- **Design direction — decided & approved (2026-08-24), NOT yet in code.** A
+  *warm & reassuring* visual language was worked out on a Claude Design canvas and
+  approved by the maintainer; the app still runs on **default Material** (no
+  `theme:` on `MaterialApp`). Mockups: readings list, entry, **S4 detail (with S5
+  edit/delete)**, empty state, a **1.x trends chart**, and a foundations sheet —
+  <https://claude.ai/code/artifact/33a266c3-5a9b-40f1-8847-9c2583ee2d39> (the
+  working `.dc.html` files were scratchpad-only, not committed). Headlines: Hanken
+  Grotesk; warm paper/sand neutrals; a **teal** structural accent + one
+  **terracotta** action colour; large ≥56px targets; chart series colours
+  validated colour-blind-safe (systolic teal `#0E8C74`, diastolic ochre
+  `#B4832E`); **never colour a reading good/bad, no threshold lines** (§1);
+  edit/delete live on the opened session, not on every list row.
 
 ## Environment & tooling
 
@@ -133,10 +145,21 @@ fought ~20 tests); load-then-show over show-then-swap; and the recent-window
 average (user's call) over an all-time one — 14 days, tunable, a candidate for a
 future Settings toggle.
 
-**Next up:** **S4 — Session detail + session average** (roadmap Phase 2). A
-screen showing one occasion's readings and their mean (`CLAUDE.md` §4);
-`Session.average` already exists, so this is largely a read-only detail screen
-over it.
+**Next up (design foundation → S4):**
+
+1. **Design-foundation slice — turn the approved direction into a Flutter theme.**
+   Build a `ThemeData` (an explicit `ColorScheme` for the warm palette, a
+   `TextTheme` in **Hanken Grotesk bundled as an app asset — NOT the `google_fonts`
+   package**, which fetches over the network and breaks offline-first, §2, plus
+   card / button / app-bar / FAB component themes) and wire it in
+   `lib/ui/app.dart`. The existing widgets already read their colours from the
+   theme, so most screens re-skin centrally; also adopt the labelled "Add a
+   reading" FAB. UI-only, own branch, golden test on a key screen (§7). See the
+   design bullet in Current state (canvas URL) for the values.
+2. **S4 — Session detail + session average** (roadmap Phase 2), built in the new
+   language. A screen showing one occasion's readings and their mean (§4);
+   `Session.average` already exists, so it's largely a read-only detail screen over
+   it, plus new "Average"/"Readings" localised strings.
 
 ## Working reminders
 
