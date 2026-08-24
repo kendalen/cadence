@@ -2,6 +2,7 @@ import '../core/result.dart';
 import 'id_generator.dart';
 import 'ids.dart';
 import 'reading.dart';
+import 'reading_context.dart';
 import 'validation_failure.dart';
 
 /// The raw, unvalidated values of the reading entry form.
@@ -16,6 +17,9 @@ final class ReadingInput {
     required this.takenAt,
     this.pulse = '',
     this.notes = '',
+    this.site,
+    this.posture,
+    this.medicationTiming,
   });
 
   /// Lowest accepted systolic or diastolic value, in mmHg.
@@ -48,6 +52,16 @@ final class ReadingInput {
 
   /// The moment the user says the reading was taken, in any timezone.
   final DateTime takenAt;
+
+  /// Where the cuff was placed, or `null` when the user did not record it.
+  final MeasurementSite? site;
+
+  /// The body position the reading was taken in, or `null` when unrecorded.
+  final Posture? posture;
+
+  /// Whether the reading was before or after medication, or `null` when
+  /// unrecorded.
+  final MedicationTiming? medicationTiming;
 
   /// Validates these values and, if they hold, builds a [Reading].
   ///
@@ -105,6 +119,9 @@ final class ReadingInput {
         pulse: pulseValue,
         takenAt: takenAt.toUtc(),
         notes: trimmedNotes.isEmpty ? null : trimmedNotes,
+        site: site,
+        posture: posture,
+        medicationTiming: medicationTiming,
       ),
     );
   }

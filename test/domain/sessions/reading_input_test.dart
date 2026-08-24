@@ -1,5 +1,6 @@
 import 'package:cadence/domain/core/result.dart';
 import 'package:cadence/domain/sessions/reading.dart';
+import 'package:cadence/domain/sessions/reading_context.dart';
 import 'package:cadence/domain/sessions/reading_input.dart';
 import 'package:cadence/domain/sessions/validation_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,12 +17,18 @@ void main() {
     String pulse = '',
     String notes = '',
     DateTime? at,
+    MeasurementSite? site,
+    Posture? posture,
+    MedicationTiming? medicationTiming,
   }) => ReadingInput(
     systolic: systolic,
     diastolic: diastolic,
     pulse: pulse,
     notes: notes,
     takenAt: at ?? takenAt,
+    site: site,
+    posture: posture,
+    medicationTiming: medicationTiming,
   );
 
   Reading validated(ReadingInput input) {
@@ -183,6 +190,30 @@ void main() {
         ReadingField.pulse,
         ReadingField.takenAt,
       ]);
+    });
+  });
+
+  group('ReadingInput.validate — context', () {
+    test('carries the context through to the built reading', () {
+      final reading = validated(
+        inputWith(
+          site: MeasurementSite.leftArm,
+          posture: Posture.sitting,
+          medicationTiming: MedicationTiming.before,
+        ),
+      );
+
+      expect(reading.site, MeasurementSite.leftArm);
+      expect(reading.posture, Posture.sitting);
+      expect(reading.medicationTiming, MedicationTiming.before);
+    });
+
+    test('leaves context null when none was chosen', () {
+      final reading = validated(inputWith());
+
+      expect(reading.site, isNull);
+      expect(reading.posture, isNull);
+      expect(reading.medicationTiming, isNull);
     });
   });
 }
