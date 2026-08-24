@@ -148,6 +148,11 @@ to ship.
 - **PDF export** (once CSV proves the export path).
 - **Trends / charts** over time.
 - **Discard-day-1 toggle** and a Settings screen — unless S6 pulls them in.
+- **Time-format preference (12-hour vs 24-hour).** Times currently follow the
+  locale (English shows AM/PM, Italian shows 24-hour) via `DateFormat.jm`. An
+  explicit user override belongs on the same Settings screen as the
+  discard-day-1 toggle. Surfaced 2026-08-24 while testing the expanded
+  reading-time display.
 - **Locales beyond English and Italian** (the ARB i18n infrastructure supports
   them; v1.0 ships EN + IT — `CLAUDE.md` §9).
 
