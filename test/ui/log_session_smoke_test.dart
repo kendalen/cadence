@@ -74,8 +74,16 @@ void main() {
 
   Future<void> save(WidgetTester tester) async {
     final button = find.widgetWithText(FilledButton, 'Save');
-    // The banked-readings list can push Save below the test viewport; scroll it
-    // into view first so the tap lands (a no-op when it is already visible).
+    // The form is a lazy ListView; extra content (banked readings, expanded
+    // context fields) can leave Save unbuilt below the viewport, where a plain
+    // tap would miss it. scrollUntilVisible scrolls the form until Save is
+    // built and shown (a no-op when it is already on-screen); ensureVisible
+    // then guarantees it is fully in view before the tap lands. The form's own
+    // scrollable is named explicitly because the list screen beneath this route
+    // has one too; the entry form is the topmost route, so its scrollable is the
+    // last in the tree.
+    final formScrollable = find.byType(Scrollable).last;
+    await tester.scrollUntilVisible(button, 100, scrollable: formScrollable);
     await tester.ensureVisible(button);
     await settle(tester);
     await tester.tap(button);
@@ -86,6 +94,13 @@ void main() {
     await tester.tap(
       find.widgetWithText(OutlinedButton, 'Add another reading'),
     );
+    await settle(tester);
+  }
+
+  Future<void> chooseSite(WidgetTester tester, String label) async {
+    await tester.tap(find.byKey(const Key('siteDropdown')));
+    await settle(tester);
+    await tester.tap(find.text(label).last);
     await settle(tester);
   }
 
@@ -158,6 +173,23 @@ void main() {
     final readings = await database.select(database.readings).get();
     expect(sessions, hasLength(1));
     expect(readings, hasLength(2));
+
+    await disposeApp(tester);
+  });
+
+  testWidgets('a reading keeps the context chosen for it', (tester) async {
+    await pumpApp(tester);
+    await openEntryForm(tester);
+    await enter(tester, 'Systolic (mmHg)', '120');
+    await enter(tester, 'Diastolic (mmHg)', '80');
+
+    await tester.tap(find.text('Add details (optional)'));
+    await settle(tester);
+    await chooseSite(tester, 'Left arm');
+    await save(tester);
+
+    final readings = await database.select(database.readings).get();
+    expect(readings.single.site, 'leftArm');
 
     await disposeApp(tester);
   });

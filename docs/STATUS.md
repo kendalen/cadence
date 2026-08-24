@@ -12,8 +12,9 @@ stand and what's next*.
 
 ## Current state
 
-"Log a session end-to-end" is complete; **S1 (reading context → schema v2)** has
-landed on top of it (roadmap slice, `docs/ROADMAP.md`).
+"Log a session end-to-end" is complete; **S1 (reading context → schema v2)** and
+**S2 (multiple readings per session + context pickers)** have landed on top of it
+(roadmap slices, `docs/ROADMAP.md`).
 
 - **Domain:** `Session` / `Reading` entities, typed ids, `ReadingInput.validate()`
   (plausibility bounds — typo guards, not clinical thresholds), a sealed `Result`
@@ -25,11 +26,12 @@ landed on top of it (roadmap slice, `docs/ROADMAP.md`).
   `DriftSessionRepository`, UUID v7 ids, committed v1 + v2 snapshots, and a
   migration test proving v1 rows survive the upgrade with null context.
 - **UI:** readings list + entry form on `flutter_bloc` Cubits; all strings in ARB.
-  The entry form now builds up an occasion of one or more readings (bank with
-  "add another reading", remove a banked one, save the lot as one session) —
-  **S2a landed**. No context pickers yet; those are S2b.
+  The entry form builds up an occasion of one or more readings (bank with "add
+  another reading", remove a banked one, save the lot as one session) and
+  captures optional per-reading context via a collapsible "Add details" section
+  (arm/wrist, body position, before/after medication) — **S2 landed (a + b)**.
 - **Tests:** domain + data covered; an end-to-end smoke test (incl. a
-  two-reading occasion). All green (71).
+  two-reading occasion and a context round-trip). All green (76).
 - **Verified running:** debug APK builds and runs on a physical Android device
   (as of the "log a session" slice).
 
@@ -74,11 +76,11 @@ rightArm, leftWrist, rightWrist}`, `Posture {sitting, standing, lying}`,
 migration slice (schema + domain + tests only); the entry pickers come with the
 form rework.
 
-**Next up:** **S2b — reading context pickers** in the entry form: a collapsible
-"Add details" section per reading (arm/wrist, body position, before/after
-medication), wired into the occasion's readings and defaulting to not-recorded.
-S2a (multiple readings per occasion) has landed. Note S3 (fast entry) touches
-the same form, so consider the order when scoping.
+**Next up:** **S3 — fast entry** per the roadmap. It touches the same entry form
+S2 just reworked, so mind the overlap when scoping. Heads-up for whoever picks it
+up: `lib/ui/sessions/entry/session_entry_screen.dart` is now ~386 lines (over the
+~300 smell line, CLAUDE.md §6) — the private `_BankedReadings` / `_ContextDetails`
+widgets are good extraction candidates into their own files.
 
 ## Working reminders
 

@@ -7,9 +7,11 @@ import 'package:intl/intl.dart';
 import '../../../domain/sessions/id_generator.dart';
 import '../../../domain/sessions/ids.dart';
 import '../../../domain/sessions/reading.dart';
+import '../../../domain/sessions/reading_context.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import '../../../l10n/app_localizations.dart';
+import '../reading_context_labels.dart';
 import '../validation_messages.dart';
 import 'session_entry_cubit.dart';
 import 'session_entry_state.dart';
@@ -45,6 +47,10 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
   /// How many readings were banked at the last state we reacted to, so growth
   /// (a reading was just banked) can be told from any other state change.
   int _bankedCount = 0;
+
+  MeasurementSite? _site;
+  Posture? _posture;
+  MedicationTiming? _medicationTiming;
 
   @override
   void dispose() {
@@ -91,6 +97,15 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
                 controller: _notes,
                 decoration: InputDecoration(labelText: l10n.notesLabel),
                 maxLines: 2,
+              ),
+              _ContextDetails(
+                site: _site,
+                posture: _posture,
+                medicationTiming: _medicationTiming,
+                onSite: (value) => setState(() => _site = value),
+                onPosture: (value) => setState(() => _posture = value),
+                onMedication: (value) =>
+                    setState(() => _medicationTiming = value),
               ),
               const SizedBox(height: 8),
               _TakenAtField(
@@ -156,6 +171,11 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
     _diastolic.clear();
     _pulse.clear();
     _notes.clear();
+    setState(() {
+      _site = null;
+      _posture = null;
+      _medicationTiming = null;
+    });
   }
 
   void _addReading() => context.read<SessionEntryCubit>().addReading(
@@ -163,6 +183,9 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
     diastolic: _diastolic.text,
     pulse: _pulse.text,
     notes: _notes.text,
+    site: _site,
+    posture: _posture,
+    medicationTiming: _medicationTiming,
   );
 
   void _save() => unawaited(
@@ -171,6 +194,9 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
       diastolic: _diastolic.text,
       pulse: _pulse.text,
       notes: _notes.text,
+      site: _site,
+      posture: _posture,
+      medicationTiming: _medicationTiming,
     ),
   );
 
@@ -276,4 +302,85 @@ class _BankedReadings extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The optional arm / body-position / medication fields, collapsed by default
+/// so the fast path (just the numbers) stays uncluttered.
+class _ContextDetails extends StatelessWidget {
+  const _ContextDetails({
+    required this.site,
+    required this.posture,
+    required this.medicationTiming,
+    required this.onSite,
+    required this.onPosture,
+    required this.onMedication,
+  });
+
+  final MeasurementSite? site;
+  final Posture? posture;
+  final MedicationTiming? medicationTiming;
+  final ValueChanged<MeasurementSite?> onSite;
+  final ValueChanged<Posture?> onPosture;
+  final ValueChanged<MedicationTiming?> onMedication;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return ExpansionTile(
+      title: Text(l10n.contextDetails),
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: 8),
+      children: [
+        _dropdown<MeasurementSite>(
+          key: const Key('siteDropdown'),
+          label: l10n.siteFieldLabel,
+          value: site,
+          values: MeasurementSite.values,
+          labelOf: (value) => siteLabel(value, l10n),
+          notRecorded: l10n.contextNotRecorded,
+          onChanged: onSite,
+        ),
+        const SizedBox(height: 8),
+        _dropdown<Posture>(
+          key: const Key('postureDropdown'),
+          label: l10n.postureFieldLabel,
+          value: posture,
+          values: Posture.values,
+          labelOf: (value) => postureLabel(value, l10n),
+          notRecorded: l10n.contextNotRecorded,
+          onChanged: onPosture,
+        ),
+        const SizedBox(height: 8),
+        _dropdown<MedicationTiming>(
+          key: const Key('medicationDropdown'),
+          label: l10n.medicationFieldLabel,
+          value: medicationTiming,
+          values: MedicationTiming.values,
+          labelOf: (value) => medicationTimingLabel(value, l10n),
+          notRecorded: l10n.contextNotRecorded,
+          onChanged: onMedication,
+        ),
+      ],
+    );
+  }
+
+  Widget _dropdown<T extends Enum>({
+    required Key key,
+    required String label,
+    required T? value,
+    required List<T> values,
+    required String Function(T) labelOf,
+    required String notRecorded,
+    required ValueChanged<T?> onChanged,
+  }) => DropdownButtonFormField<T?>(
+    key: key,
+    initialValue: value,
+    decoration: InputDecoration(labelText: label),
+    items: [
+      DropdownMenuItem<T?>(value: null, child: Text(notRecorded)),
+      for (final option in values)
+        DropdownMenuItem<T?>(value: option, child: Text(labelOf(option))),
+    ],
+    onChanged: onChanged,
+  );
 }

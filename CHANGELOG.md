@@ -55,3 +55,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   another reading", review and remove banked readings, and save the occasion as
   one multi-reading session (CLAUDE.md §4). Logging a single reading is
   unchanged — fill and save.
+- Optional context pickers in the entry form: per reading, choose where it was
+  measured (arm/wrist), the body position, and before/after medication, in a
+  collapsible "Add details" section defaulting to not-recorded (CLAUDE.md §4).

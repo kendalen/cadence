@@ -94,5 +94,43 @@
   "removeReading": "Remove",
   "@removeReading": {
     "description": "Tooltip of the button that removes a reading from the occasion before it is saved."
-  }
+  },
+  "contextDetails": "Add details (optional)",
+  "@contextDetails": {
+    "description": "Title of the collapsible section holding the optional arm, body position and medication fields."
+  },
+  "contextNotRecorded": "Not recorded",
+  "@contextNotRecorded": {
+    "description": "Default option for each optional context dropdown, meaning the user did not record it."
+  },
+  "siteFieldLabel": "Where measured",
+  "@siteFieldLabel": {
+    "description": "Label of the dropdown choosing where the cuff was placed (arm or wrist)."
+  },
+  "siteLeftArm": "Left arm",
+  "@siteLeftArm": { "description": "Cuff placed on the left upper arm." },
+  "siteRightArm": "Right arm",
+  "@siteRightArm": { "description": "Cuff placed on the right upper arm." },
+  "siteLeftWrist": "Left wrist",
+  "@siteLeftWrist": { "description": "Monitor placed on the left wrist." },
+  "siteRightWrist": "Right wrist",
+  "@siteRightWrist": { "description": "Monitor placed on the right wrist." },
+  "postureFieldLabel": "Body position",
+  "@postureFieldLabel": {
+    "description": "Label of the dropdown choosing the body position the reading was taken in."
+  },
+  "postureSitting": "Sitting",
+  "@postureSitting": { "description": "Reading taken while seated." },
+  "postureStanding": "Standing",
+  "@postureStanding": { "description": "Reading taken while standing." },
+  "postureLying": "Lying down",
+  "@postureLying": { "description": "Reading taken while lying down." },
+  "medicationFieldLabel": "Medication",
+  "@medicationFieldLabel": {
+    "description": "Label of the dropdown choosing whether the reading was before or after medication."
+  },
+  "medicationBefore": "Before medication",
+  "@medicationBefore": { "description": "Reading taken before taking medication." },
+  "medicationAfter": "After medication",
+  "@medicationAfter": { "description": "Reading taken after taking medication." }
 }
