@@ -48,19 +48,22 @@ end-to-end**.
 - **When you upgrade Flutter locally, bump the `flutter-version:` line in
   `ci.yml`** so CI tests against the same version you develop on.
 
-## Candidate next slices
+## Next slices — see the roadmap
 
-Not yet decided — pick one, then design it (brainstorm first, TDD the domain per
-`CLAUDE.md` §7). Ideas, roughly in dependency order:
+The path to a shippable **v1.0** is now planned in **[`ROADMAP.md`](ROADMAP.md)**:
+an ordered product track (S1–S10) and a parallel Play-Store release track
+(B1–B7), plus what is deferred to 1.x and why.
 
-- Session average display (mean of a session's readings).
-- 7‑2‑2 coverage reporting: readings collected vs expected, with under-sampled
-  averages labelled as such (`CLAUDE.md` §4).
-- Readings history / session detail view.
-- Optional, user-configurable "discard day 1" setting (literature is divided —
-  do not hardcode either behaviour).
-- Export: versioned JSON backup first (the only restorable format), then CSV/PDF
-  export-only, via the Android share sheet / SAF.
+**Decided (2026-08-24):** a fuller v1.0 that deliberately pulls in 7‑2‑2
+coverage, the reading context fields, and Italian localisation. Reference-range
+display stays deferred (a maintainer call — `CLAUDE.md` §1, §10). Ease of use is
+a cross-cutting requirement because the audience skews older; see the roadmap's
+principle section.
+
+**Next up:** **S1 — context fields → schema v2** (arm / posture / before-after
+medication on `Reading`), the first slice, chosen to do the schema migration
+while no real user data is at risk. Design it as its own slice (brainstorm
+first, TDD the domain per `CLAUDE.md` §7).
 
 ## Working reminders
 
