@@ -38,10 +38,10 @@ class SessionListScreen extends StatelessWidget {
             ),
           },
         ),
-        floatingActionButton: FloatingActionButton(
+        floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEntryForm(context),
-          tooltip: l10n.addReading,
-          child: const Icon(Icons.add),
+          icon: const Icon(Icons.add),
+          label: Text(l10n.addReading),
         ),
       ),
     );

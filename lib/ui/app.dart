@@ -5,6 +5,7 @@ import '../domain/sessions/id_generator.dart';
 import '../domain/sessions/session_repository.dart';
 import '../l10n/app_localizations.dart';
 import 'sessions/list/session_list_screen.dart';
+import 'theme/cadence_theme.dart';
 
 /// The application widget.
 ///
@@ -33,6 +34,7 @@ class CadenceApp extends StatelessWidget {
     ],
     child: MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      theme: buildCadenceTheme(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: const SessionListScreen(),
