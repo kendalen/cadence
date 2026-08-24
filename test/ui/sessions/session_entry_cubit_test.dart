@@ -105,4 +105,60 @@ void main() {
 
     expect(repository.added, hasLength(1));
   });
+
+  test(
+    'adds a valid reading to the banked list and clears the form of errors',
+    () async {
+      final earlier = now.subtract(const Duration(hours: 2));
+      cubit.takenAtChanged(earlier);
+
+      cubit.addReading(
+        systolic: '120',
+        diastolic: '80',
+        pulse: '70',
+        notes: '',
+      );
+
+      final state = cubit.state as SessionEntryEditing;
+      expect(state.bankedReadings, hasLength(1));
+      expect(state.bankedReadings.single.systolic, 120);
+      expect(state.failures, isEmpty);
+    },
+  );
+
+  test(
+    'resets the moment to one minute after the reading just banked',
+    () async {
+      final earlier = now.subtract(const Duration(hours: 2));
+      cubit.takenAtChanged(earlier);
+
+      cubit.addReading(systolic: '120', diastolic: '80', pulse: '', notes: '');
+
+      expect(cubit.state.takenAt, earlier.add(const Duration(minutes: 1)));
+    },
+  );
+
+  test('never resets the moment past now', () async {
+    // takenAt defaults to now; +1 minute would be in the future, so it clamps.
+    cubit.addReading(systolic: '120', diastolic: '80', pulse: '', notes: '');
+
+    expect(cubit.state.takenAt, now);
+  });
+
+  test('an invalid reading is not banked and its errors are shown', () async {
+    cubit.addReading(systolic: '', diastolic: '400', pulse: '', notes: '');
+
+    final state = cubit.state as SessionEntryEditing;
+    expect(state.bankedReadings, isEmpty);
+    expect(state.failures, isNotEmpty);
+  });
+
+  test('changing the moment keeps the banked readings', () async {
+    cubit.addReading(systolic: '120', diastolic: '80', pulse: '', notes: '');
+    final banked = cubit.state.bankedReadings;
+
+    cubit.takenAtChanged(now.subtract(const Duration(hours: 1)));
+
+    expect(cubit.state.bankedReadings, banked);
+  });
 }

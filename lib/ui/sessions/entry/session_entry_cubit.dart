@@ -10,10 +10,12 @@ import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import 'session_entry_state.dart';
 
-/// Drives the entry form: validate, then store as a one-reading session.
+/// Drives the entry form: build up an occasion of one or more readings, then
+/// store it as a single session.
 ///
-/// This slice records exactly one reading per occasion; the schema already
-/// holds many, so multi-reading entry is a later, additive change.
+/// Readings are validated one at a time and banked in the state; saving writes
+/// the banked readings plus the reading currently in the form, if one has been
+/// started.
 class SessionEntryCubit extends Cubit<SessionEntryState> {
   /// Starts the form with its moment defaulting to the reading of [now].
   ///
@@ -32,12 +34,59 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
   /// The clock, injected so tests can pin "now" and the future check with it.
   final DateTime Function() _now;
 
-  /// Records the moment picked in the date and time pickers.
+  /// Records the moment picked in the date and time pickers, keeping any
+  /// readings already banked and clearing failures shown for the old form.
+  void takenAtChanged(DateTime takenAt) => emit(
+    SessionEntryEditing(
+      takenAt.toLocal(),
+      bankedReadings: state.bankedReadings,
+    ),
+  );
+
+  /// Validates the typed values and banks the reading for this occasion.
   ///
-  /// Clears any failures shown, since the form has changed since they were
-  /// reported.
-  void takenAtChanged(DateTime takenAt) =>
-      emit(SessionEntryEditing(takenAt.toLocal()));
+  /// On valid input the reading joins [SessionEntryState.bankedReadings], the
+  /// form is cleared of errors, and the moment resets to one minute after the
+  /// banked reading — but never past [now], so the prefilled time is never
+  /// already in the future. On invalid input nothing is banked and the
+  /// failures are reported so the form can mark the bad fields.
+  void addReading({
+    required String systolic,
+    required String diastolic,
+    required String pulse,
+    required String notes,
+  }) {
+    final takenAt = state.takenAt;
+    final input = ReadingInput(
+      systolic: systolic,
+      diastolic: diastolic,
+      pulse: pulse,
+      notes: notes,
+      takenAt: takenAt,
+    );
+
+    final validated = input.validate(_idGenerator, now: _now());
+    if (validated case Err<Reading, List<ValidationFailure>>(:final error)) {
+      emit(
+        SessionEntryEditing(
+          takenAt,
+          bankedReadings: state.bankedReadings,
+          failures: error,
+        ),
+      );
+      return;
+    }
+
+    final reading = (validated as Ok<Reading, List<ValidationFailure>>).value;
+    final nextMoment = takenAt.add(const Duration(minutes: 1));
+    final clockNow = _now();
+    emit(
+      SessionEntryEditing(
+        nextMoment.isAfter(clockNow) ? clockNow : nextMoment,
+        bankedReadings: [...state.bankedReadings, reading],
+      ),
+    );
+  }
 
   /// Validates the typed values and, if they hold, stores the reading.
   ///
