@@ -88,6 +88,19 @@ class SessionEntryCubit extends Cubit<SessionEntryState> {
     );
   }
 
+  /// Drops the banked reading with [id] from this occasion.
+  ///
+  /// Used to correct a reading banked by mistake before the occasion is saved;
+  /// editing or deleting an already-stored reading is a separate concern.
+  void removeBankedReading(ReadingId id) => emit(
+    SessionEntryEditing(
+      state.takenAt,
+      bankedReadings: state.bankedReadings
+          .where((reading) => reading.id != id)
+          .toList(),
+    ),
+  );
+
   /// Validates the typed values and, if they hold, stores the reading.
   ///
   /// Emits [SessionEntryEditing] with the failures if validation rejects the

@@ -161,4 +161,16 @@ void main() {
 
     expect(cubit.state.bankedReadings, banked);
   });
+
+  test('removes a banked reading by id, leaving the rest', () async {
+    cubit.addReading(systolic: '120', diastolic: '80', pulse: '', notes: '');
+    cubit.addReading(systolic: '118', diastolic: '79', pulse: '', notes: '');
+    final first = cubit.state.bankedReadings.first;
+
+    cubit.removeBankedReading(first.id);
+
+    final remaining = cubit.state.bankedReadings;
+    expect(remaining, hasLength(1));
+    expect(remaining.single.systolic, 118);
+  });
 }
