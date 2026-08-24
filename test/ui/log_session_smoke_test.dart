@@ -2,7 +2,8 @@
 // in the list. This is not a widget test in the sense CLAUDE.md §7 warns about
 // — it asserts nothing about how the screens are laid out, only that the parts
 // are connected: navigation, the providers, validation, the drift write, and
-// the stream that feeds the list back.
+// the stream that feeds the list back. S3a adds the stepper wiring: default and
+// carried-over values, and that a stepped number is what gets stored.
 
 import 'package:cadence/data/database/app_database.dart';
 import 'package:cadence/data/ids/uuid_id_generator.dart';
@@ -14,6 +15,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late AppDatabase database;
+
+  // The three number fields, found by the key on their stepper.
+  const systolicStepper = Key('systolicStepper');
+  const diastolicStepper = Key('diastolicStepper');
+  const pulseStepper = Key('pulseStepper');
 
   setUp(() {
     database = AppDatabase.forTesting(NativeDatabase.memory());
@@ -65,11 +71,49 @@ void main() {
     await settle(tester);
   }
 
-  Future<void> enter(WidgetTester tester, String label, String value) async {
-    await tester.enterText(
-      find.ancestor(of: find.text(label), matching: find.byType(TextField)),
-      value,
+  /// The text field inside the stepper carrying [key].
+  Finder stepperField(Key key) =>
+      find.descendant(of: find.byKey(key), matching: find.byType(TextField));
+
+  // The form's own ListView scrollable, named by key so it is never confused
+  // with the internal scroll area each stepper's text field creates.
+  Finder formScrollable() => find
+      .descendant(
+        of: find.byKey(const Key('entryFormList')),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+
+  /// Scrolls the stepper carrying [key] back into the lazy ListView, which
+  /// disposes it once it leaves the viewport (e.g. banking a reading scrolls the
+  /// form down). Negative delta scrolls toward the top fields; a no-op when the
+  /// stepper is already built.
+  Future<void> bringIntoView(WidgetTester tester, Key key) => tester
+      .scrollUntilVisible(find.byKey(key), -120, scrollable: formScrollable());
+
+  /// The value currently shown in the stepper carrying [key].
+  String fieldText(WidgetTester tester, Key key) =>
+      tester.widget<TextField>(stepperField(key)).controller!.text;
+
+  /// Brings the stepper carrying [key] into view, then reads its value.
+  Future<String> readField(WidgetTester tester, Key key) async {
+    await bringIntoView(tester, key);
+    await settle(tester);
+    return fieldText(tester, key);
+  }
+
+  /// Types [value] into the stepper carrying [key], replacing what is there.
+  Future<void> setValue(WidgetTester tester, Key key, String value) async {
+    await bringIntoView(tester, key);
+    await tester.enterText(stepperField(key), value);
+  }
+
+  /// Taps + on the stepper carrying [key].
+  Future<void> increment(WidgetTester tester, Key key) async {
+    await tester.tap(
+      find.descendant(of: find.byKey(key), matching: find.byIcon(Icons.add)),
     );
+    await settle(tester);
   }
 
   Future<void> save(WidgetTester tester) async {
@@ -78,12 +122,8 @@ void main() {
     // context fields) can leave Save unbuilt below the viewport, where a plain
     // tap would miss it. scrollUntilVisible scrolls the form until Save is
     // built and shown (a no-op when it is already on-screen); ensureVisible
-    // then guarantees it is fully in view before the tap lands. The form's own
-    // scrollable is named explicitly because the list screen beneath this route
-    // has one too; the entry form is the topmost route, so its scrollable is the
-    // last in the tree.
-    final formScrollable = find.byType(Scrollable).last;
-    await tester.scrollUntilVisible(button, 100, scrollable: formScrollable);
+    // then guarantees it is fully in view before the tap lands.
+    await tester.scrollUntilVisible(button, 100, scrollable: formScrollable());
     await tester.ensureVisible(button);
     await settle(tester);
     await tester.tap(button);
@@ -91,9 +131,13 @@ void main() {
   }
 
   Future<void> addAnother(WidgetTester tester) async {
-    await tester.tap(
-      find.widgetWithText(OutlinedButton, 'Add another reading'),
-    );
+    // Taller steppers can push this button below the viewport of the lazy
+    // ListView; scroll it into view first, the same way save() reaches Save.
+    final button = find.widgetWithText(OutlinedButton, 'Add another reading');
+    await tester.scrollUntilVisible(button, 100, scrollable: formScrollable());
+    await tester.ensureVisible(button);
+    await settle(tester);
+    await tester.tap(button);
     await settle(tester);
   }
 
@@ -109,9 +153,9 @@ void main() {
     expect(find.text('No readings yet.'), findsOneWidget);
 
     await openEntryForm(tester);
-    await enter(tester, 'Systolic (mmHg)', '132');
-    await enter(tester, 'Diastolic (mmHg)', '84');
-    await enter(tester, 'Pulse (bpm, optional)', '72');
+    await setValue(tester, systolicStepper, '132');
+    await setValue(tester, diastolicStepper, '84');
+    await setValue(tester, pulseStepper, '72');
     await save(tester);
 
     expect(find.text('132/84'), findsOneWidget);
@@ -121,11 +165,57 @@ void main() {
     await disposeApp(tester);
   });
 
+  testWidgets('a new occasion starts at the default reading', (tester) async {
+    await pumpApp(tester);
+    await openEntryForm(tester);
+
+    // The steppers open on a neutral default so there is always something to
+    // step from; pulse stays empty because it is optional (CLAUDE.md §4).
+    expect(fieldText(tester, systolicStepper), '120');
+    expect(fieldText(tester, diastolicStepper), '80');
+    expect(fieldText(tester, pulseStepper), '');
+
+    await disposeApp(tester);
+  });
+
+  testWidgets('a stepped value is what gets saved', (tester) async {
+    await pumpApp(tester);
+    await openEntryForm(tester);
+
+    // One tap on + takes the default systolic 120 to 121; diastolic stays 80.
+    await increment(tester, systolicStepper);
+    await save(tester);
+
+    expect(find.text('121/80'), findsOneWidget);
+
+    await disposeApp(tester);
+  });
+
+  testWidgets('the next reading is pre-filled from the one just banked', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    await openEntryForm(tester);
+
+    await setValue(tester, systolicStepper, '145');
+    await setValue(tester, diastolicStepper, '95');
+    await setValue(tester, pulseStepper, '77');
+    await addAnother(tester);
+
+    // Readings a minute apart cluster, so the second starts where the first
+    // landed — no re-typing (ROADMAP ease-of-use principle).
+    expect(await readField(tester, systolicStepper), '145');
+    expect(await readField(tester, diastolicStepper), '95');
+    expect(await readField(tester, pulseStepper), '77');
+
+    await disposeApp(tester);
+  });
+
   testWidgets('the reading survives the app being rebuilt', (tester) async {
     await pumpApp(tester);
     await openEntryForm(tester);
-    await enter(tester, 'Systolic (mmHg)', '132');
-    await enter(tester, 'Diastolic (mmHg)', '84');
+    await setValue(tester, systolicStepper, '132');
+    await setValue(tester, diastolicStepper, '84');
     await save(tester);
 
     // Same database, a fresh widget tree: what the list shows came back out of
@@ -142,10 +232,16 @@ void main() {
   ) async {
     await pumpApp(tester);
     await openEntryForm(tester);
-    await enter(tester, 'Systolic (mmHg)', '400');
+    await setValue(tester, systolicStepper, '400');
+    // Clear the prefilled diastolic so the "every failure is reported" path is
+    // still exercised: an out-of-range systolic and a blank diastolic together.
+    await setValue(tester, diastolicStepper, '');
     await save(tester);
 
-    // Still on the form, with the bad field and the blank one both marked.
+    // Saving scrolls to the Save button; scroll back up to the fields whose
+    // errors we are checking. Still on the form, both bad fields marked.
+    await bringIntoView(tester, systolicStepper);
+    await settle(tester);
     expect(find.text('Enter a number between 10 and 300.'), findsOneWidget);
     expect(find.text('Enter a value.'), findsOneWidget);
 
@@ -160,12 +256,12 @@ void main() {
     await pumpApp(tester);
     await openEntryForm(tester);
 
-    await enter(tester, 'Systolic (mmHg)', '120');
-    await enter(tester, 'Diastolic (mmHg)', '80');
+    await setValue(tester, systolicStepper, '120');
+    await setValue(tester, diastolicStepper, '80');
     await addAnother(tester);
 
-    await enter(tester, 'Systolic (mmHg)', '118');
-    await enter(tester, 'Diastolic (mmHg)', '79');
+    await setValue(tester, systolicStepper, '118');
+    await setValue(tester, diastolicStepper, '79');
     await save(tester);
 
     // One occasion in the list, holding two reading rows in storage.
@@ -183,12 +279,12 @@ void main() {
     await pumpApp(tester);
     await openEntryForm(tester);
 
-    await enter(tester, 'Systolic (mmHg)', '120');
-    await enter(tester, 'Diastolic (mmHg)', '80');
+    await setValue(tester, systolicStepper, '120');
+    await setValue(tester, diastolicStepper, '80');
     await addAnother(tester);
 
-    await enter(tester, 'Systolic (mmHg)', '118');
-    await enter(tester, 'Diastolic (mmHg)', '79');
+    await setValue(tester, systolicStepper, '118');
+    await setValue(tester, diastolicStepper, '79');
     await save(tester);
 
     // The row shows the average (mean of 120/80 and 118/79) and stays
@@ -210,8 +306,8 @@ void main() {
   testWidgets('a reading keeps the context chosen for it', (tester) async {
     await pumpApp(tester);
     await openEntryForm(tester);
-    await enter(tester, 'Systolic (mmHg)', '120');
-    await enter(tester, 'Diastolic (mmHg)', '80');
+    await setValue(tester, systolicStepper, '120');
+    await setValue(tester, diastolicStepper, '80');
 
     await tester.tap(find.text('Add details (optional)'));
     await settle(tester);

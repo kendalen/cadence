@@ -36,9 +36,16 @@ stand and what's next*.
   show its individual readings, each with its own time, pulse and any recorded
   context/note (`Session.readingsByTime`; first place context surfaces in the
   UI) — **S2d**; a lone reading with no extra detail does not expand.
+  The three number fields are now big −/+ **steppers** (`NumberStepper`), sized
+  for the older audience — large type, >48dp targets, screen-reader labels;
+  still typeable, and typing stays unclamped so `ReadingInput.validate` is the
+  one typo guard. A new occasion opens on a neutral default (120/80, no pulse);
+  "add another reading" carries the just-banked numbers + context into the next
+  reading; pulse keeps its optional "—"/clear state — **S3a landed**.
 - **Tests:** domain + data covered; an end-to-end smoke test (incl. a
-  two-reading occasion, a context round-trip, and expanding a row to reveal its
-  readings). All green (90).
+  two-reading occasion, a context round-trip, expanding a row, stepper defaults,
+  carry-over prefill, and a stepped value being what is saved), plus
+  `NumberStepper` behaviour tests. All green (100).
 - **Verified running:** debug APK builds and runs on a physical Android device
   (as of the "log a session" slice).
 
@@ -83,10 +90,23 @@ rightArm, leftWrist, rightWrist}`, `Posture {sitting, standing, lying}`,
 migration slice (schema + domain + tests only); the entry pickers come with the
 form rework.
 
-**Next up:** **S3 — fast entry** per the roadmap; it touches the same entry form
-S2 just reworked, so mind the overlap when scoping. The entry form's sub-widgets
-are split out (`banked_readings.dart`, `reading_context_details.dart`) to keep
-`session_entry_screen.dart` under the ~300-line smell line (CLAUDE.md §6).
+**Done (2026-08-24): S3a — fast-entry steppers.** The `NumberStepper` widget +
+within-occasion prefill + optional-pulse handling described in the UI bullet
+above. UI-only: no domain or data change. Design decided in brainstorm — first
+reading prefills from the **average of the morning/evening bucket** (a new domain
+stat, deferred to S3b), later readings from the last banked one; context prefills
+from the last actual reading, not an average.
+
+**Next up:** **S3b — history-aware first-reading prefill.** Replace S3a's fixed
+120/80 default with the user's own **morning/evening bucketed average** (split at
+noon, aligned to the 7-2-2 two-occasions-a-day shape; per-hour was rejected as
+too data-sparse). This is the domain-stat + data-query half: a new tested domain
+function computing the bucket average (reuse/extend `session_average.dart` where
+it fits), a repository read of history to feed it, a fallback chain when a bucket
+is empty (→ overall history → the 120/80 default), and prefilling the first
+reading's **context** from the most recent stored reading. Mind: prefilling a
+computed average as a to-be-saved reading is a gentle nudge — it is the user's own
+data, shown and editable before save.
 
 ## Working reminders
 

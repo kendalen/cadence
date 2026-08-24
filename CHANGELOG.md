@@ -74,3 +74,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   are ordered by time (`Session.readingsByTime`). A lone reading with no such
   detail does not expand, since it would only repeat the row. Read-only;
   editing and deleting remain a later slice.
+- Fast entry (S3a): systolic, diastolic and pulse are now large numbers with big
+  − / + steppers on either side, sized for the older audience the app targets —
+  large type, tap targets over the 48dp minimum, and screen-reader labels on
+  every button (roadmap ease-of-use principle). The number is still typeable for
+  a big jump, and typing stays unclamped so `ReadingInput.validate` remains the
+  one typo guard (CLAUDE.md §4). A new occasion opens on a neutral default
+  (120/80, no pulse) so there is always something to step from; "add another
+  reading" now carries the numbers and context of the reading just banked into
+  the next one instead of clearing them, since readings a minute apart cluster.
+  Pulse stays optional: it shows a dash until set and has a clear button back to
+  "not recorded" (CLAUDE.md §4). The morning/evening-average prefill for the
+  first reading is the next slice (S3b).

@@ -5,12 +5,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/sessions/id_generator.dart';
+import '../../../domain/sessions/reading.dart';
 import '../../../domain/sessions/reading_context.dart';
+import '../../../domain/sessions/reading_input.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import '../../../l10n/app_localizations.dart';
 import '../validation_messages.dart';
 import 'banked_readings.dart';
+import 'number_stepper.dart';
 import 'reading_context_details.dart';
 import 'session_entry_cubit.dart';
 import 'session_entry_state.dart';
@@ -38,6 +41,17 @@ class _SessionEntryForm extends StatefulWidget {
 }
 
 class _SessionEntryFormState extends State<_SessionEntryForm> {
+  /// Neutral values the first reading of an occasion opens on, so the steppers
+  /// always have somewhere to step from. They are a starting point for data
+  /// entry, not a norm or a target (CLAUDE.md §4); S3b replaces them with the
+  /// user's own morning/evening average.
+  static const _defaultSystolic = 120;
+  static const _defaultDiastolic = 80;
+
+  /// The value pulse jumps to when the field is empty and + is first tapped — a
+  /// neutral starting point, not a norm.
+  static const _pulseStartWhenEmpty = 60;
+
   final _systolic = TextEditingController();
   final _diastolic = TextEditingController();
   final _pulse = TextEditingController();
@@ -50,6 +64,15 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
   MeasurementSite? _site;
   Posture? _posture;
   MedicationTiming? _medicationTiming;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed the first reading with the neutral default. Pulse and notes stay
+    // empty: pulse is optional (CLAUDE.md §4) and a note is per-reading.
+    _systolic.text = '$_defaultSystolic';
+    _diastolic.text = '$_defaultDiastolic';
+  }
 
   @override
   void dispose() {
@@ -75,23 +98,53 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
         return Scaffold(
           appBar: AppBar(title: Text(l10n.addReading)),
           body: ListView(
+            key: const Key('entryFormList'),
             padding: const EdgeInsets.all(16),
             children: [
-              _numberField(
+              NumberStepper(
+                key: const Key('systolicStepper'),
                 controller: _systolic,
                 label: l10n.systolicLabel,
-                error: messageForField(ReadingField.systolic, failures, l10n),
+                min: ReadingInput.minPressure,
+                max: ReadingInput.maxPressure,
+                decrementLabel: l10n.stepperDecrease(l10n.fieldSystolic),
+                incrementLabel: l10n.stepperIncrease(l10n.fieldSystolic),
+                errorText: messageForField(
+                  ReadingField.systolic,
+                  failures,
+                  l10n,
+                ),
               ),
-              _numberField(
+              const SizedBox(height: 16),
+              NumberStepper(
+                key: const Key('diastolicStepper'),
                 controller: _diastolic,
                 label: l10n.diastolicLabel,
-                error: messageForField(ReadingField.diastolic, failures, l10n),
+                min: ReadingInput.minPressure,
+                max: ReadingInput.maxPressure,
+                decrementLabel: l10n.stepperDecrease(l10n.fieldDiastolic),
+                incrementLabel: l10n.stepperIncrease(l10n.fieldDiastolic),
+                errorText: messageForField(
+                  ReadingField.diastolic,
+                  failures,
+                  l10n,
+                ),
               ),
-              _numberField(
+              const SizedBox(height: 16),
+              NumberStepper(
+                key: const Key('pulseStepper'),
                 controller: _pulse,
                 label: l10n.pulseLabel,
-                error: messageForField(ReadingField.pulse, failures, l10n),
+                min: ReadingInput.minPulse,
+                max: ReadingInput.maxPulse,
+                clearable: true,
+                clearLabel: l10n.clearPulse,
+                startWhenEmpty: _pulseStartWhenEmpty,
+                decrementLabel: l10n.stepperDecrease(l10n.fieldPulse),
+                incrementLabel: l10n.stepperIncrease(l10n.fieldPulse),
+                errorText: messageForField(ReadingField.pulse, failures, l10n),
               ),
+              const SizedBox(height: 16),
               TextField(
                 controller: _notes,
                 decoration: InputDecoration(labelText: l10n.notesLabel),
@@ -135,20 +188,10 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
     );
   }
 
-  Widget _numberField({
-    required TextEditingController controller,
-    required String label,
-    required String? error,
-  }) => TextField(
-    controller: controller,
-    keyboardType: TextInputType.number,
-    decoration: InputDecoration(labelText: label, errorText: error),
-  );
-
   void _onStateChanged(BuildContext context, SessionEntryState state) {
     final l10n = AppLocalizations.of(context)!;
     if (state.bankedReadings.length > _bankedCount) {
-      _clearInputs();
+      _prefillFromLastBanked(state.bankedReadings.last);
     }
     _bankedCount = state.bankedReadings.length;
 
@@ -165,15 +208,20 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
     }
   }
 
-  void _clearInputs() {
-    _systolic.clear();
-    _diastolic.clear();
-    _pulse.clear();
+  /// Fills the form with the values just banked, so the next reading in the
+  /// occasion starts where the last one landed (readings a minute apart cluster
+  /// — see the roadmap's ease-of-use principle). Numbers and context carry
+  /// over; the note is cleared because a note belongs to the reading it was
+  /// written for, not the next one.
+  void _prefillFromLastBanked(Reading reading) {
+    _systolic.text = '${reading.systolic}';
+    _diastolic.text = '${reading.diastolic}';
+    _pulse.text = reading.pulse?.toString() ?? '';
     _notes.clear();
     setState(() {
-      _site = null;
-      _posture = null;
-      _medicationTiming = null;
+      _site = reading.site;
+      _posture = reading.posture;
+      _medicationTiming = reading.medicationTiming;
     });
   }
 

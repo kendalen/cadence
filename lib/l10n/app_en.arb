@@ -139,5 +139,35 @@
   "medicationBefore": "Before medication",
   "@medicationBefore": { "description": "Reading taken before taking medication." },
   "medicationAfter": "After medication",
-  "@medicationAfter": { "description": "Reading taken after taking medication." }
+  "@medicationAfter": { "description": "Reading taken after taking medication." },
+  "stepperDecrease": "Decrease {field}",
+  "@stepperDecrease": {
+    "description": "Accessible label of the − button on a number stepper. {field} is the field name, e.g. 'Systolic'.",
+    "placeholders": {
+      "field": { "type": "String" }
+    }
+  },
+  "stepperIncrease": "Increase {field}",
+  "@stepperIncrease": {
+    "description": "Accessible label of the + button on a number stepper. {field} is the field name, e.g. 'Systolic'.",
+    "placeholders": {
+      "field": { "type": "String" }
+    }
+  },
+  "fieldSystolic": "Systolic",
+  "@fieldSystolic": {
+    "description": "Short name of the systolic field, spoken by the stepper's − and + buttons."
+  },
+  "fieldDiastolic": "Diastolic",
+  "@fieldDiastolic": {
+    "description": "Short name of the diastolic field, spoken by the stepper's − and + buttons."
+  },
+  "fieldPulse": "Pulse",
+  "@fieldPulse": {
+    "description": "Short name of the pulse field, spoken by the stepper's − and + buttons."
+  },
+  "clearPulse": "Clear pulse",
+  "@clearPulse": {
+    "description": "Accessible label of the button that empties the optional pulse field back to 'not recorded'."
+  }
 }
