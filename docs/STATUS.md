@@ -56,21 +56,34 @@ stand and what's next*.
   carry-over prefill, a stepped value being what is saved, and a fresh occasion
   prefilled from history), plus `NumberStepper` behaviour tests, the
   `suggestedFirstReading` / `mostRecentReading` domain stats, `recentHistory`,
-  and the cubit's `initialSeed`. All green (121).
+  the cubit's `initialSeed`, and a golden test on the readings-list empty state.
+  All green (125).
 - **Verified running:** debug APK builds and runs on a physical Android device
   (as of the "log a session" slice).
-- **Design direction — decided & approved (2026-08-24), NOT yet in code.** A
-  *warm & reassuring* visual language was worked out on a Claude Design canvas and
-  approved by the maintainer; the app still runs on **default Material** (no
-  `theme:` on `MaterialApp`). Mockups: readings list, entry, **S4 detail (with S5
-  edit/delete)**, empty state, a **1.x trends chart**, and a foundations sheet —
-  <https://claude.ai/code/artifact/33a266c3-5a9b-40f1-8847-9c2583ee2d39> (the
-  working `.dc.html` files were scratchpad-only, not committed). Headlines: Hanken
-  Grotesk; warm paper/sand neutrals; a **teal** structural accent + one
-  **terracotta** action colour; large ≥56px targets; chart series colours
-  validated colour-blind-safe (systolic teal `#0E8C74`, diastolic ochre
-  `#B4832E`); **never colour a reading good/bad, no threshold lines** (§1);
-  edit/delete live on the opened session, not on every list row.
+- **Design foundation — now in code (2026-08-24).** The *warm & reassuring*
+  visual language (worked out on a Claude Design canvas, approved by the
+  maintainer) is a Material 3 `ThemeData` built in `lib/ui/theme/`
+  (`cadence_colors.dart` holds the exact palette; `cadence_theme.dart` the
+  `buildCadenceTheme()`), wired onto `MaterialApp`. Teal is Material's
+  `primary` (structural accent); the terracotta **clay** action colour is
+  reserved for the entry FAB via `floatingActionButtonTheme`. Hanken Grotesk is
+  bundled as a single variable-weight asset (`assets/fonts/`, SIL OFL 1.1,
+  registered in `main.dart`) — **not** the `google_fonts` package, which fetches
+  over the network (§2). The "Add a reading" button is now a labelled extended
+  FAB. Exact tokens: paper `#FAF6F1`, surface white, sand `#F3ECE4`, border
+  `#EAE0D6`, ink `#2A2521`/`#6F655C`/`#A2968B`, teal `#2F6E63`/`#234F47`/`#DCEAE5`,
+  clay `#BC6248`/`#8F4732`/`#F6E2D9`; chart series validated colour-blind-safe
+  (systolic teal `#0E8C74`, diastolic ochre `#B4832E`). **Never colour a reading
+  good/bad, no threshold lines** (§1). Light-only for now: the canvas designed no
+  dark palette, so a device in dark mode still gets the warm light theme (dark is
+  a later, separate design slice). Golden coverage: the readings-list **empty
+  state** (timezone-free) via a tolerant comparator (`test/flutter_test_config.dart`)
+  so one macOS-generated baseline holds on the Linux CI runner. Remaining mockups
+  still to build: **S4 detail (with S5 edit/delete)**, a **1.x trends chart**;
+  canvas <https://claude.ai/code/artifact/33a266c3-5a9b-40f1-8847-9c2583ee2d39>
+  (working `.dc.html` files were scratchpad-only, not committed). **Not yet run
+  on a physical device this slice** — verified via the golden + full suite;
+  confirm on-device when S4 lands.
 
 ## Environment & tooling
 
@@ -145,21 +158,21 @@ fought ~20 tests); load-then-show over show-then-swap; and the recent-window
 average (user's call) over an all-time one — 14 days, tunable, a candidate for a
 future Settings toggle.
 
-**Next up (design foundation → S4):**
+**Done (2026-08-24): design foundation.** The approved warm visual language is
+now a Material 3 theme wired onto `MaterialApp` — see the design-foundation
+bullet under Current state for the details, tokens, and decisions (teal =
+`primary`, clay reserved for the FAB; Hanken Grotesk as a bundled OFL variable
+asset; light-only; golden on the empty state via a tolerant comparator). UI-only,
+own branch `design-foundation-theme`.
 
-1. **Design-foundation slice — turn the approved direction into a Flutter theme.**
-   Build a `ThemeData` (an explicit `ColorScheme` for the warm palette, a
-   `TextTheme` in **Hanken Grotesk bundled as an app asset — NOT the `google_fonts`
-   package**, which fetches over the network and breaks offline-first, §2, plus
-   card / button / app-bar / FAB component themes) and wire it in
-   `lib/ui/app.dart`. The existing widgets already read their colours from the
-   theme, so most screens re-skin centrally; also adopt the labelled "Add a
-   reading" FAB. UI-only, own branch, golden test on a key screen (§7). See the
-   design bullet in Current state (canvas URL) for the values.
-2. **S4 — Session detail + session average** (roadmap Phase 2), built in the new
+**Next up — S4:**
+
+1. **S4 — Session detail + session average** (roadmap Phase 2), built in the new
    language. A screen showing one occasion's readings and their mean (§4);
    `Session.average` already exists, so it's largely a read-only detail screen over
-   it, plus new "Average"/"Readings" localised strings.
+   it, plus new "Average"/"Readings" localised strings. Own branch. This is the
+   first screen built *in* the new theme, and a good moment to confirm the app on
+   a physical device.
 
 ## Working reminders
 

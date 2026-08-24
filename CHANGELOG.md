@@ -86,6 +86,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Pulse stays optional: it shows a dash until set and has a clear button back to
   "not recorded" (CLAUDE.md §4). The morning/evening-average prefill for the
   first reading is the next slice (S3b).
+- Design foundation: the approved "warm & reassuring" visual language turned
+  into a Material 3 theme (`lib/ui/theme/`). An explicit warm `ColorScheme` —
+  teal as the structural accent, one reserved terracotta "clay" action colour,
+  warm paper/sand surfaces — and Hanken Grotesk, bundled as a single
+  variable-weight app asset under the SIL Open Font License 1.1 rather than the
+  network-fetching `google_fonts` package (CLAUDE.md §2), with card,
+  filled-button, app-bar, and floating-action-button component themes. Wired into
+  `MaterialApp`, so the existing screens re-skin centrally. Colour is never used
+  to grade a reading and no threshold line is drawn (CLAUDE.md §1, §4). The "Add
+  a reading" button is now a labelled extended FAB. A golden test pins the
+  readings-list empty state, through a tolerant comparator so one committed
+  baseline holds across the maintainer's macOS and the Linux CI runner.
 - History-aware first-reading prefill (S3b): a new occasion's first reading now
   opens on the user's own numbers instead of the fixed 120/80. The estimate is
   the mean of past occasion averages, preferring the most specific data
