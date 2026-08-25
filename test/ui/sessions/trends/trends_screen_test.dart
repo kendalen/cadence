@@ -20,14 +20,16 @@ import '../../../support/fake_session_repository.dart';
 
 int _seq = 0;
 
-/// A one-reading occasion at [takenAtUtc] (readings are stored UTC).
-Session _occasion(DateTime takenAtUtc) => Session(
+/// A one-reading occasion at [takenAtUtc] (readings are stored UTC), optionally
+/// carrying a [pulse].
+Session _occasion(DateTime takenAtUtc, {int? pulse}) => Session(
   id: SessionId('s${_seq++}'),
   readings: [
     Reading(
       id: ReadingId('r${_seq++}'),
       systolic: 128,
       diastolic: 82,
+      pulse: pulse,
       takenAt: takenAtUtc,
     ),
   ],
@@ -93,6 +95,25 @@ void main() {
 
     expect(find.text('No readings in this range yet.'), findsOneWidget);
     expect(find.text('Blood pressure'), findsNothing);
+  });
+
+  testWidgets('pulse chart shows only when the range holds a pulse', (
+    tester,
+  ) async {
+    // A pulse-carrying occasion in the default window shows the pulse chart.
+    await pump(tester);
+    repository.emit([_occasion(daysAgo(10), pulse: 72)]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Blood pressure'), findsOneWidget);
+    expect(find.text('Pulse'), findsOneWidget);
+
+    // Replace it with a pulse-less occasion: the pulse chart drops away.
+    repository.emit([_occasion(daysAgo(10))]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Blood pressure'), findsOneWidget);
+    expect(find.text('Pulse'), findsNothing);
   });
 
   testWidgets('empty diary golden', (tester) async {

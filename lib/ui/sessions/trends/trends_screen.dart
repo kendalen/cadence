@@ -86,8 +86,23 @@ class _TrendsScreenState extends State<TrendsScreen> {
             const SizedBox(height: 20),
             if (series.daily.isEmpty)
               _EmptyTrends(l10n.trendsEmpty)
-            else
-              _bloodPressureChart(l10n, series, fill: false),
+            else ...[
+              _chart(
+                l10n.trendsChartBloodPressure,
+                _bpSeries(l10n),
+                series,
+                fill: false,
+              ),
+              if (_hasPulse(series)) ...[
+                const SizedBox(height: 24),
+                _chart(
+                  l10n.fieldPulse,
+                  _pulseSeries(l10n),
+                  series,
+                  fill: false,
+                ),
+              ],
+            ],
           ],
         ),
       );
@@ -126,7 +141,31 @@ class _TrendsScreenState extends State<TrendsScreen> {
         Expanded(
           child: series.daily.isEmpty
               ? _EmptyTrends(l10n.trendsEmpty)
-              : _bloodPressureChart(l10n, series, fill: true),
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Two charts share the height evenly; one chart fills it.
+                    Expanded(
+                      child: _chart(
+                        l10n.trendsChartBloodPressure,
+                        _bpSeries(l10n),
+                        series,
+                        fill: true,
+                      ),
+                    ),
+                    if (_hasPulse(series)) ...[
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: _chart(
+                          l10n.fieldPulse,
+                          _pulseSeries(l10n),
+                          series,
+                          fill: true,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
         ),
       ],
     ),
@@ -178,38 +217,58 @@ class _TrendsScreenState extends State<TrendsScreen> {
     ],
   );
 
-  /// The blood-pressure chart with its heading and legend. When [fill] the chart
-  /// expands to the available height (landscape); otherwise it takes a fixed
-  /// height inside the scrolling portrait column.
-  Widget _bloodPressureChart(
-    AppLocalizations l10n,
+  // The two blood-pressure lines: systolic teal, diastolic ochre.
+  List<TrendChartSeries> _bpSeries(AppLocalizations l10n) => [
+    TrendChartSeries(
+      label: l10n.fieldSystolic,
+      color: CadenceColors.systolic,
+      valueOf: (point) => point.systolic,
+    ),
+    TrendChartSeries(
+      label: l10n.fieldDiastolic,
+      color: CadenceColors.diastolic,
+      valueOf: (point) => point.diastolic,
+    ),
+  ];
+
+  // The single pulse line. Its points carry a null value on buckets where no
+  // occasion recorded a pulse, which the chart simply skips.
+  List<TrendChartSeries> _pulseSeries(AppLocalizations l10n) => [
+    TrendChartSeries(
+      label: l10n.fieldPulse,
+      color: CadenceColors.pulse,
+      valueOf: (point) => point.pulse,
+    ),
+  ];
+
+  // Only show the pulse chart when the range actually holds a recorded pulse —
+  // a user who never logs pulse shouldn't face an empty second chart.
+  bool _hasPulse(TrendSeries series) =>
+      series.daily.any((point) => point.pulse != null);
+
+  /// A titled chart with its lines. A legend is shown only for a multi-line
+  /// chart (blood pressure); a single-line chart's heading already names it, so
+  /// the heading (e.g. [AppLocalizations.fieldPulse]) doubles as the label. When
+  /// [fill] the chart expands to the available height (landscape); otherwise it
+  /// takes a fixed height inside the scrolling portrait column.
+  Widget _chart(
+    String heading,
+    List<TrendChartSeries> chartSeries,
     TrendSeries series, {
     required bool fill,
   }) {
-    final chartSeries = [
-      TrendChartSeries(
-        label: l10n.fieldSystolic,
-        color: CadenceColors.systolic,
-        valueOf: (point) => point.systolic,
-      ),
-      TrendChartSeries(
-        label: l10n.fieldDiastolic,
-        color: CadenceColors.diastolic,
-        valueOf: (point) => point.diastolic,
-      ),
-    ];
     final chart = TrendLineChart(series: chartSeries, data: series);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
       children: [
-        Text(
-          l10n.trendsChartBloodPressure,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text(heading, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
-        _Legend(chartSeries),
-        const SizedBox(height: 12),
+        if (chartSeries.length > 1) ...[
+          _Legend(chartSeries),
+          const SizedBox(height: 12),
+        ] else
+          const SizedBox(height: 8),
         if (fill)
           Expanded(child: chart)
         else

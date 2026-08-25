@@ -65,4 +65,10 @@ abstract final class CadenceColors {
 
   /// Diastolic chart series — validated colour-blind-safe against [systolic].
   static const Color diastolic = Color(0xFFB4832E);
+
+  /// Pulse chart series (T3). It lives on its own chart below blood pressure, so
+  /// it need not be colour-blind-distinct from [systolic]/[diastolic]. A muted
+  /// slate, clear of the warm teal/ochre/clay accents (maintainer's call — the
+  /// hex is proposed, retune to taste).
+  static const Color pulse = Color(0xFF556B7A);
 }
