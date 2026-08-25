@@ -8,6 +8,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Weekly coverage summary (S6): a "Last 7 days" card pinned above the readings
+  list reports two dimensions of coverage against the 7-2-2 protocol — occasions
+  logged against the 14 expected (two a day), and distinct days logged against
+  the 7 the protocol spans — so readings bunched into a few days are not mistaken
+  for a full week's spread. When the window holds any occasion it also shows the
+  period average (the mean of the occasions' averages). A statement of
+  completeness, never a judgement of the readings and with no threshold
+  (CLAUDE.md §1, §4). The window is a rolling last-7-days, so the heading is
+  "Last 7 days" rather than "This week" (which would read as the calendar week).
+  New pure domain `weeklyCoverage` / `MonitoringCoverage`; UI-only wiring, no
+  schema change.
 - App launcher icon: a cream "C" monogram with a terracotta beat-dot on the teal
   brand tile, generated for
   all densities plus an Android 8+ adaptive icon via `flutter_launcher_icons`

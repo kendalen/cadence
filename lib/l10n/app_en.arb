@@ -221,5 +221,25 @@
   "readingRemoved": "Reading removed",
   "@readingRemoved": {
     "description": "Snackbar shown after one reading is removed from an occasion, alongside an undo action."
+  },
+  "coverageLast7Days": "Last 7 days",
+  "@coverageLast7Days": {
+    "description": "Heading of the summary card showing how well the last 7 days (a rolling window, not the calendar week) keep to the home-monitoring protocol (CLAUDE.md §4)."
+  },
+  "coverageOccasions": "{logged} of {total} occasions",
+  "@coverageOccasions": {
+    "description": "Occasions logged in the last 7 days against the number the 7-2-2 protocol expects (e.g. 9 of 14 occasions). A count of completeness, not a judgement.",
+    "placeholders": {
+      "logged": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "coverageDays": "{logged} of {total} days",
+  "@coverageDays": {
+    "description": "Distinct days in the last 7 on which anything was logged, against the 7 the protocol spans (e.g. 4 of 7 days). Shown beside the occasions count so readings bunched into a few days are not mistaken for a full week's spread.",
+    "placeholders": {
+      "logged": { "type": "int" },
+      "total": { "type": "int" }
+    }
   }
 }

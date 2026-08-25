@@ -141,6 +141,14 @@ void main() {
     await settle(tester);
   }
 
+  /// Text inside the sessions list, not the coverage summary above it.
+  ///
+  /// A single occasion's average equals its one reading, so the pinned "This
+  /// week" card repeats the same pressure the tile shows (S6). The card lives
+  /// outside the ListView, so scoping to it keeps the two apart.
+  Finder inList(String text) =>
+      find.descendant(of: find.byType(ListView), matching: find.text(text));
+
   Future<void> chooseSite(WidgetTester tester, String label) async {
     await tester.tap(find.byKey(const Key('siteDropdown')));
     await settle(tester);
@@ -158,9 +166,15 @@ void main() {
     await setValue(tester, pulseStepper, '72');
     await save(tester);
 
-    expect(find.text('132/84'), findsOneWidget);
-    expect(find.text('72 bpm'), findsOneWidget);
+    expect(inList('132/84'), findsOneWidget);
+    expect(inList('72 bpm'), findsOneWidget);
     expect(find.text('No readings yet.'), findsNothing);
+
+    // The week's coverage summary rides above the list, counting the occasion
+    // just logged (S6, CLAUDE.md §4).
+    expect(find.text('Last 7 days'), findsOneWidget);
+    expect(find.text('1 of 14 occasions'), findsOneWidget);
+    expect(find.text('1 of 7 days'), findsOneWidget);
 
     await disposeApp(tester);
   });
@@ -208,7 +222,7 @@ void main() {
     await increment(tester, systolicStepper);
     await save(tester);
 
-    expect(find.text('121/80'), findsOneWidget);
+    expect(inList('121/80'), findsOneWidget);
 
     await disposeApp(tester);
   });
@@ -244,7 +258,7 @@ void main() {
     // storage, not out of the state it was saved from.
     await pumpApp(tester);
 
-    expect(find.text('132/84'), findsOneWidget);
+    expect(inList('132/84'), findsOneWidget);
 
     await disposeApp(tester);
   });
@@ -309,13 +323,13 @@ void main() {
 
     // The list shows only the average (mean of 120/80 and 118/79); the
     // individual readings are not on the list itself.
-    expect(find.text('119/80'), findsOneWidget);
+    expect(inList('119/80'), findsOneWidget);
     expect(find.text('120/80'), findsNothing);
     expect(find.text('118/79'), findsNothing);
 
     // Tapping the row opens the occasion in full: the average, and each
     // reading behind it.
-    await tester.tap(find.text('119/80'));
+    await tester.tap(inList('119/80'));
     await settle(tester);
 
     expect(find.text('Average'), findsOneWidget);

@@ -4,12 +4,15 @@ import 'package:intl/intl.dart';
 
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
+import '../../../domain/sessions/weekly_coverage.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
 import '../detail/session_detail_screen.dart';
 import '../entry/session_entry_screen.dart';
+import '../pressure_text.dart';
 import 'session_list_cubit.dart';
 import 'session_list_state.dart';
+import 'weekly_coverage_card.dart';
 
 /// The recorded readings, newest first.
 ///
@@ -33,16 +36,32 @@ class SessionListScreen extends StatelessWidget {
             ),
             SessionListLoaded(:final sessions) when sessions.isEmpty =>
               const _EmptyList(),
-            SessionListLoaded(:final sessions) => ListView.builder(
-              // Room at the end so the last card can scroll clear of the
-              // floating "Add a reading" button (and the nav bar) instead of
-              // hiding behind it.
-              padding: withSystemBottomInset(
-                context,
-                const EdgeInsets.only(bottom: 88),
-              ),
-              itemCount: sessions.length,
-              itemBuilder: (context, index) => _SessionTile(sessions[index]),
+            SessionListLoaded(:final sessions) => Column(
+              children: [
+                // The week's coverage stays pinned while the occasions scroll,
+                // so the older audience never loses the "am I keeping up?"
+                // summary. The clock lives here, keeping weeklyCoverage pure.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                  child: WeeklyCoverageCard(
+                    weeklyCoverage(sessions, now: DateTime.now()),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    // Room at the end so the last card can scroll clear of the
+                    // floating "Add a reading" button (and the nav bar) instead
+                    // of hiding behind it.
+                    padding: withSystemBottomInset(
+                      context,
+                      const EdgeInsets.only(bottom: 88),
+                    ),
+                    itemCount: sessions.length,
+                    itemBuilder: (context, index) =>
+                        _SessionTile(sessions[index]),
+                  ),
+                ),
+              ],
             ),
           },
         ),
@@ -114,7 +133,7 @@ class _SessionTile extends StatelessWidget {
       child: ListTile(
         title: Row(
           children: [
-            Text(l10n.readingPressure(average.systolic, average.diastolic)),
+            PressureText(average.systolic, average.diastolic),
             if (readingCount > 1) ...[
               const SizedBox(width: 8),
               _ReadingCountBadge(readingCount),

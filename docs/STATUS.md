@@ -251,8 +251,47 @@ Two follow-ups after eyeballing S5b on the device:
 - Own branch `s5c-add-and-time-edit` (off `main`, which already had S5a+S5b+icon).
   150 tests green. **All of S5 (a/b/c) is now on `main`.**
 
-**Next up — S6 (7-2-2 coverage), see the roadmap.** S5 is merged and pushed;
-device-verify the full edit/add/delete flow when convenient.
+**Done (2026-08-25): S6 — 7-2-2 coverage.** A "Last 7 days" summary card pinned
+above the readings list reports two dimensions of coverage against the protocol:
+**occasions logged / 14** (two a day) and **distinct days logged / 7** (the span)
+— so readings bunched into a few days are not read as a full week (the
+maintainer's call: 9 occasions across only 4 days must be visible). When the
+window holds any occasion it also shows the **period average** — the mean of the
+in-window occasions' averages (session-as-unit, §4). No threshold, no colour, no
+verdict (§1). Pure domain `weeklyCoverage` / `MonitoringCoverage` in
+`weekly_coverage.dart` (rolling last-7-days window via a UTC cutoff; days grouped
+by an injected `toLocal`, like `suggestedFirstReading`), TDD; UI-only wiring
+(the list cubit already streams every session, so the card computes coverage in
+the build with `DateTime.now()`). Decisions taken in brainstorm with the
+maintainer: rolling window (not calendar week or an explicit user-started
+period — which is why the heading is "Last 7 days", not "This week"); count
+occasions/14 (the number in §4's "9/14" wins over the word "readings"); show the
+period average now rather than defer it; days-covered added after eyeballing on
+device. Reference-range/threshold display stays deferred to 1.x — not pulled in.
+Own branch `s6-weekly-coverage`.
+
+**Also done (2026-08-25, same branch): a design pass + bold BP.** Off the
+approved Claude Design mockups: the session-detail occasion **average is now the
+hero** (large, teal, pulse smaller on its own line beneath); the detail
+**readings sit in their own card**; the new/edit reading forms give **notes,
+"Add details" and "Taken at" each their own card** (shared `SectionCard`, one
+padded-card look — §8). Blood-pressure values are **bold everywhere** they appear
+via a shared `PressureText` widget (the design invariant + the one value
+formatting in a single place — §8). Committed separately from the coverage slice.
+
+- **Tests:** now **169** green (S6 added `weeklyCoverage` domain tests —
+  occasions, days, period average — plus coverage-card behaviour tests and a
+  smoke-test assertion that the summary rides above the list).
+- **Verified on the physical device** (Redmi 2312DRA50G) 2026-08-25: the
+  coverage card, both counts, the teal hero average, the section cards and the
+  bold pressure all render correctly. Tap-injection stays off (Security
+  settings), so navigation was driven by hand; `flutter run` + `adb screencap`
+  and `kill -USR1 <pid>` (hot reload) were the loop.
+
+**Next up — S7 (JSON backup export + import), see the roadmap.** The only
+restorable backup format (§2, §5): versioned, tolerant of unknown fields, never
+silently dropping data; through the Android share sheet / SAF. S6 is merged and
+pushed.
 
 ## Working reminders
 
