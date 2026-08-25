@@ -6,8 +6,8 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-25 (trends-chart T3 — pulse chart; the trends chart
-T1→T3 is now complete)
+**Last updated:** 2026-08-25 (Settings screen + date-bounded CSV/PDF export +
+app version in About)
 
 ---
 
@@ -770,6 +770,51 @@ no-verdict boundary (maintainer's call). One-line UI change; golden unaffected
 release update installed over the existing diary (data intact), and the "Ultimi
 7 giorni" card renders on the soft sand background, set apart from the white
 reading cards.
+
+**Done (2026-08-25): Settings screen + date-bounded CSV/PDF export + version in
+About.** A new `SettingsScreen` (`lib/ui/settings/`), reached from a **gear icon**
+in the readings-list app bar (beside the trends icon), is now the home of the
+readings export and About. Own branch `s-settings-and-ranged-export` (HEAD
+`9a6ada3`), **249 tests green**, no schema change → no migration. **Not yet
+device-verified** — the CSV/PDF share hand-off is native (share_plus), so it wants
+an on-device eyeball as usual.
+- **Date-bounded export (maintainer ask).** Preset ranges — Last 7 / 30 / 90 days
+  / All — chosen with a `RadioGroup`, then Export CSV / Export PDF. Default is
+  **Last 30 days** (matches the trends default). The only new logic is one pure
+  domain fn `sessionsInLastDays` (`sessions_in_last_days.dart`, TDD, 7 tests):
+  keeps sessions whose local calendar date is within the last N days — the **same
+  window meaning `weeklyCoverage` uses** (day of `now` + N−1 before it, built from
+  date parts so it is DST-proof), so there is one notion of "which day" (§8), not
+  a rolling N×24h cutoff. "All" skips the filter. The CSV/PDF build-and-share code
+  **moved out of the overflow menu** into the Settings screen — a move, not a
+  second way (§8) — reading the whole diary once via `recentHistory()` (the screen
+  is a standalone pushed route, so it reaches the app-root `SessionRepository`
+  rather than the list's cubit) then narrowing to the range.
+- **App version in About (maintainer ask).** `showAppAbout` now awaits
+  `PackageInfo.fromPlatform()` and passes `applicationVersion` to
+  `showAboutDialog`; a failed read falls back to no version line (§6). **New
+  dependency (§9): `package_info_plus` ^10.2.1** — BSD-3 (verified in the resolved
+  package's LICENSE), same `fluttercommunity/plus_plugins` monorepo as the
+  already-shipped `share_plus`, current. Necessity: Flutter has no runtime version
+  read and §2 forbids hardcoding it.
+- **Overflow menu shrank** to the whole-diary JSON backup + import (CSV/PDF export
+  and About moved to Settings); its now-unused imports/enum/method were removed.
+- **Strings:** 6 new ARB keys (EN + IT) — `settingsTitle`,
+  `settingsExportHeading`, `settingsExportRangeLast7/30/90` + `…RangeAll`. Buttons
+  reuse `exportCsv`/`exportPdf`, the About row reuses `aboutMenu`. Italian is a
+  reasonable first pass, flagged for the maintainer's wording review (as S10).
+- **Tests:** `sessions_in_last_days_test` (boundaries, wider-window, tz-injected)
+  + a `SettingsScreen` behaviour test (renders every range + About; an empty
+  diary reports "nothing to export" instead of sharing). The menu-tap→native
+  share stays untested, same boundary as the JSON backup and the old export.
+
+**Next (agreed): the discard-day-1 toggle** — its own slice with a short
+brainstorm. Research done (memory `discard-day1-rule`): ESH drops **all of the
+first monitoring day** (first-day BP runs high — "first measurement effect"), but
+Cadence's **rolling** last-7-days window has no "day 1" marker, so *which* day is
+day 1 (oldest in window? first logged?) and whether it affects the **average
+only** vs the coverage counts are the maintainer's clinical calls (§10). **Default
+decided: toggle OFF — do NOT drop day 1** (maintainer, 2026-08-25).
 
 ## Known issues (open)
 
