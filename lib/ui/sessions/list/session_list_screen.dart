@@ -99,22 +99,27 @@ class _SessionTile extends StatelessWidget {
         .add_jm()
         .format(session.occurredAt.toLocal());
 
-    return ListTile(
-      title: Row(
-        children: [
-          Text(l10n.readingPressure(average.systolic, average.diastolic)),
-          if (readingCount > 1) ...[
-            const SizedBox(width: 8),
-            _ReadingCountBadge(readingCount),
+    // A card per occasion, matching the approved visual design; the card's
+    // colour, border, radius and spacing come from the theme's cardTheme.
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        title: Row(
+          children: [
+            Text(l10n.readingPressure(average.systolic, average.diastolic)),
+            if (readingCount > 1) ...[
+              const SizedBox(width: 8),
+              _ReadingCountBadge(readingCount),
+            ],
+            const Spacer(),
+            if (average.pulse != null) Text(l10n.readingPulse(average.pulse!)),
           ],
-          const Spacer(),
-          if (average.pulse != null) Text(l10n.readingPulse(average.pulse!)),
-        ],
-      ),
-      subtitle: Text(takenAt),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (context) => SessionDetailScreen(session),
+        ),
+        subtitle: Text(takenAt),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (context) => SessionDetailScreen(session),
+          ),
         ),
       ),
     );

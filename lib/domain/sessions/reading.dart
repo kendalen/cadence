@@ -53,6 +53,23 @@ final class Reading extends Equatable {
   /// unrecorded.
   final MedicationTiming? medicationTiming;
 
+  /// This reading with its identity changed to [id], every other field kept.
+  ///
+  /// Used when editing: the entry validation ([ReadingInput.validate]) mints a
+  /// fresh id, but an edited reading must keep the identity the store knows it
+  /// by, so its validated values are re-stamped with the original [ReadingId].
+  Reading withId(ReadingId id) => Reading(
+    id: id,
+    systolic: systolic,
+    diastolic: diastolic,
+    takenAt: takenAt,
+    pulse: pulse,
+    notes: notes,
+    site: site,
+    posture: posture,
+    medicationTiming: medicationTiming,
+  );
+
   /// Whether any measurement context was recorded for this reading.
   ///
   /// True when [site], [posture] or [medicationTiming] is set. Notes are not

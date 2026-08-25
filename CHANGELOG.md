@@ -8,6 +8,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- App launcher icon: a cream "C" monogram with a terracotta beat-dot on the teal
+  brand tile, generated for
+  all densities plus an Android 8+ adaptive icon via `flutter_launcher_icons`
+  (dev-only dependency). Source art in `assets/icon/`.
+
+### Changed
+
+- Device launcher name is now "Cadence" (was lowercase "cadence").
+
 - Project scaffolding: Android-only Flutter application (package
   `net.kendalen.cadence`) with the three-layer source tree `lib/domain`,
   `lib/data`, `lib/ui` and a placeholder test per layer (CLAUDE.md §3, §7).
@@ -133,3 +142,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   session; deleting an absent session is a no-op that still succeeds) and a small
   `SessionDetailCubit` so the UI reaches the store through a cubit, not directly
   (CLAUDE.md §3).
+- Edit and remove readings (S5b): on the session detail screen, tap a reading to
+  correct its values, pulse, note and context in a focused editor (reusing the
+  entry steppers, context pickers and `ReadingInput` validation); the reading
+  keeps its identity (`Reading.withId`), so the store updates it rather than
+  adding a new one. Editing the time is not part of this slice. A reading can
+  also be removed from an occasion that holds more than one, with an "Undo"
+  (removing the last one is instead the whole-occasion delete, which keeps its
+  dialog). The detail screen now tracks the store, so an edit's new values show
+  without a stale snapshot. Backed by a new `SessionRepository.update(Session)`
+  (replaces an occasion's readings in one transaction) and the domain helpers
+  `Session.withReadingReplaced` / `withoutReading` (the latter returns `null`
+  when it would empty the occasion, encoding the ≥1-reading rule, CLAUDE.md §4).
+- The readings list now shows each occasion as a card, matching the approved
+  visual design; colour, border, radius and spacing come from the theme's
+  `cardTheme`.

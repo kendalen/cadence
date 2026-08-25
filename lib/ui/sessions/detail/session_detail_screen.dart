@@ -3,9 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/core/result.dart';
+import '../../../domain/sessions/ids.dart';
+import '../../../domain/sessions/reading.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../l10n/app_localizations.dart';
+import '../entry/edit_reading_screen.dart';
 import 'reading_detail.dart';
 import 'session_detail_cubit.dart';
 
@@ -68,9 +71,15 @@ class _SessionDetailView extends StatelessWidget {
                 ),
               ],
               for (final reading in readings)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ReadingDetail(reading),
+                _ReadingRow(
+                  reading: reading,
+                  // Removing a lone reading is the same as deleting the
+                  // occasion, so it is offered only when others remain; the
+                  // "Delete this occasion" button covers the single-reading
+                  // case.
+                  canRemove: readings.length > 1,
+                  onEdit: () => _editReading(context, reading),
+                  onRemove: () => _removeReading(context, reading.id),
                 ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
@@ -154,6 +163,113 @@ class _SessionDetailView extends StatelessWidget {
           ],
         ),
       );
+
+  /// Opens the editor for [reading] and, if it comes back corrected, saves it.
+  ///
+  /// The editor returns the corrected reading (same id, see [Reading.withId])
+  /// or `null` if the user backs out. On success the store change flows back
+  /// through the cubit's watch and refreshes the display; a write failure is
+  /// surfaced and the readings are left as they were. Handles that outlive the
+  /// editor route are captured before the await.
+  Future<void> _editReading(BuildContext context, Reading reading) async {
+    final cubit = context.read<SessionDetailCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    final edited = await Navigator.of(context).push<Reading>(
+      MaterialPageRoute<Reading>(
+        builder: (context) => EditReadingScreen(reading),
+      ),
+    );
+    if (edited == null) {
+      return;
+    }
+
+    if (await cubit.save(cubit.state.withReadingReplaced(edited)) is Err) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errorSaveFailed)));
+    }
+  }
+
+  /// Removes one reading from a multi-reading occasion, with an undo.
+  ///
+  /// The occasion stays (the row offering this is shown only when more than one
+  /// reading remains), so the store keeps it and undo simply writes the
+  /// previous readings back. No confirmation dialog: the removal is small and
+  /// immediately reversible; the whole-occasion delete keeps its dialog.
+  Future<void> _removeReading(BuildContext context, ReadingId id) async {
+    final cubit = context.read<SessionDetailCubit>();
+    final repository = context.read<SessionRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    final before = cubit.state;
+    final remaining = before.withoutReading(id);
+    if (remaining == null) {
+      return; // The last reading; use "Delete this occasion" instead.
+    }
+
+    switch (await cubit.save(remaining)) {
+      case Ok():
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.readingRemoved),
+              action: SnackBarAction(
+                label: l10n.undo,
+                onPressed: () => repository.update(before),
+              ),
+            ),
+          );
+      case Err():
+        messenger.showSnackBar(SnackBar(content: Text(l10n.errorSaveFailed)));
+    }
+  }
+}
+
+/// One reading on the detail screen, with edit and (optionally) remove actions.
+///
+/// The reading fills the row; the actions sit at its trailing edge as icon
+/// buttons with spoken labels, kept to the >48dp target for the older audience
+/// (roadmap ease-of-use principle).
+class _ReadingRow extends StatelessWidget {
+  const _ReadingRow({
+    required this.reading,
+    required this.canRemove,
+    required this.onEdit,
+    required this.onRemove,
+  });
+
+  final Reading reading;
+  final bool canRemove;
+  final VoidCallback onEdit;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: ReadingDetail(reading)),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: l10n.editReading,
+            onPressed: onEdit,
+          ),
+          if (canRemove)
+            IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: l10n.removeReading,
+              onPressed: onRemove,
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 /// The occasion's mean, shown prominently above its readings.

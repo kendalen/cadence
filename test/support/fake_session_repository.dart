@@ -43,6 +43,23 @@ class FakeSessionRepository implements SessionRepository {
     return const Ok(unit);
   }
 
+  /// When set, [update] reports this instead of replacing.
+  PersistenceFailure? refuseUpdateWith;
+
+  @override
+  Future<Result<Unit, PersistenceFailure>> update(Session session) async {
+    final refusal = refuseUpdateWith;
+    if (refusal != null) {
+      return Err(refusal);
+    }
+    final index = added.indexWhere((stored) => stored.id == session.id);
+    if (index >= 0) {
+      added[index] = session;
+    }
+    _sessions.add(List.of(added));
+    return const Ok(unit);
+  }
+
   @override
   Stream<List<Session>> watchAll() => _sessions.stream;
 

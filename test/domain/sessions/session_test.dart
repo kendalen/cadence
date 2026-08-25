@@ -185,6 +185,81 @@ void main() {
     });
   });
 
+  group('Session.withReadingReplaced', () {
+    test('swaps in the reading with the matching id, keeping the rest', () {
+      final original = readingOf(id: 'r1', systolic: 120, diastolic: 80);
+      final other = readingOf(id: 'r2', systolic: 118, diastolic: 78);
+      final session = sessionOf([original, other]);
+
+      final edited = readingOf(id: 'r1', systolic: 130, diastolic: 85);
+      final result = session.withReadingReplaced(edited);
+
+      expect(result.readings, [edited, other]);
+      expect(result.id, session.id);
+    });
+
+    test('throws when no reading has the replacement id', () {
+      final session = sessionOf([readingOf(id: 'r1')]);
+
+      expect(
+        () => session.withReadingReplaced(readingOf(id: 'unknown')),
+        throwsStateError,
+      );
+    });
+  });
+
+  group('Session.withoutReading', () {
+    test('drops the reading with the id, keeping the others in order', () {
+      final first = readingOf(id: 'r1');
+      final second = readingOf(id: 'r2');
+      final third = readingOf(id: 'r3');
+      final session = sessionOf([first, second, third]);
+
+      final result = session.withoutReading(const ReadingId('r2'));
+
+      expect(result?.readings, [first, third]);
+      expect(result?.id, session.id);
+    });
+
+    test('returns null when removing the only reading would empty it', () {
+      final session = sessionOf([readingOf(id: 'r1')]);
+
+      // A session must hold at least one reading (CLAUDE.md §4), so removing
+      // the last one is "delete the occasion", signalled by null.
+      expect(session.withoutReading(const ReadingId('r1')), isNull);
+    });
+
+    test('returns the session unchanged when the id is not present', () {
+      final session = sessionOf([readingOf(id: 'r1'), readingOf(id: 'r2')]);
+
+      expect(session.withoutReading(const ReadingId('gone')), session);
+    });
+  });
+
+  group('Reading.withId', () {
+    test('copies the reading under a new id, all else identical', () {
+      final reading = readingOf(
+        id: 'fresh',
+        systolic: 130,
+        diastolic: 85,
+        pulse: 66,
+        notes: 'note',
+        site: MeasurementSite.leftArm,
+      );
+
+      final result = reading.withId(const ReadingId('original'));
+
+      expect(result.id, const ReadingId('original'));
+      expect(result, reading.withId(const ReadingId('original')));
+      expect(result.systolic, 130);
+      expect(result.diastolic, 85);
+      expect(result.pulse, 66);
+      expect(result.notes, 'note');
+      expect(result.site, MeasurementSite.leftArm);
+      expect(result.takenAt, reading.takenAt);
+    });
+  });
+
   group('Reading', () {
     test('compares by value', () {
       expect(readingAt('r1', earlier), readingAt('r1', earlier));

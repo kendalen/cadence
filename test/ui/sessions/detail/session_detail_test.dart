@@ -6,6 +6,7 @@
 // deliberately not asserted (the same reason the theme golden pins only the
 // timezone-free empty state).
 
+import 'package:cadence/domain/sessions/id_generator.dart';
 import 'package:cadence/domain/sessions/ids.dart';
 import 'package:cadence/domain/sessions/persistence_failure.dart';
 import 'package:cadence/domain/sessions/reading.dart';
@@ -18,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/fake_id_generator.dart';
 import '../../../support/fake_session_repository.dart';
 
 void main() {
@@ -35,8 +37,11 @@ void main() {
         takenAt: DateTime.utc(2026, 8, 24, 8),
       );
 
-  Widget wrap(Widget home) => RepositoryProvider<SessionRepository>.value(
-    value: repository,
+  Widget wrap(Widget home) => MultiRepositoryProvider(
+    providers: [
+      RepositoryProvider<SessionRepository>.value(value: repository),
+      RepositoryProvider<IdGenerator>.value(value: FakeIdGenerator()),
+    ],
     child: MaterialApp(
       theme: buildCadenceTheme(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -194,6 +199,106 @@ void main() {
       // Stayed on the detail screen; the error was surfaced.
       expect(find.text('128/82'), findsOneWidget);
       expect(find.textContaining("Couldn't delete"), findsOneWidget);
+    });
+  });
+
+  group('edit', () {
+    testWidgets('correcting a reading saves it under the same id', (
+      tester,
+    ) async {
+      final session = Session(
+        id: const SessionId('s1'),
+        readings: [reading('r1', 120, 80)],
+      );
+      repository.added.add(session);
+      await pump(tester, session);
+
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit reading'), findsOneWidget);
+
+      // Bump systolic 120 -> 121 and save.
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('systolicStepper')),
+          matching: find.byIcon(Icons.add),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      final stored = repository.added.single.readings.single;
+      expect(stored.systolic, 121);
+      // Identity preserved: the store updated the reading, not added a new one.
+      expect(stored.id, const ReadingId('r1'));
+      // The detail screen refreshed to the new value.
+      expect(find.text('121/80'), findsOneWidget);
+    });
+
+    testWidgets('backing out of the editor changes nothing', (tester) async {
+      final session = Session(
+        id: const SessionId('s1'),
+        readings: [reading('r1', 120, 80)],
+      );
+      repository.added.add(session);
+      await pump(tester, session);
+
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('systolicStepper')),
+          matching: find.byIcon(Icons.add),
+        ),
+      );
+      await tester.pump();
+      // Leave without saving.
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      expect(repository.added.single.readings.single.systolic, 120);
+    });
+  });
+
+  group('remove a reading', () {
+    Session pair() => Session(
+      id: const SessionId('s1'),
+      readings: [reading('r1', 120, 80), reading('r2', 118, 78)],
+    );
+
+    testWidgets('a single-reading occasion offers no per-reading remove', (
+      tester,
+    ) async {
+      final session = Session(
+        id: const SessionId('s1'),
+        readings: [reading('r1', 128, 82)],
+      );
+      await pump(tester, session);
+
+      expect(find.byIcon(Icons.close), findsNothing);
+      // It can still be edited, and deleted as a whole occasion.
+      expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+      expect(find.text('Delete this occasion'), findsOneWidget);
+    });
+
+    testWidgets('removing one of a pair keeps the other, with undo', (
+      tester,
+    ) async {
+      final session = pair();
+      repository.added.add(session);
+      await pump(tester, session);
+
+      await tester.tap(find.byIcon(Icons.close).first);
+      await tester.pumpAndSettle();
+
+      expect(repository.added.single.readings, hasLength(1));
+      expect(find.text('Reading removed'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(repository.added.single.readings, hasLength(2));
     });
   });
 }

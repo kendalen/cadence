@@ -44,6 +44,31 @@ class DriftSessionRepository implements SessionRepository {
   }
 
   @override
+  Future<Result<Unit, PersistenceFailure>> update(Session session) async {
+    try {
+      // Replace the whole reading set in one transaction: the session row's
+      // only column is its id, so there is nothing to update on it — the change
+      // is always to which readings it owns.
+      await _database.transaction(() async {
+        await (_database.delete(
+          _database.readings,
+        )..where((reading) => reading.sessionId.equals(session.id.value))).go();
+        await _database.batch(
+          (batch) => batch.insertAll(
+            _database.readings,
+            session.readings.map((r) => toReadingRow(r, session.id)),
+          ),
+        );
+      });
+      return const Ok(unit);
+    } on Exception catch (error) {
+      // Broad for the same reason as add: every way sqlite can refuse a write
+      // is an expected failure, not a bug. The cause is kept; Error propagates.
+      return Err(WriteFailed(error));
+    }
+  }
+
+  @override
   Future<Result<Unit, PersistenceFailure>> delete(SessionId id) async {
     try {
       // Readings go with it via the schema's cascade (CLAUDE.md §4: a session

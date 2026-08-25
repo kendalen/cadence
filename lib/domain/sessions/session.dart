@@ -49,6 +49,42 @@ final class Session extends Equatable {
     );
   }
 
+  /// This session with the reading sharing [replacement]'s id swapped for
+  /// [replacement], every other reading and the order kept.
+  ///
+  /// The match is by [Reading.id]: editing changes a reading's values, never
+  /// its identity (see [Reading.withId]). Throws [StateError] if no reading has
+  /// that id — replacing a reading the session does not hold is a bug, not an
+  /// expected outcome.
+  Session withReadingReplaced(Reading replacement) {
+    if (!readings.any((reading) => reading.id == replacement.id)) {
+      throw StateError('no reading ${replacement.id.value} in session');
+    }
+    return Session(
+      id: id,
+      readings: readings
+          .map(
+            (reading) => reading.id == replacement.id ? replacement : reading,
+          )
+          .toList(),
+    );
+  }
+
+  /// This session without the reading identified by [id], or `null` when that
+  /// was its only reading.
+  ///
+  /// A session always holds at least one reading (CLAUDE.md §4), so removing the
+  /// last one is not an empty session but the removal of the occasion itself —
+  /// signalled by `null` so the caller deletes it instead. Removing an id the
+  /// session does not hold returns it unchanged.
+  Session? withoutReading(ReadingId id) {
+    final kept = readings.where((reading) => reading.id != id).toList();
+    if (kept.isEmpty) {
+      return null;
+    }
+    return Session(id: this.id, readings: kept);
+  }
+
   @override
   List<Object?> get props => [id, readings];
 }

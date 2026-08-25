@@ -34,4 +34,14 @@ abstract interface class SessionRepository {
   /// caller wants — no session with that id — already holds, so it returns
   /// [Ok]. Returns [WriteFailed] only if the store rejected the delete.
   Future<Result<Unit, PersistenceFailure>> delete(SessionId id);
+
+  /// Replaces the readings of the already-stored session with [session]'s, as
+  /// one unit.
+  ///
+  /// Used to correct or remove readings on an existing occasion: the session
+  /// keeps its identity, its readings become exactly the ones given. The
+  /// session must already be stored — this does not create a new one; use [add]
+  /// for that. Returns [WriteFailed] if the store rejected the write, in which
+  /// case nothing changed.
+  Future<Result<Unit, PersistenceFailure>> update(Session session);
 }

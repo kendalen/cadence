@@ -209,5 +209,17 @@
   "errorDeleteFailed": "Couldn''t delete this occasion. Please try again.",
   "@errorDeleteFailed": {
     "description": "Snackbar shown when deleting an occasion failed, so nothing was removed."
+  },
+  "editReading": "Edit reading",
+  "@editReading": {
+    "description": "Title of the screen for correcting one recorded reading, and the label of the edit action on each reading in the session detail screen."
+  },
+  "removeReading": "Remove this reading",
+  "@removeReading": {
+    "description": "Label of the action that removes one reading from an occasion that holds more than one."
+  },
+  "readingRemoved": "Reading removed",
+  "@readingRemoved": {
+    "description": "Snackbar shown after one reading is removed from an occasion, alongside an undo action."
   }
 }

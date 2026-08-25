@@ -64,7 +64,7 @@ stand and what's next*.
   readings-list empty state, plus `SessionDetailScreen` delete-flow behaviour
   tests (confirm, cancel, delete + undo, restore, failure) and the
   `SessionRepository.delete` data tests (removes + cascades, absent-session
-  no-op). All green (134).
+  no-op). All green (146).
 - **Verified running:** the theme + S4 were run and eyeballed on a **physical
   Android device** (Redmi 2312DRA50G, Android 16 / API 36) on 2026-08-25 — the
   warm theme, Hanken type, big teal steppers and teal Save button all render
@@ -196,25 +196,43 @@ per the maintainer's call (CLAUDE.md §6). New `SessionRepository.delete(Session
 `Session`) so the screen reaches the store through a cubit, not directly. The
 undo snackbar rides the app-root `ScaffoldMessenger`, shown just before the pop
 so it lands on the list; navigator/messenger/repository are captured before the
-awaits (no reach for a disposed context). Own branch `s5a-delete-session`. 134
-tests green; not yet on a device. **S5 was split** at the ~400-line budget
-(CLAUDE.md §8) — the reactive detail (watch the store) and the shared reading
-widgets land with S5b, where editing needs them.
+awaits (no reach for a disposed context). Own branch `s5a-delete-session`.
+**S5 was split** at the ~400-line budget (CLAUDE.md §8) — the reactive detail
+(watch the store) and the shared reading widgets landed with S5b.
 
-**Next up — S5b:**
+**Done (2026-08-25): S5b — edit a reading & remove a single reading.** On the
+`SessionDetailScreen`, each reading now has an edit action (tap → a focused
+`EditReadingScreen`) and, when the occasion holds more than one, a remove action.
+- **Edit** reuses the entry `NumberStepper` + `ReadingContextDetails` +
+  `ReadingInput.validate`; the editor is a pure form that pops the corrected
+  `Reading` (the detail screen writes it). Identity is preserved via
+  `Reading.withId` — validate mints a fresh id, immediately re-stamped with the
+  original, so the store updates the reading rather than adding one. **Editing
+  the time was left out of this slice** (the mistyped thing is the numbers; time
+  is picked, not typed) — a candidate follow-up.
+- **Remove** a reading is offered only when others remain (removing a lone
+  reading is the whole-occasion delete, which keeps its dialog); undo only, no
+  dialog, since it is small and immediately reversible (undo = `update` the
+  previous readings back).
+- Domain (TDD): `Session.withReadingReplaced` (match by id, throws if absent)
+  and `withoutReading` (→ `Session?`, `null` when it would empty the occasion —
+  the ≥1-reading rule, §4), plus `Reading.withId`.
+- Data: `SessionRepository.update(Session)` — one transaction: delete this
+  session's readings, re-insert the given set (the session row has only its id,
+  nothing to update on it). Drift + fake coverage.
+- `SessionDetailCubit` now watches `watchAll()` and re-emits its occasion when
+  the store changes, so an edit's new values appear without a stale snapshot; a
+  vanished occasion is ignored (the screen is already leaving on the action).
+- Own branch `s5b-edit-reading` (off `s5a-delete-session`). 146 tests green; not
+  yet on a device.
 
-1. **S5b — Edit a reading & remove a single reading** (roadmap Phase 2). Tap a
-   reading on the `SessionDetailScreen` to edit its numbers/pulse/notes/context/
-   time, reusing `NumberStepper` + `ReadingContextDetails` + `ReadingInput.validate`;
-   and a per-reading remove (removing the last reading deletes the occasion via
-   the S5a `delete`). Domain (TDD): `Session.withReadingReplaced` /
-   `withoutReading` (→ `Session?`, encoding the ≥1-reading rule). Data: a new
-   `update(Session)` (transaction: delete this session's readings, re-insert).
-   Make `SessionDetailCubit` watch the store (reuse `watchAll()`, filter by id)
-   so an edit's new values show without a stale snapshot, and pop when the
-   session is gone. Own branch. Decided in brainstorm: edit one reading at a
-   time (not the whole occasion in the entry form); single-reading remove gets
-   undo only (no dialog), the whole-occasion delete keeps its dialog.
+**Also done (2026-08-25, folded into the S5b branch at the maintainer's ask):**
+the readings list renders each occasion as a **card** (matching the approved
+design) instead of a flat `ListTile` — colour/border/radius/spacing all from the
+theme's `cardTheme`, so nothing hardcoded.
+
+**Next up — S6 (7-2-2 coverage), see the roadmap.** Both S5a and S5b are on
+device-untested branches; confirm on the physical device before/after merge.
 
 ## Working reminders
 

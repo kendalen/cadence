@@ -219,6 +219,37 @@ void main() {
     },
   );
 
+  test('update replaces a reading\'s values in place', () async {
+    await repository.add(
+      sessionOf('s1', [readingOf('r1', morning, systolic: 120, diastolic: 80)]),
+    );
+
+    final edited = sessionOf('s1', [
+      readingOf('r1', morning, systolic: 130, diastolic: 85, pulse: 66),
+    ]);
+    final result = await repository.update(edited);
+
+    expect(result, const Ok<Unit, PersistenceFailure>(unit));
+    final stored = (await repository.watchAll().first).single.readings.single;
+    expect(stored.systolic, 130);
+    expect(stored.diastolic, 85);
+    expect(stored.pulse, 66);
+  });
+
+  test('update can drop a reading from a session', () async {
+    final second = morning.add(const Duration(minutes: 1));
+    await repository.add(
+      sessionOf('s1', [readingOf('r1', morning), readingOf('r2', second)]),
+    );
+
+    await repository.update(sessionOf('s1', [readingOf('r1', morning)]));
+
+    final ids = (await repository.watchAll().first).single.readings
+        .map((reading) => reading.id.value)
+        .toList();
+    expect(ids, ['r1']);
+  });
+
   test('takenAt is stored as UTC ISO-8601 text', () async {
     await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
 
