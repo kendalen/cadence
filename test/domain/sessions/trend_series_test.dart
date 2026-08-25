@@ -271,4 +271,45 @@ void main() {
       },
     );
   });
+
+  group('bounded range anchors averaged buckets at window start', () {
+    test('quarter with an ~85-day span → weekly buckets anchored at window '
+        'start, not the earliest datum', () {
+      // window start = today − 89 days = 2026-05-27; the oldest occasion is 85
+      // days back, so the span is weekly-bucketed even under the 90-day preset.
+      final now = DateTime.utc(2026, 8, 24, 8);
+      final series = build(
+        [
+          _occasion(
+            systolic: 120,
+            takenAt: DateTime.utc(2026, 5, 31, 8),
+          ), // 85d back, in window
+          _occasion(
+            systolic: 130,
+            takenAt: DateTime.utc(2026, 6, 2, 8),
+          ), // same weekly bucket
+          _occasion(
+            systolic: 110,
+            takenAt: DateTime.utc(2026, 8, 24, 8),
+          ), // recent
+        ],
+        range: TrendRange.quarter,
+        now: now,
+      );
+
+      // Span 85 days (oldest → now) → weekly buckets, even though the preset
+      // window is 90 days.
+      expect(series.bucketSize, const Duration(days: 7));
+      expect(series.daily, hasLength(3));
+      expect(series.averaged, hasLength(2));
+
+      // The first averaged bucket anchors at the window start (2026-05-27), not
+      // at the earliest datum (2026-05-31): bounded ranges tile from
+      // windowStart. It holds the two close occasions.
+      final first = series.averaged.first;
+      expect(first.localDate, DateTime.utc(2026, 5, 27));
+      expect(first.occasionCount, 2);
+      expect(first.systolic, 125); // mean(120, 130)
+    });
+  });
 }
