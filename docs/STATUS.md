@@ -6,7 +6,7 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-25 (trends-chart T1 domain + coverage-card sand tint)
 
 ---
 
@@ -142,6 +142,19 @@ back into scope. **B2 (app icon + name) is already in this build** —
 `android:label="Cadence"` and a custom launcher icon generated via
 `flutter_launcher_icons` (the ROADMAP's "template defaults" note is stale); and
 `targetSdk=36` already meets B3's target check.
+
+**Store-name differentiation (for B2/B6, not yet decided).** "Cadence" is very
+crowded on Play (~25 apps — mostly cycling-cadence, metronomes, music, task
+managers; a bank; audiobooks). None collide with our `applicationId`
+(`net.kendalen.cadence`), so this is a *findability + brand* problem, not a
+technical one. The only health-adjacent collision — the one that matters — is
+**`Cadence: Medication Companion`** (SmartHealth AI,
+`uk.co.sussexendocrineclinic.cadence`). Lever is the store **title**: a
+qualifier like `Cadence — Blood Pressure Diary` / IT `Cadence — Diario
+Pressione` differentiates from both the fitness crowd and the meds app and
+matches what people search. Full app list captured in
+`docs/App Android su Google Play.md` (untracked; `docs/superpowers` aside, docs
+are otherwise tracked — decide whether to commit it). Maintainer's call (§10).
 
 **Done:** **S1 — context fields → schema v2**. `MeasurementSite {leftArm,
 rightArm, leftWrist, rightWrist}`, `Posture {sitting, standing, lying}`,
@@ -609,6 +622,62 @@ total data loss — but HyperOS **retains app data** and reinstalling the
 `device-install-release-hazard` memory: **for on-device checks, build/install the
 release build** (same key → data safe); only use debug with a backup or the new
 `.debug` id.
+
+**Done (2026-08-25): trends chart — T1 (domain aggregation).** The first of
+three slices toward the deferred 1.x **trends chart**. Pure domain only, no UI,
+no new dependency. New `lib/domain/sessions/trend_series.dart`:
+`buildTrendSeries(sessions, {range, filter, now, toLocal})` turns stored
+sessions into a `TrendSeries` — two point lists (`daily` scatter + `averaged`
+line) plus a `bucketSize`. Design decisions (brainstorm, maintainer-approved,
+spec `docs/superpowers/specs/2026-08-25-trends-chart-design.md`, plan
+`docs/superpowers/plans/2026-08-25-trends-chart-t1-domain.md` — both local,
+`docs/superpowers` is gitignored):
+- **Two BP lines + a separate pulse chart** (maintainer's call — pulse on its
+  own chart dodges the different-scale squash); systolic teal `#0E8C74`,
+  diastolic ochre `#B4832E` (the approved CVD-safe series colours).
+- **One point per day**, each a **mean of session averages** (§4, same rule as
+  the coverage card's period-average — reuses `roundedMean`/`SessionAverage`),
+  never of raw readings.
+- **Morning/evening filter** reusing the existing local-noon `DayBucket`
+  (no second split rule, §8).
+- **Adaptive averaging** keyed off the **actual data span** (not the preset):
+  span ≤30d → daily, 31–90d → 7-day, >90d → 30-day buckets — so "All" with
+  little history still shows daily points. `daily` are always kept for a faint
+  scatter behind the `averaged` line (maintainer's call).
+- **DST-proof dates:** every calendar date is normalised to civil
+  `DateTime.utc(y,m,d)` so day counting/addition is exact (stricter than
+  `weeklyCoverage`, which only compares `isBefore`); `TrendPoint.localDate` is
+  such a civil date — the UI must read its y/m/d directly, not `toLocal` it.
+- **§1 held:** the file only computes means — no thresholds, no classification,
+  no verdict.
+- **Tests:** 14 domain tests (windowing, noon-boundary filter, daily means,
+  pulse-when-present, adaptive thresholds keyed off span, bounded-range
+  windowStart anchoring, empty/single edges), all timezone-independent via an
+  injected identity `toLocal`. Built subagent-driven (3 tasks + task reviews +
+  a whole-branch review; one deferred-minor closed with an extra test; `_pointOf`
+  left un-extracted per rule-of-three — a 3rd "mean of session averages" would
+  trigger a shared helper). Own branch `t1-trend-series-domain`, **merged to
+  `main` + pushed** (HEAD `b3b81e5`). **233 tests green.**
+- **Not device-verified (nothing to see):** T1 is domain-only, no UI yet.
+
+**Next: trends chart T2 + T3** (each its own plan/branch when picked up):
+- **T2 — BP trends screen.** Adds `fl_chart` (MIT per pub.dev; **re-verify the
+  resolved package LICENSE before committing**, §9), an app-bar chart-icon entry
+  point, the range (7/30/90/All) + AM/PM (All/Morning/Evening) segmented
+  controls, a shared `TrendLineChart` (faint daily dots + averaged lines +
+  legend + tap-tooltips), Chart A (sys+dia), an empty-state golden, and ARB
+  strings (EN + IT for the wording pass). May split at the §8 budget.
+- **T3 — pulse chart.** Chart B reusing `TrendLineChart`; needs its own pulse
+  line-colour token (a muted slate proposed, maintainer's call).
+
+**Done (2026-08-25): coverage-card sand tint.** The pinned "Last 7 days" card
+now has a soft **sand** (`CadenceColors.sand` `#F3ECE4`) background so it reads
+as the overview, set apart from the white reading cards below. **Neutral warm
+token, never a status colour** — a teal/green "good" tint would cross §1's
+no-verdict boundary (maintainer's call). One-line UI change; golden unaffected
+(empty state shows no card), behaviour tests assert no colour. Own branch
+`coverage-card-sand-tint`, **merged to `main` + pushed** (HEAD `a105ee0`).
+**On-device eyeball pending** (needs ≥1 logged session for the card to appear).
 
 ## Known issues (open)
 
