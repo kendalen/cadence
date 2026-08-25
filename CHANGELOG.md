@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- The "Remove" tooltip on a reading in the entry form showed "Remove this
+  reading" instead of the short "Remove": `app_en.arb` defined `removeReading`
+  twice and the later, longer entry silently won. The two actions now have
+  distinct keys (`removeReading` / `removeReadingFromOccasion`), so each reads
+  correctly; the Italian translation was split to match.
+
 ### Added
 
 - Italian localisation (S10): the full UI string set is translated to Italian, so
