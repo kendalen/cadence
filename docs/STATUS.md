@@ -62,8 +62,13 @@ stand and what's next*.
   behaviour tests, the `suggestedFirstReading` / `mostRecentReading` domain
   stats, `recentHistory`, the cubit's `initialSeed`, and a golden test on the
   readings-list empty state. All green (127).
-- **Verified running:** debug APK builds and runs on a physical Android device
-  (as of the "log a session" slice).
+- **Verified running:** the theme + S4 were run and eyeballed on a **physical
+  Android device** (Redmi 2312DRA50G, Android 16 / API 36) on 2026-08-25 — the
+  warm theme, Hanken type, big teal steppers and teal Save button all render
+  correctly. (Xiaomi/HyperOS needs Developer options → "Install via USB" on to
+  let `flutter run` install; `adb shell input` tap-injection additionally needs
+  "USB debugging (Security settings)", which was left off — screen capture works
+  without it.)
 - **Design foundation — now in code (2026-08-24).** The *warm & reassuring*
   visual language (worked out on a Claude Design canvas, approved by the
   maintainer) is a Material 3 `ThemeData` built in `lib/ui/theme/`
@@ -175,9 +180,8 @@ average for multi-reading occasions). Replaced S2d's in-place expansion; no
 domain or data change (`Session.average` already existed); two new ARB strings
 (`Average` / `Readings`). Built and eyeballed in the new theme via a throwaway
 render; tested by direct-pump behaviour tests + the navigation smoke test. Own
-branch `s4-session-detail`. **Still not run on a physical device** — a device
-run is overdue (last one was the "log a session" slice); worth doing before or
-during S5.
+branch `s4-session-detail` (merged to `main`). **Verified on a physical device**
+2026-08-25 — see "Verified running" above.
 
 **Next up — S5:**
 
