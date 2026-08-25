@@ -132,6 +132,14 @@ display stays deferred (a maintainer call — `CLAUDE.md` §1, §10). Ease of us
 a cross-cutting requirement because the audience skews older; see the roadmap's
 principle section.
 
+**Reprioritised (2026-08-25):** with B1 (release signing) done and the app
+running signed on the device, the maintainer's next order is: **(1) S10 —
+Italian localisation**, then **(2) the deferred 1.x capabilities** (a trends
+**chart** first among them). The **Play-Store paperwork track (B2–B7) waits** —
+it is not blocking the maintainer's near-term goal of a working signed build on
+their own phone. B2 (icon + name) and the rest stay queued for when publishing
+comes back into scope.
+
 **Done:** **S1 — context fields → schema v2**. `MeasurementSite {leftArm,
 rightArm, leftWrist, rightWrist}`, `Posture {sitting, standing, lying}`,
 `MedicationTiming {before, after}` — all optional, stored by name, no UI. Thin
