@@ -470,6 +470,23 @@ in (maintainer's call — keep S9 lean).
 - **Not yet run on a device this slice** — installing the v3 build on the Redmi
   will run the migration and show the notice once; eyeball it + About there.
 
+## Known issues (open)
+
+- **Coverage can show "8 of 7 days" (S6 `weeklyCoverage`).** Reported on-device
+  2026-08-25 with readings spanning from 18/08. Root cause: the window is a
+  **168-hour rolling cutoff** (`now.toUtc() - 7d`), which can straddle **8
+  calendar days** — e.g. now Aug 25 12:00 → cutoff Aug 18 12:00, so a reading on
+  the evening of Aug 18 through readings on Aug 25 covers Aug 18–25 = 8 distinct
+  local days, and "distinct days / 7" reads 8/7. The occasions/14 count is not
+  affected the same way; the days-covered count is the visible symptom. Fix is a
+  **semantics decision (maintainer, §4):** "last 7 days" should almost certainly
+  mean the last **7 calendar days** — cutoff at the **start of `(today − 6 days)`
+  in local time** (using the same injected `toLocal` the day-grouping already
+  uses), which caps distinct days at 7 and also tightens the occasions window.
+  Start the fix with a failing `weeklyCoverage` test reproducing 8/7
+  (`weekly_coverage.dart` / `weekly_coverage_test.dart`), per §7. Investigate in
+  the S9b session.
+
 ## Working reminders
 
 - Vertical slices, one branch per slice; a slice over ~400 lines of diff was two.
