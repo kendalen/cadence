@@ -6,7 +6,8 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-25 (trends-chart T2 — BP trends screen)
+**Last updated:** 2026-08-25 (trends-chart T3 — pulse chart; the trends chart
+T1→T3 is now complete)
 
 ---
 
@@ -726,13 +727,37 @@ A **polish round followed on-device feedback** (three follow-up commits on
   responsive variant — flagged; could unify on `ToggleButtons` both ways if the
   maintainer prefers, at the cost of the portrait look.
 
-**Next: trends chart T3** (its own plan/branch when picked up):
-- **T3 — pulse chart.** Chart B below Chart A, reusing `TrendLineChart` with a
-  single pulse series (`TrendChartSeries` already supports a nullable `valueOf`
-  so bucketed points with no pulse are skipped). Needs its own pulse
-  line-colour token in `cadence_colors.dart` (a muted slate proposed, clear of
-  teal/ochre/clay — maintainer's call) and `trendsChartPulse` ARB strings
-  (EN + IT). Small.
+**Done (2026-08-25): trends chart — T3 (pulse chart) + two shaping follow-ups.**
+The trends chart (T1 domain → T2 BP screen → T3 pulse) is now complete. On
+`main`, pushed (HEAD `d41d0f7`), **240 tests green**, and **device-verified on the
+Redmi** (release update over the existing diary, data intact). Branch
+`t3-pulse-chart`.
+- **T3 — pulse chart.** A single pulse series (its own **muted slate**
+  `CadenceColors.pulse` `#556B7A` — maintainer to retune the hex to taste)
+  reusing the series-agnostic `TrendLineChart`. Buckets with no pulse are
+  skipped (nullable `valueOf`), never drawn as zero. No new domain or data — T1
+  already computed `TrendPoint.pulse`. The pulse **tab label reuses `fieldPulse`**
+  (no redundant `trendsChartPulse` ARB key was added — deliberate, flagged).
+- **Tabbed layout (maintainer ask, replaced the initial stacked charts).** BP
+  and pulse are now **two tabs** (`TabBar`/`TabBarView` on a `TabController` held
+  on the State so the tab survives control changes + rotation), with the shared
+  range/time-of-day controls above them — one chart fills the space instead of
+  two crowding the short landscape height. When the range holds no recorded
+  pulse the pulse tab shows a calm **`trendsNoPulse`** message (new EN+IT string)
+  rather than an empty axis. The screen-level empty state (no occasions at all)
+  is unchanged, so the empty golden still holds.
+- **7-day view is per-occasion (maintainer ask).** The week range now plots
+  **one point per occasion** instead of one daily mean, so a day's morning +
+  evening readings (7-2-2's two-a-day) stay visible. Points sit at their **local
+  time** (a new `_civilDateTime` keeps h:m, DST-free) so same-day occasions
+  separate on the axis; the tooltip shows the time. A **`bucketSize ==
+  Duration.zero`** sentinel flags per-occasion to the chart. 30/90/All keep the
+  daily/adaptive averaging; applies to every time-of-day filter. Domain TDD
+  (per-occasion count, time-sort, filter still applies); the old week-window test
+  updated to the time-bearing point.
+- **Tooltip toggle (maintainer ask).** Re-tapping the pinned point dismisses its
+  tooltip; only a discrete `FlTapUpEvent` toggles, so one tap's down/up pair
+  can't cancel out, and dragging still scrubs.
 
 **Done (2026-08-25): coverage-card sand tint.** The pinned "Last 7 days" card
 now has a soft **sand** (`CadenceColors.sand` `#F3ECE4`) background so it reads
@@ -748,7 +773,12 @@ reading cards.
 
 ## Known issues (open)
 
-_(none)_
+- **Chart tooltip: a slightly-moving tap doesn't dismiss.** Re-tapping a pinned
+  point toggles its tooltip off, but a tap that drifts a few pixels reads as a
+  drag (a scrub), so it re-pins instead of closing. Minor; the maintainer saw it
+  on-device 2026-08-25 and deemed it fine for now. Fix when picked up: ignore a
+  touch whose movement is under a small threshold in `_onTouch`
+  (`trend_line_chart.dart`) so a near-stationary tap still counts as a tap.
 
 ## Known issues (resolved)
 
