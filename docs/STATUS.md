@@ -562,9 +562,8 @@ speaker) reviews the wording first, especially the §1 disclaimer/medical string
 Notes for that review:
 - **Register:** all strings use informal "tu"; the maintainer chose it, but this
   is the place to catch any string that reads better formally.
-- **Posture options** (`postureSitting`/`postureLying`) are masculine ("Seduto",
-  "Sdraiato") — Italian has no gender-neutral single word; flag if a different
-  phrasing is wanted for a mixed audience. "In piedi" is already invariant.
+- **Posture options** use both gender forms at the maintainer's call —
+  "Seduta/o", "Sdraiata/o" (feminine first); "In piedi" is already invariant.
 - **`pulse` → "Battito"** (not "Polso", which is reused for the wrist site) — a
   deliberate choice to avoid pulse/wrist confusion.
 - **Pre-existing English bug surfaced:** `removeReading` is defined **twice** in
