@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- The pinned "Last 7 days" coverage card now has a soft sand background, setting
+  the summary apart from the white reading cards below it. The tint is a neutral
+  warm colour, never a status colour — colouring it good/bad would cross the
+  no-verdict boundary (§1).
+
 ### Fixed
 
 - The "Remove" tooltip on a reading in the entry form showed "Remove this
