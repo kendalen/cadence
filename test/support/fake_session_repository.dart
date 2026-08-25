@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cadence/domain/core/result.dart';
 import 'package:cadence/domain/core/unit.dart';
 import 'package:cadence/domain/sessions/ids.dart';
+import 'package:cadence/domain/sessions/import_summary.dart';
 import 'package:cadence/domain/sessions/persistence_failure.dart';
 import 'package:cadence/domain/sessions/session.dart';
 import 'package:cadence/domain/sessions/session_repository.dart';
@@ -58,6 +59,31 @@ class FakeSessionRepository implements SessionRepository {
     }
     _sessions.add(List.of(added));
     return const Ok(unit);
+  }
+
+  /// When set, [importSessions] reports this instead of merging.
+  PersistenceFailure? refuseImportWith;
+
+  @override
+  Future<Result<ImportSummary, PersistenceFailure>> importSessions(
+    List<Session> sessions,
+  ) async {
+    final refusal = refuseImportWith;
+    if (refusal != null) {
+      return Err(refusal);
+    }
+    final storedIds = added.map((session) => session.id).toSet();
+    final fresh = sessions
+        .where((session) => !storedIds.contains(session.id))
+        .toList();
+    added.addAll(fresh);
+    _sessions.add(List.of(added));
+    return Ok(
+      ImportSummary(
+        added: fresh.length,
+        alreadyPresent: sessions.length - fresh.length,
+      ),
+    );
   }
 
   @override

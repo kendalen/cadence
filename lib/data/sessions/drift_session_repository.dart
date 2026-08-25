@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../domain/core/result.dart';
 import '../../domain/core/unit.dart';
 import '../../domain/sessions/ids.dart';
+import '../../domain/sessions/import_summary.dart';
 import '../../domain/sessions/persistence_failure.dart';
 import '../../domain/sessions/session.dart';
 import '../../domain/sessions/session_repository.dart';
@@ -82,6 +83,50 @@ class DriftSessionRepository implements SessionRepository {
       // Broad for the same reason as add: every way sqlite can refuse a write
       // is an expected failure the user must be told about, not a bug to crash
       // on. The cause is kept; Error still propagates.
+      return Err(WriteFailed(error));
+    }
+  }
+
+  @override
+  Future<Result<ImportSummary, PersistenceFailure>> importSessions(
+    List<Session> sessions,
+  ) async {
+    try {
+      return await _database.transaction(() async {
+        // The stored ids are read inside the transaction so the local-wins
+        // decision cannot race a concurrent write.
+        final storedIds = (await _database.select(_database.sessions).get())
+            .map((row) => row.id)
+            .toSet();
+
+        final fresh = sessions
+            .where((session) => !storedIds.contains(session.id.value))
+            .toList();
+
+        for (final session in fresh) {
+          await _database
+              .into(_database.sessions)
+              .insert(SessionsCompanion.insert(id: session.id.value));
+          await _database.batch(
+            (batch) => batch.insertAll(
+              _database.readings,
+              session.readings.map((r) => toReadingRow(r, session.id)),
+            ),
+          );
+        }
+
+        return Ok(
+          ImportSummary(
+            added: fresh.length,
+            alreadyPresent: sessions.length - fresh.length,
+          ),
+        );
+      });
+    } on Exception catch (error) {
+      // Broad for the same reason as add: any way sqlite can refuse a write is
+      // an expected failure to report, not a bug. The whole import is one
+      // transaction, so a failure leaves nothing imported. The cause is kept;
+      // Error still propagates.
       return Err(WriteFailed(error));
     }
   }

@@ -1,6 +1,7 @@
 import '../core/result.dart';
 import '../core/unit.dart';
 import 'ids.dart';
+import 'import_summary.dart';
 import 'persistence_failure.dart';
 import 'session.dart';
 
@@ -44,4 +45,17 @@ abstract interface class SessionRepository {
   /// for that. Returns [WriteFailed] if the store rejected the write, in which
   /// case nothing changed.
   Future<Result<Unit, PersistenceFailure>> update(Session session);
+
+  /// Merges [sessions] into the store by id, as one unit, and reports the
+  /// split.
+  ///
+  /// A session whose id is not yet stored is added; a session whose id is
+  /// already stored is left exactly as it is (local data wins on a clash —
+  /// import never overwrites). Used to restore a JSON backup (CLAUDE.md §5).
+  /// Returns an [ImportSummary] of how many were added versus already present,
+  /// or [WriteFailed] if the store rejected the write, in which case nothing
+  /// was imported.
+  Future<Result<ImportSummary, PersistenceFailure>> importSessions(
+    List<Session> sessions,
+  );
 }

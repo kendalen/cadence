@@ -8,6 +8,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- JSON backup import (S7b): an "Import backup" item in the readings-list
+  overflow menu restores occasions from a JSON backup file, picked through the
+  Android file picker (SAF). Merge is by occasion id and never overwrites — an
+  occasion already in the diary is left exactly as it is (local data wins) — so
+  the import is non-destructive; the confirmation states what will happen and
+  the summary reports how many new occasions were added. The reader is forgiving
+  but honest (CLAUDE.md §5): it ignores unknown fields, defaults missing optional
+  ones, treats an unknown context value as unrecorded, and skips a malformed
+  reading — but everything it cannot use is counted and surfaced, never dropped
+  silently. A file that is not a Cadence backup, cannot be parsed, or was written
+  by a newer version of the format is refused with a plain reason. Adds
+  `file_selector` (BSD-3) for the file pick. New domain `ImportSummary` and
+  `SessionRepository.importSessions` (merge-by-id in one transaction).
 - JSON backup export (S7a): an "Export backup" item in the readings-list
   overflow menu saves the whole diary as a versioned JSON document and opens the
   Android share sheet. The format carries a top-level `format`/`version` and each

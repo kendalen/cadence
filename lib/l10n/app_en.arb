@@ -253,5 +253,51 @@
   "exportBackupFailed": "Couldn''t export backup.",
   "@exportBackupFailed": {
     "description": "Shown when preparing or sharing the backup failed."
+  },
+  "importBackup": "Import backup",
+  "@importBackup": {
+    "description": "Menu item in the readings list that restores occasions from a JSON backup file."
+  },
+  "importBackupConfirmTitle": "Import backup?",
+  "@importBackupConfirmTitle": {
+    "description": "Title of the dialog shown after a backup file is read, before its occasions are added."
+  },
+  "importBackupConfirmBody": "{count, plural, =1{This backup has 1 occasion.} other{This backup has {count} occasions.}} Add it to your diary? Occasions already recorded won''t change.",
+  "@importBackupConfirmBody": {
+    "description": "Body of the import confirmation dialog: how many occasions the file holds, and that importing never changes existing data.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "importBackupConfirmAction": "Import",
+  "@importBackupConfirmAction": {
+    "description": "Confirms the import in the confirmation dialog."
+  },
+  "importBackupSummary": "{count, plural, =0{No new occasions to add.} =1{Added 1 occasion.} other{Added {count} occasions.}}",
+  "@importBackupSummary": {
+    "description": "Shown after an import, reporting how many new occasions were added (those already present are left unchanged).",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "importBackupSomeSkipped": "Some entries couldn''t be read and were left out.",
+  "@importBackupSomeSkipped": {
+    "description": "Appended to the import summary when some readings or occasions in the file could not be read."
+  },
+  "importBackupNotABackup": "This file isn''t a Cadence backup.",
+  "@importBackupNotABackup": {
+    "description": "Shown when the chosen file is valid but is not a Cadence backup."
+  },
+  "importBackupUnreadable": "This file couldn''t be read as a backup.",
+  "@importBackupUnreadable": {
+    "description": "Shown when the chosen file could not be parsed at all."
+  },
+  "importBackupTooNew": "This backup was made by a newer version of Cadence.",
+  "@importBackupTooNew": {
+    "description": "Shown when the backup's format version is newer than this build can read."
+  },
+  "importBackupFailed": "Couldn''t import the backup.",
+  "@importBackupFailed": {
+    "description": "Shown when storing the imported occasions failed."
   }
 }

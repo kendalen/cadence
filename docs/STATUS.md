@@ -330,12 +330,55 @@ the durable contract S7b must read.
   actual share-sheet hand-off wants an on-device check when convenient (the
   codec + cubit are covered by the suite). Verify on the Redmi as with S6.
 
-**Next up — S7b (JSON backup import).** The restorable half: read a backup file
-back (SAF file-pick), tolerate unknown fields, supply defaults for missing ones,
-and **never silently drop data — on ambiguity report and ask** (§5). Its own
-brainstorm, where the real open question is **merge vs replace** conflict
-semantics (a maintainer/domain call, §10). S7a is on branch `s7a-backup-export`;
-merge it before starting S7b.
+**Done (2026-08-25): S7b — JSON backup import.** The restorable half. An
+"Import backup" overflow-menu item picks a `.json` (Android SAF), reads and
+validates it **before** writing, confirms, merges, and reports.
+- **Maintainer decisions (brainstorm):** **merge by id, local wins on clash**
+  (the stable ids were built for exactly this — `ids.dart`: "reconcile identity
+  rather than duplicate it"); **refuse a newer top-level `version`** rather than
+  guess a future shape; **`file_selector`** (flutter.dev, BSD-3) for the pick.
+  Replace-all was offered and rejected as destructive.
+- **Tolerant reader (§5, never silently drop):** pure `decodeBackup(String) →
+  BackupParse` in `lib/data/backup/backup_decoder.dart` (sealed: `BackupParsed`
+  with `skippedReadings`/`skippedSessions` counts, or `BackupRejected(reason)`
+  where reason ∈ {`notABackup`, `unreadable`, `tooNew`} → UI maps to a localized
+  string, never a raw exception). Ignores unknown fields, defaults missing
+  optionals, treats an unknown enum value as unrecorded, skips a reading missing
+  a required field (id/systolic/diastolic/takenAt) and a session left with no
+  usable readings — all **counted**. `jsonDecode` runs inside, so a parse error
+  becomes `unreadable`.
+- **Merge:** new domain value `ImportSummary(added, alreadyPresent)`;
+  `SessionRepository.importSessions(List<Session>) → Result<ImportSummary, …>`.
+  Drift impl reads stored ids **inside one transaction** and inserts only the
+  new-id sessions (session row + readings batch, like `add`), so local-wins is
+  race-free and a failure imports nothing. Fake mirrors it.
+- **UI:** `pick_backup.dart` isolates `file_selector` (mirrors `share_backup`),
+  returns the file text or null on cancel. The overflow menu now has Export +
+  Import (a `_MenuAction` enum). Handler: pick → decode → on reject a plain
+  snackbar → confirm dialog stating the file's occasion count and that existing
+  data won't change (§6 confirms an import; reuses the shared `cancel` string) →
+  `importSessions` → summary snackbar ("Added N occasions", + "some couldn't be
+  read" when anything was skipped). **No cubit pass-through** — import writes to
+  the store and the list already watches it, so it refreshes reactively; the
+  handler calls the repository directly (like the entry `create:` does). This is
+  the one deliberate deviation from the spec (which had a thin cubit method) —
+  lazier, same behaviour.
+- **Tests:** the **round-trip** `encodeBackup → jsonEncode → decodeBackup`
+  (headline, both halves now exist), decoder tolerance (not-a-backup, tooNew,
+  bad JSON, missing-required skipped+counted, unknown enum nulled, unknown fields
+  ignored, all-bad-readings session skipped), and repo `importSessions` (adds
+  new, skips existing id unchanged, empty list). **187 green** (+12). No schema
+  change → no migration snapshot. Own branch `s7b-backup-import` (off
+  `s7a-backup-export`). Spec:
+  `docs/superpowers/specs/2026-08-25-json-backup-import-design.md`.
+- **Not yet on a device** — `file_selector` + `share_plus` both have native
+  code; the whole S7 round-trip (export a backup, reinstall/clear, import it
+  back) wants one on-device pass on the Redmi. That's the maintainer's planned
+  test of "the entire update".
+
+**Next up — S8 (CSV export).** Export-only, for handing a doctor the numbers;
+joins the same overflow menu. PDF stays a 1.x fast-follow (roadmap). S7a is on
+`s7a-backup-export`, S7b on `s7b-backup-import` (off it) — merge both to `main`.
 
 ## Working reminders
 

@@ -3,6 +3,7 @@ import 'package:cadence/data/sessions/drift_session_repository.dart';
 import 'package:cadence/domain/core/result.dart';
 import 'package:cadence/domain/core/unit.dart';
 import 'package:cadence/domain/sessions/ids.dart';
+import 'package:cadence/domain/sessions/import_summary.dart';
 import 'package:cadence/domain/sessions/persistence_failure.dart';
 import 'package:cadence/domain/sessions/reading.dart';
 import 'package:cadence/domain/sessions/reading_context.dart';
@@ -259,5 +260,63 @@ void main() {
 
     expect(stored.read<String>('kind'), 'text');
     expect(stored.read<String>('taken_at'), startsWith('2026-08-23T06:40'));
+  });
+
+  group('importSessions', () {
+    test('adds every session when the store is empty', () async {
+      final result = await repository.importSessions([
+        sessionOf('s1', [readingOf('r1', morning)]),
+        sessionOf('s2', [readingOf('r2', evening)]),
+      ]);
+
+      expect(
+        result,
+        const Ok<ImportSummary, PersistenceFailure>(
+          ImportSummary(added: 2, alreadyPresent: 0),
+        ),
+      );
+      final ids = (await repository.watchAll().first)
+          .map((session) => session.id.value)
+          .toList();
+      expect(ids, containsAll(['s1', 's2']));
+    });
+
+    test(
+      'skips a session whose id already exists, leaving it unchanged',
+      () async {
+        await repository.add(
+          sessionOf('s1', [readingOf('r1', morning, systolic: 120)]),
+        );
+
+        final result = await repository.importSessions([
+          // Same id, different content: local wins, so this is ignored.
+          sessionOf('s1', [readingOf('r1-new', morning, systolic: 200)]),
+          sessionOf('s2', [readingOf('r2', evening)]),
+        ]);
+
+        expect(
+          result,
+          const Ok<ImportSummary, PersistenceFailure>(
+            ImportSummary(added: 1, alreadyPresent: 1),
+          ),
+        );
+        final s1 = (await repository.watchAll().first).firstWhere(
+          (session) => session.id.value == 's1',
+        );
+        expect(s1.readings.single.id.value, 'r1');
+        expect(s1.readings.single.systolic, 120);
+      },
+    );
+
+    test('imports nothing and reports zero for an empty list', () async {
+      final result = await repository.importSessions([]);
+
+      expect(
+        result,
+        const Ok<ImportSummary, PersistenceFailure>(
+          ImportSummary(added: 0, alreadyPresent: 0),
+        ),
+      );
+    });
   });
 }

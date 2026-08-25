@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../data/backup/backup_decoder.dart';
+import '../../../domain/core/result.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/weekly_coverage.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
+import '../backup/pick_backup.dart';
 import '../backup/share_backup.dart';
 import '../detail/session_detail_screen.dart';
 import '../entry/session_entry_screen.dart';
@@ -89,18 +92,37 @@ class SessionListScreen extends StatelessWidget {
   }
 }
 
-/// The app-bar overflow (⋮) menu. Home of the data-out actions; CSV export
-/// (S8) joins it later, which is why a single item still lives in a menu.
+/// What the overflow menu can do.
+enum _MenuAction {
+  /// Save the whole diary as a JSON backup and share it.
+  export,
+
+  /// Restore occasions from a JSON backup file.
+  import,
+}
+
+/// The app-bar overflow (⋮) menu, home of the data in/out actions. CSV export
+/// (S8) joins it later.
 class _OverflowMenu extends StatelessWidget {
   const _OverflowMenu();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return PopupMenuButton<void>(
-      onSelected: (_) => unawaited(_exportBackup(context)),
+    return PopupMenuButton<_MenuAction>(
+      onSelected: (action) => unawaited(switch (action) {
+        _MenuAction.export => _exportBackup(context),
+        _MenuAction.import => _importBackup(context),
+      }),
       itemBuilder: (context) => [
-        PopupMenuItem<void>(child: Text(l10n.exportBackup)),
+        PopupMenuItem(
+          value: _MenuAction.export,
+          child: Text(l10n.exportBackup),
+        ),
+        PopupMenuItem(
+          value: _MenuAction.import,
+          child: Text(l10n.importBackup),
+        ),
       ],
     );
   }
@@ -131,6 +153,93 @@ class _OverflowMenu extends StatelessWidget {
       messenger.showSnackBar(SnackBar(content: Text(l10n.exportBackupFailed)));
     }
   }
+
+  /// Picks a backup file, and — after confirmation — merges its occasions in.
+  ///
+  /// The file is read and validated before anything is written, so a bad file
+  /// is refused with a plain reason (never a raw exception, CLAUDE.md §6) and
+  /// the confirm step states what will happen (§6 confirms an import). Merge is
+  /// by id and never overwrites (§5), so the confirmation informs rather than
+  /// guards against loss; the summary afterwards reports what was added and
+  /// notes if anything in the file could not be read (§5, never drop silently).
+  Future<void> _importBackup(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final repository = context.read<SessionRepository>();
+
+    final String? contents;
+    try {
+      contents = await pickBackupContents();
+    } on Exception {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.importBackupUnreadable)),
+      );
+      return;
+    }
+    if (contents == null) {
+      return; // The user cancelled the picker.
+    }
+
+    final BackupParsed parsed;
+    switch (decodeBackup(contents)) {
+      case BackupRejected(:final reason):
+        messenger.showSnackBar(
+          SnackBar(content: Text(_rejectionMessage(l10n, reason))),
+        );
+        return;
+      case final BackupParsed result:
+        parsed = result;
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.importBackupConfirmTitle),
+        content: Text(l10n.importBackupConfirmBody(parsed.sessions.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.importBackupConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    switch (await repository.importSessions(parsed.sessions)) {
+      case Ok(:final value):
+        final message = StringBuffer(l10n.importBackupSummary(value.added));
+        if (parsed.skippedReadings > 0 || parsed.skippedSessions > 0) {
+          message
+            ..write(' ')
+            ..write(l10n.importBackupSomeSkipped);
+        }
+        messenger.showSnackBar(SnackBar(content: Text(message.toString())));
+      case Err():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.importBackupFailed)),
+        );
+    }
+  }
+
+  /// The message for a backup that could not be read at all.
+  String _rejectionMessage(
+    AppLocalizations l10n,
+    BackupRejectedReason reason,
+  ) => switch (reason) {
+    BackupRejectedReason.notABackup => l10n.importBackupNotABackup,
+    BackupRejectedReason.unreadable => l10n.importBackupUnreadable,
+    BackupRejectedReason.tooNew => l10n.importBackupTooNew,
+  };
 }
 
 /// What the list shows before anything has been recorded.
