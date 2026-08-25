@@ -225,6 +225,11 @@ void main() {
         ),
       );
       await tester.pump();
+      await tester.dragUntilVisible(
+        find.text('Save'),
+        find.byKey(const Key('readingFormList')),
+        const Offset(0, -200),
+      );
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
@@ -299,6 +304,41 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.added.single.readings, hasLength(2));
+    });
+  });
+
+  group('add another reading', () {
+    testWidgets('appends a reading, seeded from the latest one', (
+      tester,
+    ) async {
+      final session = Session(
+        id: const SessionId('s1'),
+        readings: [reading('r1', 120, 80, pulse: 70)],
+      );
+      repository.added.add(session);
+      await pump(tester, session);
+
+      await tester.tap(find.text('Add another reading'));
+      await tester.pumpAndSettle();
+      // The single-reading form, opened for an add.
+      expect(find.text('Add a reading'), findsOneWidget);
+
+      // Save the seeded values as-is.
+      await tester.dragUntilVisible(
+        find.text('Save'),
+        find.byKey(const Key('readingFormList')),
+        const Offset(0, -200),
+      );
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      final readings = repository.added.single.readings;
+      expect(readings, hasLength(2));
+      // Seeded from the latest reading: the new one carries its numbers…
+      expect(readings.last.systolic, 120);
+      expect(readings.last.diastolic, 80);
+      // …but gets its own identity, not a copy of the original's id.
+      expect(readings.last.id, isNot(const ReadingId('r1')));
     });
   });
 }

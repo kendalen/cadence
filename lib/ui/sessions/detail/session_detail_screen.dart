@@ -9,7 +9,7 @@ import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
-import '../entry/edit_reading_screen.dart';
+import '../entry/reading_form_screen.dart';
 import 'reading_detail.dart';
 import 'session_detail_cubit.dart';
 
@@ -87,6 +87,14 @@ class _SessionDetailView extends StatelessWidget {
                 ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                child: OutlinedButton.icon(
+                  onPressed: () => _addReading(context),
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.addAnotherReading),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: OutlinedButton.icon(
                   onPressed: () => _confirmAndDelete(context),
                   icon: const Icon(Icons.delete_outline),
@@ -168,13 +176,14 @@ class _SessionDetailView extends StatelessWidget {
         ),
       );
 
-  /// Opens the editor for [reading] and, if it comes back corrected, saves it.
+  /// Opens the form for [reading] and, if it comes back corrected, saves it.
   ///
-  /// The editor returns the corrected reading (same id, see [Reading.withId])
-  /// or `null` if the user backs out. On success the store change flows back
-  /// through the cubit's watch and refreshes the display; a write failure is
-  /// surfaced and the readings are left as they were. Handles that outlive the
-  /// editor route are captured before the await.
+  /// The form returns the corrected reading with a fresh id, re-stamped here
+  /// with [reading]'s own id ([Reading.withId]) so the store updates it rather
+  /// than adding a new one; `null` if the user backs out. On success the store
+  /// change flows back through the cubit's watch and refreshes the display; a
+  /// write failure is surfaced and the readings are left as they were. Handles
+  /// that outlive the form route are captured before the await.
   Future<void> _editReading(BuildContext context, Reading reading) async {
     final cubit = context.read<SessionDetailCubit>();
     final messenger = ScaffoldMessenger.of(context);
@@ -182,16 +191,69 @@ class _SessionDetailView extends StatelessWidget {
 
     final edited = await Navigator.of(context).push<Reading>(
       MaterialPageRoute<Reading>(
-        builder: (context) => EditReadingScreen(reading),
+        builder: (context) =>
+            ReadingFormScreen(initial: reading, title: l10n.editReading),
       ),
     );
     if (edited == null) {
       return;
     }
 
-    if (await cubit.save(cubit.state.withReadingReplaced(edited)) is Err) {
+    final updated = cubit.state.withReadingReplaced(edited.withId(reading.id));
+    if (await cubit.save(updated) is Err) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.errorSaveFailed)));
     }
+  }
+
+  /// Adds another reading to this occasion — for the reading a user meant to
+  /// log but saved too soon (a common slip for the older audience the app
+  /// serves, roadmap ease-of-use principle).
+  ///
+  /// The form opens seeded from the occasion's most recent reading (its numbers
+  /// and context carried over, note cleared, time about a minute later but never
+  /// in the future), all editable. The new reading keeps the form's fresh id
+  /// and is appended. Handles that outlive the form route are captured before
+  /// the await.
+  Future<void> _addReading(BuildContext context) async {
+    final cubit = context.read<SessionDetailCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    final added = await Navigator.of(context).push<Reading>(
+      MaterialPageRoute<Reading>(
+        builder: (context) => ReadingFormScreen(
+          initial: _seedForAddedReading(cubit.state),
+          title: l10n.addReading,
+        ),
+      ),
+    );
+    if (added == null) {
+      return;
+    }
+
+    if (await cubit.save(cubit.state.withReadingAdded(added)) is Err) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errorSaveFailed)));
+    }
+  }
+
+  /// The values a freshly added reading opens on: the occasion's latest reading
+  /// carried over (note dropped, since a note belongs to the reading it was
+  /// written for), timed about a minute after it but never in the future. The
+  /// id is a placeholder — the form mints the real one on save.
+  Reading _seedForAddedReading(Session session) {
+    final last = session.readingsByTime.last;
+    final nowUtc = DateTime.now().toUtc();
+    final aMinuteLater = last.takenAt.add(const Duration(minutes: 1));
+    return Reading(
+      id: const ReadingId('seed'),
+      systolic: last.systolic,
+      diastolic: last.diastolic,
+      pulse: last.pulse,
+      takenAt: aMinuteLater.isAfter(nowUtc) ? nowUtc : aMinuteLater,
+      site: last.site,
+      posture: last.posture,
+      medicationTiming: last.medicationTiming,
+    );
   }
 
   /// Removes one reading from a multi-reading occasion, with an undo.

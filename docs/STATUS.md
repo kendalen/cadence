@@ -64,7 +64,7 @@ stand and what's next*.
   readings-list empty state, plus `SessionDetailScreen` delete-flow behaviour
   tests (confirm, cancel, delete + undo, restore, failure) and the
   `SessionRepository.delete` data tests (removes + cascades, absent-session
-  no-op). All green (146).
+  no-op), plus S5c add-reading + Session.withReadingAdded + the shared TakenAtField extraction. All green (150).
 - **Verified running:** the theme + S4 were run and eyeballed on a **physical
   Android device** (Redmi 2312DRA50G, Android 16 / API 36) on 2026-08-25 — the
   warm theme, Hanken type, big teal steppers and teal Save button all render
@@ -231,8 +231,28 @@ the readings list renders each occasion as a **card** (matching the approved
 design) instead of a flat `ListTile` — colour/border/radius/spacing all from the
 theme's `cardTheme`, so nothing hardcoded.
 
-**Next up — S6 (7-2-2 coverage), see the roadmap.** Both S5a and S5b are on
-device-untested branches; confirm on the physical device before/after merge.
+**Done (2026-08-25): S5c — add-to-occasion + editable time (maintainer ask).**
+Two follow-ups after eyeballing S5b on the device:
+- **Add another reading** to a saved occasion — an "Add another reading" button
+  on `SessionDetailScreen` for the reading a user meant to log but saved too
+  soon (a common slip for the older audience). New domain `Session.withReadingAdded`
+  (TDD). It opens the reading form seeded from the occasion's latest reading
+  (numbers + context carried, note cleared, time ~1 min later, clamped to now),
+  and appends on save.
+- **Editable time** in the reading form — not just the values. The entry form's
+  time field + date/time picker were extracted into a shared `TakenAtField`
+  (+ `pickTakenAt`) so time is picked one way everywhere (§8, no second way);
+  the entry form was refactored onto it. S5b's `EditReadingScreen` was
+  generalised into `ReadingFormScreen` (title param, editable `takenAt`), serving
+  both edit and add — it pops a validated `Reading` with a **fresh** id and the
+  caller decides identity (edit re-stamps via `Reading.withId`; add keeps the
+  fresh id). S5a/S5b's earlier nav-bar-inset fix (`withSystemBottomInset`) also
+  applies here.
+- Own branch `s5c-add-and-time-edit` (off `main`, which already had S5a+S5b+icon).
+  150 tests green. **All of S5 (a/b/c) is now on `main`.**
+
+**Next up — S6 (7-2-2 coverage), see the roadmap.** S5 is merged and pushed;
+device-verify the full edit/add/delete flow when convenient.
 
 ## Working reminders
 

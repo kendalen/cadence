@@ -208,6 +208,19 @@ void main() {
     });
   });
 
+  group('Session.withReadingAdded', () {
+    test('appends the reading, keeping the id and the existing ones', () {
+      final first = readingOf(id: 'r1');
+      final session = sessionOf([first]);
+
+      final added = readingOf(id: 'r2');
+      final result = session.withReadingAdded(added);
+
+      expect(result.readings, [first, added]);
+      expect(result.id, session.id);
+    });
+  });
+
   group('Session.withoutReading', () {
     test('drops the reading with the id, keeping the others in order', () {
       final first = readingOf(id: 'r1');

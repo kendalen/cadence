@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 
 import '../../../domain/sessions/id_generator.dart';
 import '../../../domain/sessions/reading.dart';
@@ -18,6 +17,7 @@ import 'number_stepper.dart';
 import 'reading_context_details.dart';
 import 'session_entry_cubit.dart';
 import 'session_entry_state.dart';
+import 'taken_at_field.dart';
 
 /// The form for recording one reading.
 class SessionEntryScreen extends StatelessWidget {
@@ -183,7 +183,7 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
                     setState(() => _medicationTiming = value),
               ),
               const SizedBox(height: 8),
-              _TakenAtField(
+              TakenAtField(
                 takenAt: state.takenAt,
                 error: messageForField(ReadingField.takenAt, failures, l10n),
                 onChange: () => _pickTakenAt(state.takenAt),
@@ -270,67 +270,12 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
     ),
   );
 
-  /// Asks for a date, then a time, and reports the result to the cubit.
-  ///
-  /// The date picker cannot go past today; a time later today is still
-  /// selectable, which `ReadingInput.validate` rejects.
+  /// Asks for a moment via the shared picker and reports it to the cubit.
   Future<void> _pickTakenAt(DateTime current) async {
-    final now = DateTime.now();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: current,
-      firstDate: DateTime(now.year - 5),
-      lastDate: now,
-    );
-    if (date == null || !mounted) {
+    final picked = await pickTakenAt(context, current);
+    if (picked == null || !mounted) {
       return;
     }
-
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(current),
-    );
-    if (time == null || !mounted) {
-      return;
-    }
-
-    context.read<SessionEntryCubit>().takenAtChanged(
-      DateTime(date.year, date.month, date.day, time.hour, time.minute),
-    );
-  }
-}
-
-/// The chosen date and time, with a button to change it.
-class _TakenAtField extends StatelessWidget {
-  const _TakenAtField({
-    required this.takenAt,
-    required this.error,
-    required this.onChange,
-  });
-
-  final DateTime takenAt;
-  final String? error;
-  final VoidCallback onChange;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context).toString();
-    final formatted = DateFormat.yMMMd(locale).add_jm().format(takenAt);
-
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(l10n.takenAtLabel),
-      subtitle: Text(
-        error == null ? formatted : '$formatted\n${error!}',
-        style: error == null
-            ? null
-            : TextStyle(color: Theme.of(context).colorScheme.error),
-      ),
-      trailing: TextButton(
-        onPressed: onChange,
-        child: Text(l10n.changeTakenAt),
-      ),
-    );
+    context.read<SessionEntryCubit>().takenAtChanged(picked);
   }
 }

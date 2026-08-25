@@ -70,6 +70,14 @@ final class Session extends Equatable {
     );
   }
 
+  /// This session with [reading] appended to its readings, everything else
+  /// kept.
+  ///
+  /// Used to add a reading to an occasion after it was first saved — e.g. the
+  /// second reading of a pair the user meant to log but saved too soon.
+  Session withReadingAdded(Reading reading) =>
+      Session(id: id, readings: [...readings, reading]);
+
   /// This session without the reading identified by [id], or `null` when that
   /// was its only reading.
   ///

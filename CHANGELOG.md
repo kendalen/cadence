@@ -164,3 +164,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The readings list now shows each occasion as a card, matching the approved
   visual design; colour, border, radius and spacing come from the theme's
   `cardTheme`.
+- Add another reading to a saved occasion (S5c): an "Add another reading" button
+  on the session detail screen appends a reading to an occasion that was saved
+  too soon — a common slip for the audience the app serves. It opens the
+  single-reading form seeded from the occasion's latest reading (numbers and
+  context carried over, note cleared, time about a minute later), all editable,
+  and appends on save (`Session.withReadingAdded`).
+- The reading form now lets the **time** be edited too, not just the values —
+  the same date/time picker the entry form uses, extracted into a shared
+  `TakenAtField` so a reading's time is picked one way everywhere (the entry
+  edit screen from S5b is generalised into `ReadingFormScreen`, serving both
+  edit and add; the reading's identity is decided by the caller).

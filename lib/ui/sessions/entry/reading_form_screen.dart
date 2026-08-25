@@ -12,42 +12,55 @@ import '../../system_insets.dart';
 import '../validation_messages.dart';
 import 'number_stepper.dart';
 import 'reading_context_details.dart';
+import 'taken_at_field.dart';
 
-/// Corrects one already-recorded [Reading].
+/// A form for one reading — used both to correct an existing reading and to add
+/// another reading to an occasion after it was first saved.
 ///
-/// A focused form over the same steppers, context pickers and validation as the
-/// entry screen — but for an existing reading, so there is no banking, no
-/// history seed, and no "add another". Saving validates the values and pops the
-/// corrected reading back to the caller (`null` if the user backs out); the
-/// caller writes it to the store. The reading keeps its identity and its
-/// original time — only its values and context are edited here (editing the
-/// time is not part of this slice).
-class EditReadingScreen extends StatefulWidget {
-  /// Edits [reading].
-  const EditReadingScreen(this.reading, {super.key});
+/// The same steppers, context pickers, time picker and validation as the entry
+/// screen, but for a single reading: no banking, no history seed, no "add
+/// another". It seeds its fields from [initial] and, on save, pops the
+/// validated [Reading]. The popped reading carries a **fresh** id: the caller
+/// decides identity — keeping [initial]'s id (via [Reading.withId]) to replace
+/// it, or using the fresh one to add a new reading. `null` is popped if the
+/// user backs out.
+class ReadingFormScreen extends StatefulWidget {
+  /// Edits or adds a reading, seeded from [initial], under the app-bar [title].
+  const ReadingFormScreen({
+    required this.initial,
+    required this.title,
+    super.key,
+  });
 
-  /// The reading to correct.
-  final Reading reading;
+  /// The values the form opens on.
+  final Reading initial;
+
+  /// The app-bar title (e.g. "Edit reading" or "Add a reading").
+  final String title;
 
   @override
-  State<EditReadingScreen> createState() => _EditReadingScreenState();
+  State<ReadingFormScreen> createState() => _ReadingFormScreenState();
 }
 
-class _EditReadingScreenState extends State<EditReadingScreen> {
+class _ReadingFormScreenState extends State<ReadingFormScreen> {
   late final _systolic = TextEditingController(
-    text: '${widget.reading.systolic}',
+    text: '${widget.initial.systolic}',
   );
   late final _diastolic = TextEditingController(
-    text: '${widget.reading.diastolic}',
+    text: '${widget.initial.diastolic}',
   );
   late final _pulse = TextEditingController(
-    text: widget.reading.pulse?.toString() ?? '',
+    text: widget.initial.pulse?.toString() ?? '',
   );
-  late final _notes = TextEditingController(text: widget.reading.notes ?? '');
+  late final _notes = TextEditingController(text: widget.initial.notes ?? '');
 
-  late MeasurementSite? _site = widget.reading.site;
-  late Posture? _posture = widget.reading.posture;
-  late MedicationTiming? _medicationTiming = widget.reading.medicationTiming;
+  late MeasurementSite? _site = widget.initial.site;
+  late Posture? _posture = widget.initial.posture;
+  late MedicationTiming? _medicationTiming = widget.initial.medicationTiming;
+
+  /// The chosen moment, in local time for the picker and display; converted to
+  /// UTC by [ReadingInput.validate] on save.
+  late DateTime _takenAt = widget.initial.takenAt.toLocal();
 
   List<ValidationFailure> _failures = const [];
 
@@ -65,8 +78,9 @@ class _EditReadingScreenState extends State<EditReadingScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.editReading)),
+      appBar: AppBar(title: Text(widget.title)),
       body: ListView(
+        key: const Key('readingFormList'),
         padding: withSystemBottomInset(context, const EdgeInsets.all(16)),
         children: [
           NumberStepper(
@@ -117,6 +131,12 @@ class _EditReadingScreenState extends State<EditReadingScreen> {
             onPosture: (value) => setState(() => _posture = value),
             onMedication: (value) => setState(() => _medicationTiming = value),
           ),
+          const SizedBox(height: 8),
+          TakenAtField(
+            takenAt: _takenAt,
+            error: messageForField(ReadingField.takenAt, _failures, l10n),
+            onChange: _pickTakenAt,
+          ),
           const SizedBox(height: 24),
           FilledButton(onPressed: _save, child: Text(l10n.saveReading)),
         ],
@@ -124,18 +144,25 @@ class _EditReadingScreenState extends State<EditReadingScreen> {
     );
   }
 
-  /// Validates the edited values and, if they hold, pops the corrected reading.
+  Future<void> _pickTakenAt() async {
+    final picked = await pickTakenAt(context, _takenAt);
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() => _takenAt = picked);
+  }
+
+  /// Validates the values and, if they hold, pops the reading with a fresh id.
   ///
-  /// The reading keeps its identity: [ReadingInput.validate] mints a fresh id,
-  /// which is immediately re-stamped with the original via [Reading.withId] so
-  /// the store updates the same reading rather than adding a new one.
+  /// The fresh id is deliberate: the caller re-stamps it (for an edit) or keeps
+  /// it (for an add). See [ReadingFormScreen].
   void _save() {
     final input = ReadingInput(
       systolic: _systolic.text,
       diastolic: _diastolic.text,
       pulse: _pulse.text,
       notes: _notes.text,
-      takenAt: widget.reading.takenAt,
+      takenAt: _takenAt,
       site: _site,
       posture: _posture,
       medicationTiming: _medicationTiming,
@@ -149,7 +176,7 @@ class _EditReadingScreenState extends State<EditReadingScreen> {
       case Err(:final error):
         setState(() => _failures = error);
       case Ok(:final value):
-        Navigator.of(context).pop(value.withId(widget.reading.id));
+        Navigator.of(context).pop(value);
     }
   }
 }
