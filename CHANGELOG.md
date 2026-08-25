@@ -27,7 +27,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   icon on the readings list. Two segmented controls choose the range (7 / 30 /
   90 days / All) and the time of day (all / morning / evening); the chart draws a
   faint per-day scatter behind bold averaged systolic and diastolic lines, with a
-  legend and tap-to-tooltips. Neutral lines only — no threshold, no reference
+  legend and a tap-to-pin tooltip. In landscape the controls move to a compact
+  vertical side rail so the chart gets the width. Neutral lines only — no threshold, no reference
   range, no good/bad colour, no verdict (§1). Adds the `fl_chart` dependency
   (MIT, verified in the resolved package's LICENSE).
 - Trend-series domain aggregation (`buildTrendSeries`): range windowing,

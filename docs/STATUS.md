@@ -692,12 +692,39 @@ landscape.
   green** (+3). No schema change → no migration. Own branch
   `t2-bp-trends-screen`. Spec:
   `docs/superpowers/specs/2026-08-25-trends-chart-design.md`.
-- **Kept within the §8 budget** — did not split; `TrendLineChart` (the shared,
-  T3-ready seam) and the screen are separate files.
-- **Not yet run on a device** — the chart's real rendering (and whether the
-  4-segment range control overflows on a narrow phone at a large font scale)
-  wants an on-device eyeball; the behaviour tests cover the logic. Verify on the
-  Redmi as usual.
+- **Kept within the §8 budget** — the feature landed as **two commits** on
+  `t2-bp-trends-screen` (shared `TrendLineChart` + `fl_chart` + strings; then the
+  screen wired in), fast-forwarded to `main` + pushed.
+- **App-bar icon:** `Icons.stacked_line_chart` (two-line motif for sys/dia;
+  deliberately not `trending_up` — a directional arrow would read as a verdict,
+  §1).
+
+**Verified on the physical device** (Redmi 2312DRA50G) 2026-08-25, after a
+same-key release update (data intact): the chart renders correctly with real
+data, the range control **fits without overflow** at default font, and the
+Italian strings ("Andamento", "Pressione", "Sistolica/Diastolica") read well.
+A **polish round followed on-device feedback** (three follow-up commits on
+`main`, ending HEAD `7c4ffb8`), all still 236 green:
+- **Sticky tooltip.** Tap a point and its tooltip stays pinned until another is
+  tapped (dragging scrubs it) — the older audience can't read a tooltip they
+  must hold a finger on. `TrendLineChart` became a `StatefulWidget` holding the
+  selection; the tooltip is drawn from `showingTooltipIndicators` with
+  **`handleBuiltInTouches: false`** — the built-in touch handler was clearing its
+  tooltip on finger-up, which is what made two earlier attempts vanish on release.
+- **Clean y-axis.** The value axis is **snapped to whole multiples of its
+  gridline step** so every label sits on a gridline; the earlier padded min/max
+  printed odd numbers (67, 172) that overlapped the nearest gridline label
+  ("151" over "150", a doubled "75"). Also the faint daily scatter is no longer
+  drawn on top of the averaged line when they're identical (buckets one day wide).
+- **Tooltip dedup.** Fixed a bug where the first series value printed twice.
+- **Landscape layout.** Controls move to a **compact vertical `ToggleButtons`
+  side rail** (portrait keeps the horizontal `SegmentedButton`s the maintainer
+  approved); the option lists are single-sourced so the two layouts can't drift.
+  Buttons have a uniform min-width (short labels no longer sit narrow/left) and
+  the side column is scrollable so the lower buttons stay reachable on the short
+  landscape height. **Mild §8 note:** two selector widgets for one choice, a
+  responsive variant — flagged; could unify on `ToggleButtons` both ways if the
+  maintainer prefers, at the cost of the portrait look.
 
 **Next: trends chart T3** (its own plan/branch when picked up):
 - **T3 — pulse chart.** Chart B below Chart A, reusing `TrendLineChart` with a
