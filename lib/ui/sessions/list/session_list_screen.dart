@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../system_insets.dart';
 import '../detail/session_detail_screen.dart';
 import '../entry/session_entry_screen.dart';
 import 'session_list_cubit.dart';
@@ -33,6 +34,13 @@ class SessionListScreen extends StatelessWidget {
             SessionListLoaded(:final sessions) when sessions.isEmpty =>
               const _EmptyList(),
             SessionListLoaded(:final sessions) => ListView.builder(
+              // Room at the end so the last card can scroll clear of the
+              // floating "Add a reading" button (and the nav bar) instead of
+              // hiding behind it.
+              padding: withSystemBottomInset(
+                context,
+                const EdgeInsets.only(bottom: 88),
+              ),
               itemCount: sessions.length,
               itemBuilder: (context, index) => _SessionTile(sessions[index]),
             ),

@@ -19,6 +19,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The readings list now has room at its end so the last card scrolls clear of
+  the floating "Add a reading" button instead of hiding behind it.
 - Scrollable forms (entry, edit reading, session detail) now pad their bottom
   past the Android navigation bar, so the Save / Delete button at the end can no
   longer come to rest underneath the bar where it is hard to tap
