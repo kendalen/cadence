@@ -595,13 +595,24 @@ window and now exercise the one-line layout). No schema change → no migration.
 **On-device landscape check still pending** — rendering behind the bars can only
 be confirmed by eye; merged to `main`, verify on the Redmi as usual.
 
+**Done (2026-08-25): debug/release build separation.** Debug builds now install
+as a **separate app** — `net.kendalen.cadence.debug`, label "Cadence Debug",
+`versionName` `…-debug` — beside the release build, via `applicationIdSuffix`
++ a manifest `${appLabel}` placeholder in `android/app/build.gradle.kts`. Debug
+and release use different signing keys but shared the applicationId, so a debug
+install over the release app forced an uninstall — which (Auto Backup off, §5)
+wipes the on-device diary. Now they coexist with separate data. Release id/label
+unchanged. Prompted by a real scare this session: `flutter run` auto-uninstalled
+the release build; the **debug** build then showed an empty diary and looked like
+total data loss — but HyperOS **retains app data** and reinstalling the
+**same-signed release** build brought everything back. Lesson captured in the
+`device-install-release-hazard` memory: **for on-device checks, build/install the
+release build** (same key → data safe); only use debug with a backup or the new
+`.debug` id.
+
 ## Known issues (open)
 
-- **Landscape rendering not yet eyeballed on device.** The landscape pass (insets
-  + compact coverage card — see the Done entry above) is tests-green and merged to
-  `main`, but not yet confirmed on the Redmi: rendering behind the system bars can
-  only be checked by eye. Verify in landscape (the add/edit form, and the list)
-  at the next device run.
+_(none)_
 
 ## Known issues (resolved)
 
@@ -611,8 +622,11 @@ be confirmed by eye; merged to `main`, verify on the Redmi as usual.
   `removeReading` (entry form) + `removeReadingFromOccasion` (session detail);
   Italian split to match; regression test added.
 - **Landscape content under the system bars + coverage card too tall** — *fixed
-  2026-08-25, merged to `main`* by the landscape pass (see the Done entry above);
-  on-device confirmation still outstanding, tracked under open issues.
+  2026-08-25, merged to `main`* by the landscape pass, and **verified on the
+  Redmi in landscape** the same day: cards clear the side bar and the "Ultimi 7
+  giorni" card renders as one compact line. (The one item not injectable with
+  tap-injection off — the add/edit form's Save button in landscape — was left for
+  a manual glance; the inset fix covers that screen too.)
 
 ## Working reminders
 
