@@ -137,8 +137,11 @@ running signed on the device, the maintainer's next order is: **(1) S10 —
 Italian localisation**, then **(2) the deferred 1.x capabilities** (a trends
 **chart** first among them). The **Play-Store paperwork track (B2–B7) waits** —
 it is not blocking the maintainer's near-term goal of a working signed build on
-their own phone. B2 (icon + name) and the rest stay queued for when publishing
-comes back into scope.
+their own phone. The rest of the B track stays queued for when publishing comes
+back into scope. **B2 (app icon + name) is already in this build** —
+`android:label="Cadence"` and a custom launcher icon generated via
+`flutter_launcher_icons` (the ROADMAP's "template defaults" note is stale); and
+`targetSdk=36` already meets B3's target check.
 
 **Done:** **S1 — context fields → schema v2**. `MeasurementSite {leftArm,
 rightArm, leftWrist, rightWrist}`, `Posture {sitting, standing, lying}`,

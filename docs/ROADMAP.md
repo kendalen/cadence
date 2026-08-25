@@ -124,8 +124,9 @@ to ship.
 - **B1 · Release signing keystore.** Generate a real upload key; keep it out of
   git; document the process. Release currently signs with debug keys (a `TODO`
   in `android/app/build.gradle.kts`).
-- **B2 · App icon + name.** Both are still Flutter template defaults
-  (`android:label="cadence"`, the template launcher icon).
+- **B2 · App icon + name.** *Done (2026-08-25).* `android:label="Cadence"` and a
+  custom launcher icon generated via `flutter_launcher_icons`; both are in the
+  signed build.
 - **B3 · `targetSdk` / manifest audit.** Confirm `targetSdk` meets Play's
   current minimum; review the manifest. (`allowBackup="false"` is already
   correctly set — `CLAUDE.md` §5.)
