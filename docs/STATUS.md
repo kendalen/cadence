@@ -547,9 +547,37 @@ documents the `keytool` command and keys.
   once on genuine first launch. Own branch `b1-release-signing`. The universal
   APK is 67 MB; the slim per-ABI `.aab` for the store is **B7**.
 
+**Done (2026-08-25, pending wording review): S10 — Italian localisation.**
+`lib/l10n/app_it.arb` translates the full 86-key string set to Italian; English
+stays the source locale (§9). Register is **informal "tu"** (maintainer's call —
+modern app convention, warmer for the calm tone). No Dart change: gen-l10n adds
+`it` to `AppLocalizations.supportedLocales`, which `MaterialApp` already uses, so
+a device set to Italian renders in Italian. Apostrophes escaped as `''`
+(`use-escaping: true`); ICU plurals kept with feminine agreement (e.g. "Aggiunta
+1 occasione" / "Aggiunte N occasioni"). A focused test
+(`test/l10n/italian_localization_test.dart`) guards the mechanics — locale
+resolves, plurals (=0/=1/other) render, escaped apostrophe decodes. **215 tests
+green.** Own branch `s10-italian` — **not merged**: the maintainer (native
+speaker) reviews the wording first, especially the §1 disclaimer/medical strings.
+Notes for that review:
+- **Register:** all strings use informal "tu"; the maintainer chose it, but this
+  is the place to catch any string that reads better formally.
+- **Posture options** use both gender forms at the maintainer's call —
+  "Seduta/o", "Sdraiata/o" (feminine first); "In piedi" is already invariant.
+- **`pulse` → "Battito"** (not "Polso", which is reused for the wrist site) — a
+  deliberate choice to avoid pulse/wrist confusion.
+- **Pre-existing English bug surfaced:** `removeReading` is defined **twice** in
+  `app_en.arb` (line ~117 "Remove", line ~233 "Remove this reading"); the second
+  silently wins, so the entry-form remove tooltip actually reads "Remove this
+  reading". The Italian file has it once ("Rimuovi questa misurazione"). Worth a
+  separate English fix (split into two keys) — out of S10's scope.
+
 ## Known issues (open)
 
-- None.
+- **`removeReading` duplicated in `app_en.arb`** (see S10 note above): two entries
+  share the key, the later winning, so the entry-form "remove during entry"
+  tooltip shows "Remove this reading" instead of "Remove". Low impact; fix by
+  splitting into two keys (e.g. `removeReading` + `removeReadingFromOccasion`).
 
 ## Working reminders
 
