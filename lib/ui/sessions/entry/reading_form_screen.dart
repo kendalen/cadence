@@ -82,7 +82,7 @@ class _ReadingFormScreenState extends State<ReadingFormScreen> {
       appBar: AppBar(title: Text(widget.title)),
       body: ListView(
         key: const Key('readingFormList'),
-        padding: withSystemBottomInset(context, const EdgeInsets.all(16)),
+        padding: withSystemInsets(context, const EdgeInsets.all(16)),
         children: [
           NumberStepper(
             key: const Key('systolicStepper'),

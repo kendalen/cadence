@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../domain/sessions/session_average.dart';
 import '../../../domain/sessions/weekly_coverage.dart';
 import '../../../l10n/app_localizations.dart';
 import '../pressure_text.dart';
@@ -11,6 +12,11 @@ import '../pressure_text.dart';
 /// the seven the protocol spans, and — when at least one occasion falls in the
 /// window — the period average. It states completeness; it never judges the
 /// numbers or shows a threshold (CLAUDE.md §1).
+///
+/// Portrait stacks the pieces over two or three lines. Landscape is wide but
+/// short, so the same pieces flow onto a single line — leaving the scarce height
+/// for the readings — and fall back to more lines only under very large font
+/// scales, so nothing is clipped.
 class WeeklyCoverageCard extends StatelessWidget {
   /// Shows [coverage], computed by the caller from the current sessions.
   const WeeklyCoverageCard(this.coverage, {super.key});
@@ -22,62 +28,107 @@ class WeeklyCoverageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final average = coverage.periodAverage;
+    final landscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.coverageLast7Days, style: textTheme.titleMedium),
-            const SizedBox(height: 4),
-            // Two dimensions of coverage side by side — how many occasions, and
-            // over how many days — wrapping to separate lines under large font
-            // scales. Both are plain counts, no judgement (§4, §1).
-            Wrap(
-              spacing: 8,
-              children: [
-                Text(
-                  l10n.coverageOccasions(
-                    coverage.occasionsLogged,
-                    coverage.occasionsExpected,
-                  ),
-                  style: textTheme.bodyLarge,
-                ),
-                Text(
-                  '·',
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                Text(
-                  l10n.coverageDays(coverage.daysLogged, coverage.daysExpected),
-                  style: textTheme.bodyLarge,
-                ),
-              ],
-            ),
-            if (average != null) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Text(l10n.sessionAverageTitle, style: textTheme.labelLarge),
-                  const SizedBox(width: 8),
-                  PressureText(
-                    average.systolic,
-                    average.diastolic,
-                    style: textTheme.titleMedium,
-                  ),
-                  const Spacer(),
-                  if (average.pulse != null)
-                    Text(l10n.readingPulse(average.pulse!)),
-                ],
-              ),
-            ],
-          ],
-        ),
+        child: landscape ? _flowing(theme, l10n) : _stacked(theme, l10n),
       ),
+    );
+  }
+
+  /// The tall portrait layout: title, then the two counts, then the average.
+  Widget _stacked(ThemeData theme, AppLocalizations l10n) {
+    final average = coverage.periodAverage;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _title(theme, l10n),
+        const SizedBox(height: 4),
+        // Two dimensions of coverage side by side — how many occasions, and over
+        // how many days — wrapping to separate lines under large font scales.
+        Wrap(
+          spacing: 8,
+          children: [_occasions(theme, l10n), _dot(theme), _days(theme, l10n)],
+        ),
+        if (average != null) ...[
+          const SizedBox(height: 12),
+          _average(theme, l10n, average, expand: true),
+        ],
+      ],
+    );
+  }
+
+  /// The short landscape layout: every piece on one line, wrapping only if a
+  /// large font scale forces it.
+  Widget _flowing(ThemeData theme, AppLocalizations l10n) {
+    final average = coverage.periodAverage;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _title(theme, l10n),
+        _occasions(theme, l10n),
+        _dot(theme),
+        _days(theme, l10n),
+        if (average != null) _average(theme, l10n, average, expand: false),
+      ],
+    );
+  }
+
+  Widget _title(ThemeData theme, AppLocalizations l10n) =>
+      Text(l10n.coverageLast7Days, style: theme.textTheme.titleMedium);
+
+  Widget _occasions(ThemeData theme, AppLocalizations l10n) => Text(
+    l10n.coverageOccasions(
+      coverage.occasionsLogged,
+      coverage.occasionsExpected,
+    ),
+    style: theme.textTheme.bodyLarge,
+  );
+
+  Widget _days(ThemeData theme, AppLocalizations l10n) => Text(
+    l10n.coverageDays(coverage.daysLogged, coverage.daysExpected),
+    style: theme.textTheme.bodyLarge,
+  );
+
+  Widget _dot(ThemeData theme) => Text(
+    '·',
+    style: theme.textTheme.bodyLarge?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    ),
+  );
+
+  /// The period average: its label, the pressure, and any pulse.
+  ///
+  /// [expand] fills the width and pushes the pulse to the far edge (portrait,
+  /// where the row owns a full line); otherwise the group is only as wide as its
+  /// content (landscape, where it sits inside a [Wrap] with no bounded width).
+  Widget _average(
+    ThemeData theme,
+    AppLocalizations l10n,
+    SessionAverage average, {
+    required bool expand,
+  }) {
+    final textTheme = theme.textTheme;
+    return Row(
+      mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+      children: [
+        Text(l10n.sessionAverageTitle, style: textTheme.labelLarge),
+        const SizedBox(width: 8),
+        PressureText(
+          average.systolic,
+          average.diastolic,
+          style: textTheme.titleMedium,
+        ),
+        if (average.pulse != null) ...[
+          if (expand) const Spacer() else const SizedBox(width: 8),
+          Text(l10n.readingPulse(average.pulse!)),
+        ],
+      ],
     );
   }
 }

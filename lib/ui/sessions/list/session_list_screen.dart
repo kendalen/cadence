@@ -45,10 +45,16 @@ class SessionListScreen extends StatelessWidget {
                 // The week's coverage stays pinned while the occasions scroll,
                 // so the older audience never loses the "am I keeping up?"
                 // summary. The clock lives here, keeping weeklyCoverage pure.
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                  child: WeeklyCoverageCard(
-                    weeklyCoverage(sessions, now: DateTime.now()),
+                // Side-only SafeArea so the card clears a landscape side bar
+                // without gaining a bottom gap above the list.
+                SafeArea(
+                  top: false,
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                    child: WeeklyCoverageCard(
+                      weeklyCoverage(sessions, now: DateTime.now()),
+                    ),
                   ),
                 ),
                 Expanded(
@@ -56,7 +62,7 @@ class SessionListScreen extends StatelessWidget {
                     // Room at the end so the last card can scroll clear of the
                     // floating "Add a reading" button (and the nav bar) instead
                     // of hiding behind it.
-                    padding: withSystemBottomInset(
+                    padding: withSystemInsets(
                       context,
                       const EdgeInsets.only(bottom: 88),
                     ),

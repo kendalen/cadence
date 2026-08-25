@@ -95,6 +95,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The "Last 7 days" summary is now compact in landscape: the same title, counts
+  and average that stack over a few lines in portrait flow onto a single line
+  when the phone is rotated, so the short landscape height is left for the
+  readings instead of the summary. It stays pinned and visible either way, and
+  falls back to more lines under very large font scales rather than clipping.
 - Session detail: the occasion average now reads as the screen's hero — larger
   and in the teal brand colour, with the pulse smaller on its own line beneath —
   and the individual readings sit in their own card. New/edit reading forms give
@@ -120,10 +125,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (CLAUDE.md §4).
 - The readings list now has room at its end so the last card scrolls clear of
   the floating "Add a reading" button instead of hiding behind it.
-- Scrollable forms (entry, edit reading, session detail) now pad their bottom
-  past the Android navigation bar, so the Save / Delete button at the end can no
-  longer come to rest underneath the bar where it is hard to tap
-  (`withSystemBottomInset`).
+- Content no longer hides under the Android system bars. Scrollable screens
+  (readings list, entry, edit/add reading, session detail) pad past the
+  navigation bar at the bottom and — new — past a side bar or display cutout
+  when the phone is rotated to landscape, where the bar moves to a side edge.
+  Before, a Save button or a card's side border could slide off under the bar
+  and be hard or impossible to tap (`withSystemInsets`, generalised from the
+  earlier bottom-only helper).
 
 - Project scaffolding: Android-only Flutter application (package
   `net.kendalen.cadence`) with the three-layer source tree `lib/domain`,

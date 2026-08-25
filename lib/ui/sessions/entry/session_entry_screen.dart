@@ -123,7 +123,7 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
           appBar: AppBar(title: Text(l10n.addReading)),
           body: ListView(
             key: const Key('entryFormList'),
-            padding: withSystemBottomInset(context, const EdgeInsets.all(16)),
+            padding: withSystemInsets(context, const EdgeInsets.all(16)),
             children: [
               NumberStepper(
                 key: const Key('systolicStepper'),

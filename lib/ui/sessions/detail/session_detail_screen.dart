@@ -61,7 +61,7 @@ class _SessionDetailView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(title: Text(title)),
           body: ListView(
-            padding: withSystemBottomInset(
+            padding: withSystemInsets(
               context,
               const EdgeInsets.symmetric(vertical: 8),
             ),

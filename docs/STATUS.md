@@ -573,36 +573,46 @@ Notes for that review:
   reading". The Italian file has it once ("Rimuovi questa misurazione"). Worth a
   separate English fix (split into two keys) — out of S10's scope.
 
+**Done (2026-08-25): landscape pass — system-bar insets + compact coverage
+card.** Two fixes for problems the maintainer hit rotating the phone to
+landscape (own branch `landscape-insets`, off `main`):
+- **Content under the system side bars.** Edge-to-edge draws behind Android's
+  bars; the scroll-padding helper only grew the *bottom*, so in landscape — where
+  the nav bar and any cutout move to a *side* edge — a Save button or a card's
+  side border slid off under the bar. `withSystemBottomInset` was generalised to
+  `withSystemInsets` (grows left/right/bottom by the system inset; top stays with
+  the app bar) and applied to all four scroll screens; the pinned coverage card
+  gets a side-only `SafeArea` so it clears a side bar without a bottom gap.
+- **"Last 7 days" card too tall in landscape.** In landscape the title/counts/
+  average now flow onto a **single line** (via a `Wrap`, so a very large font
+  scale wraps instead of clipping) rather than stacking over three, leaving the
+  short height for the readings. Stays pinned + visible; portrait unchanged.
+  (Maintainer chose compact-in-place over unpin-and-scroll.)
+
+**218 tests green** (+ new `withSystemInsets` side-inset tests and a portrait
+coverage-card test; the card's existing tests run in the default landscape-shaped
+window and now exercise the one-line layout). No schema change → no migration.
+**On-device landscape check still pending** — rendering behind the bars can only
+be confirmed by eye; merged to `main`, verify on the Redmi as usual.
+
 ## Known issues (open)
 
-- **Landscape layout & system-bar insets (several symptoms, one family).**
-  Observed on the Redmi 2312DRA50G rotated to landscape; UI-only, no data risk.
-  - **Bottom buttons hide under the system bars.** On the reading add/edit form
-    (`ReadingFormScreen`), the bottom actions (e.g. **Save**) slide behind the
-    Android navigation/status bar and can't be tapped. Likely a `SafeArea` /
-    bottom-inset gap when the usable height shrinks — the entry form got a
-    `withSystemBottomInset` fix in S5a/b/c, so check whether the add/edit form
-    path was fully covered.
-  - **"Last 7 days" card is too tall in landscape**, eating the vertical space
-    so too little is left for the readings list beneath it. Wants a more compact
-    layout (or a different arrangement) when the screen is short and wide.
-  - **Side borders hidden under the side system bar.** In landscape the nav bar
-    / cutout sits on a *side* edge, and both the summary card and the reading
-    cards run under it — their left/right border disappears. Points at a missing
-    **horizontal** `SafeArea`/inset on the list, not just the bottom one.
-
-  Common cause is almost certainly insets: the app handles the bottom inset in
-  places but not the horizontal ones, and the coverage card wasn't laid out for
-  a short-and-wide viewport. Worth fixing together as one "landscape pass".
+- **Landscape rendering not yet eyeballed on device.** The landscape pass (insets
+  + compact coverage card — see the Done entry above) is tests-green and merged to
+  `main`, but not yet confirmed on the Redmi: rendering behind the system bars can
+  only be checked by eye. Verify in landscape (the add/edit form, and the list)
+  at the next device run.
 
 ## Known issues (resolved)
 
-- **`removeReading` duplicated in `app_en.arb`** — *fixed 2026-08-25* (branch
-  `fix-remove-reading-duplicate-key`). Two entries shared the key, the later
-  ("Remove this reading") silently winning, so the entry-form remove tooltip
-  showed the wrong text. Split into `removeReading` (entry form) +
-  `removeReadingFromOccasion` (session detail); Italian split to match;
-  regression test added. 216 tests green. Not yet merged to `main`.
+- **`removeReading` duplicated in `app_en.arb`** — *fixed 2026-08-25, merged to
+  `main`*. Two entries shared the key, the later ("Remove this reading") silently
+  winning, so the entry-form remove tooltip showed the wrong text. Split into
+  `removeReading` (entry form) + `removeReadingFromOccasion` (session detail);
+  Italian split to match; regression test added.
+- **Landscape content under the system bars + coverage card too tall** — *fixed
+  2026-08-25, merged to `main`* by the landscape pass (see the Done entry above);
+  on-device confirmation still outstanding, tracked under open issues.
 
 ## Working reminders
 
