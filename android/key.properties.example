@@ -1,0 +1,17 @@
+# Release upload-key credentials for signing the Play build.
+#
+# Copy this file to android/key.properties (which is gitignored) and fill in the
+# real values, then keep it — and the keystore it points at — OFF git and backed
+# up somewhere safe. Losing the upload key means you can never ship an update to
+# the same Play listing again.
+#
+# Generate the keystore with:
+#   keytool -genkeypair -v -keystore ~/keystores/cadence-upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# storeFile must be an ABSOLUTE path — Gradle does not expand a leading ~.
+
+storePassword=your-keystore-password
+keyPassword=your-key-password
+keyAlias=upload
+storeFile=/Users/you/keystores/cadence-upload.jks
