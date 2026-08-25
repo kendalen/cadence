@@ -11,6 +11,7 @@ import '../../../domain/sessions/reading_input.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../system_insets.dart';
 import '../validation_messages.dart';
 import 'banked_readings.dart';
 import 'number_stepper.dart';
@@ -121,7 +122,7 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
           appBar: AppBar(title: Text(l10n.addReading)),
           body: ListView(
             key: const Key('entryFormList'),
-            padding: const EdgeInsets.all(16),
+            padding: withSystemBottomInset(context, const EdgeInsets.all(16)),
             children: [
               NumberStepper(
                 key: const Key('systolicStepper'),

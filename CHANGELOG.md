@@ -17,6 +17,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Device launcher name is now "Cadence" (was lowercase "cadence").
 
+### Fixed
+
+- Scrollable forms (entry, edit reading, session detail) now pad their bottom
+  past the Android navigation bar, so the Save / Delete button at the end can no
+  longer come to rest underneath the bar where it is hard to tap
+  (`withSystemBottomInset`).
+
 - Project scaffolding: Android-only Flutter application (package
   `net.kendalen.cadence`) with the three-layer source tree `lib/domain`,
   `lib/data`, `lib/ui` and a placeholder test per layer (CLAUDE.md §3, §7).

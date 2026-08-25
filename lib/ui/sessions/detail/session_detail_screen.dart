@@ -8,6 +8,7 @@ import '../../../domain/sessions/reading.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../system_insets.dart';
 import '../entry/edit_reading_screen.dart';
 import 'reading_detail.dart';
 import 'session_detail_cubit.dart';
@@ -58,7 +59,10 @@ class _SessionDetailView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(title: Text(title)),
           body: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: withSystemBottomInset(
+              context,
+              const EdgeInsets.symmetric(vertical: 8),
+            ),
             children: [
               if (showsAverage) ...[
                 _AverageCard(session),

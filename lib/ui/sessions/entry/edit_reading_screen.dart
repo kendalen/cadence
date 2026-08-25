@@ -8,6 +8,7 @@ import '../../../domain/sessions/reading_context.dart';
 import '../../../domain/sessions/reading_input.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../system_insets.dart';
 import '../validation_messages.dart';
 import 'number_stepper.dart';
 import 'reading_context_details.dart';
@@ -66,7 +67,7 @@ class _EditReadingScreenState extends State<EditReadingScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.editReading)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: withSystemBottomInset(context, const EdgeInsets.all(16)),
         children: [
           NumberStepper(
             key: const Key('systolicStepper'),
