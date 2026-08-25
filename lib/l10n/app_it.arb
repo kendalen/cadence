@@ -86,5 +86,16 @@
   "importBackupNotABackup": "Questo file non è un backup di Cadence.",
   "importBackupUnreadable": "Impossibile leggere questo file come backup.",
   "importBackupTooNew": "Questo backup è stato creato da una versione più recente di Cadence.",
-  "importBackupFailed": "Impossibile importare il backup."
+  "importBackupFailed": "Impossibile importare il backup.",
+  "trendsTitle": "Andamento",
+  "trendsRangeWeek": "7 giorni",
+  "trendsRangeMonth": "30 giorni",
+  "trendsRangeQuarter": "90 giorni",
+  "trendsRangeAll": "Tutto",
+  "trendsFilterAll": "Tutto il giorno",
+  "trendsFilterMorning": "Mattina",
+  "trendsFilterEvening": "Sera",
+  "trendsChartBloodPressure": "Pressione",
+  "trendsEmpty": "Ancora nessuna misurazione in questo periodo.",
+  "trendsTooltipOccasions": "{count, plural, =1{media di 1 occasione} other{media di {count} occasioni}}"
 }

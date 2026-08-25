@@ -46,6 +46,11 @@ dependencies:
   # Value equality for the immutable domain entities. MIT.
   equatable: ^2.1.0
   file_selector: ^1.1.0
+  # Line charts for the trends screen (T2): touch tooltips, axis labels, and
+  # automatic rescaling — the interactive case where a maintained widget beats a
+  # hand-rolled CustomPainter (CLAUDE.md §9 necessity). Pure-Flutter, no native,
+  # no network, no asset. MIT — verified in the resolved package's LICENSE.
+  fl_chart: ^1.2.0
   flutter:
     sdk: flutter
   # State management for the whole app: Cubits with constructor-injected

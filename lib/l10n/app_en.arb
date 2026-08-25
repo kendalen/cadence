@@ -363,5 +363,52 @@
   "importBackupFailed": "Couldn''t import the backup.",
   "@importBackupFailed": {
     "description": "Shown when storing the imported occasions failed."
+  },
+  "trendsTitle": "Trends",
+  "@trendsTitle": {
+    "description": "Title of the read-only trends screen, and the tooltip of the chart icon that opens it, showing the user's readings over time."
+  },
+  "trendsRangeWeek": "7 days",
+  "@trendsRangeWeek": {
+    "description": "Segmented-control option: show the last 7 days of trends."
+  },
+  "trendsRangeMonth": "30 days",
+  "@trendsRangeMonth": {
+    "description": "Segmented-control option: show the last 30 days of trends."
+  },
+  "trendsRangeQuarter": "90 days",
+  "@trendsRangeQuarter": {
+    "description": "Segmented-control option: show the last 90 days of trends."
+  },
+  "trendsRangeAll": "All",
+  "@trendsRangeAll": {
+    "description": "Segmented-control option: show the whole diary in the trends, no lower bound on the date."
+  },
+  "trendsFilterAll": "All day",
+  "@trendsFilterAll": {
+    "description": "Segmented-control option: include occasions from any time of day in the trends."
+  },
+  "trendsFilterMorning": "Morning",
+  "@trendsFilterMorning": {
+    "description": "Segmented-control option: include only morning occasions (before local noon) in the trends."
+  },
+  "trendsFilterEvening": "Evening",
+  "@trendsFilterEvening": {
+    "description": "Segmented-control option: include only evening occasions (from local noon) in the trends."
+  },
+  "trendsChartBloodPressure": "Blood pressure",
+  "@trendsChartBloodPressure": {
+    "description": "Heading of the blood-pressure trend chart (systolic and diastolic lines)."
+  },
+  "trendsEmpty": "No readings in this range yet.",
+  "@trendsEmpty": {
+    "description": "Shown on the trends screen when the chosen range and time-of-day filter hold no occasions."
+  },
+  "trendsTooltipOccasions": "{count, plural, =1{averages 1 occasion} other{averages {count} occasions}}",
+  "@trendsTooltipOccasions": {
+    "description": "Line in a chart point's tooltip stating how many occasions that point averages, so an averaged point is never read as a single reading (CLAUDE.md §4).",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
   }
 }
