@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
@@ -195,11 +196,20 @@ class _OverflowMenu extends StatelessWidget {
             mimeType: 'text/csv',
           );
         case _ReadingsFormat.pdf:
+          // Embed the bundled Hanken font so accented Italian text and
+          // typographic punctuation render, not the built-in Helvetica's box.
+          final font = await rootBundle.load(
+            'assets/fonts/HankenGrotesk-VariableFont_wght.ttf',
+          );
           final pdf = await buildReadingsPdf(
             title: labels.title,
             headers: labels.columnHeaders,
             rows: rows,
             disclaimer: labels.disclaimer,
+            fontBytes: font.buffer.asUint8List(
+              font.offsetInBytes,
+              font.lengthInBytes,
+            ),
           );
           await shareExportBytes(
             pdf,

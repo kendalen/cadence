@@ -8,24 +8,39 @@ import 'package:pdf/widgets.dart' as pw;
 ///
 /// The layout is deliberately plain — a title, one table (paginated
 /// automatically by [pw.MultiPage] for a long diary), and the [disclaimer] as a
-/// footer on every page. The footer keeps Cadence's "diary, not a diagnosis"
-/// boundary visible on the most official-looking thing the app produces
-/// (CLAUDE.md §1). Built-in Helvetica is used (no font asset), which covers
-/// Latin-1 including Italian accents; the caller supplies already-localised
-/// [headers], [rows], [title] and [disclaimer] (CLAUDE.md §9).
+/// footer on every page. The page is **landscape** so the ten columns have room
+/// to breathe. The footer keeps Cadence's "diary, not a diagnosis" boundary
+/// visible on the most official-looking thing the app produces (CLAUDE.md §1).
+///
+/// [fontBytes], when given, is a TrueType font embedded as the document's base
+/// font — the app passes the bundled Hanken Grotesk so accented Italian text and
+/// typographic punctuation (—, ’) render correctly; the built-in Helvetica is a
+/// Latin-only fallback that shows a box for anything outside its encoding. The
+/// caller supplies already-localised [headers], [rows], [title] and
+/// [disclaimer] (CLAUDE.md §9).
 Future<Uint8List> buildReadingsPdf({
   required String title,
   required List<String> headers,
   required List<List<String>> rows,
   required String disclaimer,
+  Uint8List? fontBytes,
 }) async {
-  // ponytail: built-in Helvetica (WinAnsi encoding) — covers Latin-1 incl.
-  // Italian accents, so no font asset is loaded. Embed the already-bundled
-  // Hanken Grotesk TTF (assets/fonts/) if a note ever needs glyphs outside
-  // Latin-1 (e.g. non-Latin scripts, emoji), which Helvetica would drop.
-  final document = pw.Document();
+  // One variable font file serves both slots: this maps every text style
+  // (including the header row) onto Hanken so nothing falls back to the
+  // Latin-only built-in Helvetica and boxes an accent. dart_pdf does not apply
+  // the weight axis, so "bold" renders at the file's default weight — the
+  // headers therefore read at body weight (a noted follow-up to make them
+  // heavier needs a real bold font instance, see docs/ROADMAP.md).
+  final theme = fontBytes == null
+      ? null
+      : pw.ThemeData.withFont(
+          base: pw.Font.ttf(ByteData.sublistView(fontBytes)),
+          bold: pw.Font.ttf(ByteData.sublistView(fontBytes)),
+        );
+  final document = pw.Document(theme: theme);
   document.addPage(
     pw.MultiPage(
+      pageFormat: PdfPageFormat.a4.landscape,
       build: (context) => [
         pw.Header(level: 0, text: title),
         pw.TableHelper.fromTextArray(

@@ -20,8 +20,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Both carry a "self-recorded diary, not a medical diagnosis, discuss with your
   doctor" line, keeping Cadence's regulatory boundary visible on the export a
   doctor might see (CLAUDE.md §1). Notes containing commas, quotes or newlines
-  are escaped per RFC 4180. Adds `pdf` (Apache-2.0) for pure-Dart PDF
-  generation; no schema change.
+  are escaped per RFC 4180. Dates are numeric and locale-ordered
+  (e.g. `8/25/2026` / `25/8/2026`). The PDF is landscape and embeds the bundled
+  Hanken font so accented Italian text and typographic punctuation render
+  correctly rather than as an empty box. Adds `pdf` (Apache-2.0) for pure-Dart
+  PDF generation; no schema change.
 - JSON backup import (S7b): an "Import backup" item in the readings-list
   overflow menu restores occasions from a JSON backup file, picked through the
   Android file picker (SAF). Merge is by occasion id and never overwrites — an

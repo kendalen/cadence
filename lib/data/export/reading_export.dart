@@ -70,7 +70,9 @@ List<List<String>> buildReadingRows(
   required String locale,
   DateTime Function(DateTime) toLocal = _toLocal,
 }) {
-  final dateFormat = DateFormat.yMMMd(locale);
+  // Numeric, locale-ordered dates (en_US → M/d/yyyy, it → d/M/yyyy) so the
+  // column stays narrow in the landscape table rather than "Aug 25, 2026".
+  final dateFormat = DateFormat.yMd(locale);
   final timeFormat = DateFormat.jm(locale);
   final ordered = [...sessions]
     ..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cadence/data/export/pdf_report.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -19,6 +21,25 @@ void main() {
       );
 
       expect(bytes, isNotEmpty);
+      expect(_magic(bytes), '%PDF-');
+    });
+
+    test('embeds a supplied font, rendering accents and punctuation', () async {
+      // The real bundled font, so the embed path (used for Italian text) is
+      // exercised end to end, not just the Helvetica fallback.
+      final font = File('assets/fonts/HankenGrotesk-VariableFont_wght.ttf')
+          .readAsBytesSync();
+
+      final bytes = await buildReadingsPdf(
+        title: 'Readings',
+        headers: _headers,
+        rows: [
+          ['25/8/2026', '138', '87'],
+        ],
+        disclaimer: 'Self-recorded diary — l’ho misurato: àèéìòù',
+        fontBytes: font,
+      );
+
       expect(_magic(bytes), '%PDF-');
     });
 

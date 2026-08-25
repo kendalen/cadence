@@ -161,6 +161,19 @@ void main() {
       expect(rows.map((row) => row[3]).toList(), ['120', '130']); // by time
     });
 
+    test('formats the date numerically for the locale', () {
+      final rows = _rows([
+        Session(
+          id: const SessionId('s1'),
+          readings: [_reading('r1', takenAt: DateTime.utc(2026, 8, 25, 6, 30))],
+        ),
+      ]);
+
+      // en_US numeric date (M/d/yyyy): digits and slashes only, no month name.
+      expect(rows.single[0], matches(RegExp(r'^[\d/]+$')));
+      expect(rows.single[0], contains('2026'));
+    });
+
     test('encodes an empty diary as no rows', () {
       expect(_rows([]), isEmpty);
     });

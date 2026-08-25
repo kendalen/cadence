@@ -156,6 +156,13 @@ to ship.
   already takes the session list, so filtering is a pure pre-step; the open
   question is the picker UX for the older audience (a plain from–to vs named
   shortcuts). Surfaced 2026-08-25 by the maintainer while shipping S8.
+- **Bolder PDF export headers.** The PDF embeds the bundled Hanken *variable*
+  font; `pdf` (dart_pdf) cannot select the weight axis, so the header row renders
+  at body weight. Making it visibly bolder needs a real bold instance — either
+  a static Hanken-Bold TTF bundled as a PDF-only asset (consistent typeface,
+  ~+130 KB), or falling back to the built-in Helvetica-Bold for the header cells
+  only (zero asset, but a second typeface and Latin-only). Minor polish, deferred
+  2026-08-25 at the maintainer's call.
 - **Trends / charts** over time.
 - **Discard-day-1 toggle** and a Settings screen — unless S6 pulls them in.
 - **Time-format preference (12-hour vs 24-hour).** Times currently follow the

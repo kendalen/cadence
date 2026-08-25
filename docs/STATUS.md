@@ -421,9 +421,19 @@ CSV", "Export as PDF") beside JSON backup/import.
   non-empty, empty table). **202 green** (+15). No schema change → no migration.
   UI glue (menu tap → share) is native (share_plus) and untested, same boundary
   as the JSON export/import handlers. Own branch `s8-csv-pdf-export`.
-- **Not yet run on a device this slice** — the pieces are covered by the suite;
-  the actual share-sheet hand-off and the rendered PDF/CSV want an on-device
-  eyeball when convenient (verify on the Redmi as with S6/S7).
+- **Verified on the physical device** (Redmi 2312DRA50G) 2026-08-25: both
+  exports share out through the Android sheet; CSV opens clean in a spreadsheet,
+  PDF renders correctly. Refined after the on-device eyeball: dates are **numeric
+  locale-ordered** (`DateFormat.yMd`, narrower than "Aug 25, 2026"), the PDF is
+  **landscape** (ten columns need the width), and it **embeds the bundled Hanken
+  font** — the built-in Helvetica boxed the em-dash and would box accented
+  Italian notes / auto-curled apostrophes, so the font embed (base **and** bold
+  slot → Hanken; the pure builder takes optional `fontBytes`, the UI loads the
+  asset via `rootBundle`) fixes the whole class. **204 tests green** (+2:
+  numeric-date lock, font-embed path). Deferred at the maintainer's call:
+  **bolder headers** — dart_pdf can't use the variable font's weight axis, so
+  the header row is body-weight; making it heavier needs a real bold instance
+  (see ROADMAP).
 
 ## Working reminders
 
