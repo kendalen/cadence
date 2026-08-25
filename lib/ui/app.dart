@@ -3,8 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../domain/sessions/id_generator.dart';
 import '../domain/sessions/session_repository.dart';
+import '../domain/settings/settings_repository.dart';
 import '../l10n/app_localizations.dart';
-import 'sessions/list/session_list_screen.dart';
+import 'first_run_gate.dart';
 import 'theme/cadence_theme.dart';
 
 /// The application widget.
@@ -17,6 +18,7 @@ class CadenceApp extends StatelessWidget {
   const CadenceApp({
     required this.sessionRepository,
     required this.idGenerator,
+    required this.settingsRepository,
     super.key,
   });
 
@@ -26,18 +28,22 @@ class CadenceApp extends StatelessWidget {
   /// Source of identifiers for newly entered sessions and readings.
   final IdGenerator idGenerator;
 
+  /// The store of app preferences (the first-run acknowledgement, §1).
+  final SettingsRepository settingsRepository;
+
   @override
   Widget build(BuildContext context) => MultiRepositoryProvider(
     providers: [
       RepositoryProvider<SessionRepository>.value(value: sessionRepository),
       RepositoryProvider<IdGenerator>.value(value: idGenerator),
+      RepositoryProvider<SettingsRepository>.value(value: settingsRepository),
     ],
     child: MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       theme: buildCadenceTheme(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const SessionListScreen(),
+      home: const FirstRunGate(),
     ),
   );
 }

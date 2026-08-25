@@ -8,6 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- First-run disclaimer + About (S9a): on first launch, a one-time notice states
+  plainly that Cadence is a diary for recording readings you measure yourself —
+  not a medical device, and it does not diagnose, interpret, or advise — and
+  points you to your doctor (CLAUDE.md §1). It must be acknowledged to continue
+  and is then remembered, so it shows only once. An always-available "About"
+  item in the overflow menu (set apart by a divider) shows the same statement
+  plus the licences page, which includes the bundled Hanken font's OFL. Backed
+  by a new app-settings key-value table (drift schema v3 — an additive migration
+  with a committed snapshot and a migration test, CLAUDE.md §5) and a
+  `SettingsRepository`, the groundwork the deferred Settings screen will reuse.
 - CSV and PDF export (S8): two new items in the readings-list overflow menu —
   "Export as CSV" and "Export as PDF" — save the whole diary and open the
   Android share sheet, for handing a clinician the numbers. Both are

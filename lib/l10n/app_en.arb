@@ -4,6 +4,22 @@
   "@appTitle": {
     "description": "The application name, shown as the title of the app."
   },
+  "disclaimerTitle": "A note before you start",
+  "@disclaimerTitle": {
+    "description": "Title of the one-time notice shown on first launch stating that the app is a diary, not a medical device (CLAUDE.md §1)."
+  },
+  "disclaimerBody": "Cadence is a diary for recording blood-pressure readings you measure yourself. It is not a medical device: it does not diagnose, interpret, or advise. Discuss your readings and any decisions with your doctor.",
+  "@disclaimerBody": {
+    "description": "Body of the first-run notice and the About screen: states plainly that Cadence records readings and does not diagnose, interpret, or advise, and points the user to their doctor (CLAUDE.md §1). Must not tell the user what to do about any number."
+  },
+  "disclaimerAcknowledge": "I understand",
+  "@disclaimerAcknowledge": {
+    "description": "Button that dismisses the first-run notice and records that it was seen."
+  },
+  "aboutMenu": "About",
+  "@aboutMenu": {
+    "description": "Overflow-menu item that opens the About dialog (the diary-not-a-device note plus licences)."
+  },
   "sessionListEmpty": "No readings yet.",
   "@sessionListEmpty": {
     "description": "Shown on the readings list when nothing has been recorded yet."

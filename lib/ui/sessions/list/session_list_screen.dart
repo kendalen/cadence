@@ -15,6 +15,7 @@ import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/weekly_coverage.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../about/app_about.dart';
 import '../../system_insets.dart';
 import '../backup/pick_backup.dart';
 import '../detail/session_detail_screen.dart';
@@ -111,6 +112,9 @@ enum _MenuAction {
 
   /// Restore occasions from a JSON backup file.
   import,
+
+  /// Open the About dialog (the diary-not-a-device note plus licences).
+  about,
 }
 
 /// One shareable readings format. Both share the same build-and-share path;
@@ -127,12 +131,17 @@ class _OverflowMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return PopupMenuButton<_MenuAction>(
-      onSelected: (action) => unawaited(switch (action) {
-        _MenuAction.export => _exportBackup(context),
-        _MenuAction.exportCsv => _exportReadings(context, _ReadingsFormat.csv),
-        _MenuAction.exportPdf => _exportReadings(context, _ReadingsFormat.pdf),
-        _MenuAction.import => _importBackup(context),
-      }),
+      onSelected: (action) => switch (action) {
+        _MenuAction.export => unawaited(_exportBackup(context)),
+        _MenuAction.exportCsv => unawaited(
+          _exportReadings(context, _ReadingsFormat.csv),
+        ),
+        _MenuAction.exportPdf => unawaited(
+          _exportReadings(context, _ReadingsFormat.pdf),
+        ),
+        _MenuAction.import => unawaited(_importBackup(context)),
+        _MenuAction.about => showAppAbout(context),
+      },
       itemBuilder: (context) => [
         PopupMenuItem(
           value: _MenuAction.export,
@@ -150,6 +159,9 @@ class _OverflowMenu extends StatelessWidget {
           value: _MenuAction.import,
           child: Text(l10n.importBackup),
         ),
+        // A divider sets About apart from the data in/out actions above it.
+        const PopupMenuDivider(),
+        PopupMenuItem(value: _MenuAction.about, child: Text(l10n.aboutMenu)),
       ],
     );
   }

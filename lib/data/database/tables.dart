@@ -14,6 +14,25 @@ class Sessions extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// A single app preference, stored as a string keyed by name.
+///
+/// A key-value table rather than a column per setting, so a new preference (the
+/// deferred discard-day-1 and time-format choices) does not need a schema bump.
+/// This holds UI-level app state, kept separate from the diary's [Sessions] and
+/// [Readings] (CLAUDE.md §4). Values are encoded to text by the repository that
+/// owns each key.
+@DataClassName('AppSettingRow')
+class AppSettings extends Table {
+  /// The setting's name, e.g. `disclaimerAcknowledged`.
+  TextColumn get settingKey => text()();
+
+  /// The setting's value, encoded as text by its owning repository.
+  TextColumn get settingValue => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {settingKey};
+}
+
 /// One measurement, belonging to exactly one session.
 @DataClassName('ReadingRow')
 class Readings extends Table {

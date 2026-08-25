@@ -8,6 +8,7 @@
 import 'package:cadence/data/database/app_database.dart';
 import 'package:cadence/data/ids/uuid_id_generator.dart';
 import 'package:cadence/data/sessions/drift_session_repository.dart';
+import 'package:cadence/data/settings/drift_settings_repository.dart';
 import 'package:cadence/ui/app.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +22,11 @@ void main() {
   const diastolicStepper = Key('diastolicStepper');
   const pulseStepper = Key('pulseStepper');
 
-  setUp(() {
+  setUp(() async {
     database = AppDatabase.forTesting(NativeDatabase.memory());
+    // This test is about the log-session wiring, not the first-run notice, so
+    // acknowledge it up front to keep the modal off the screens under test.
+    await DriftSettingsRepository(database).acknowledgeDisclaimer();
   });
 
   tearDown(() => database.close());
@@ -49,6 +53,7 @@ void main() {
       CadenceApp(
         sessionRepository: DriftSessionRepository(database),
         idGenerator: const UuidIdGenerator(),
+        settingsRepository: DriftSettingsRepository(database),
       ),
     );
     await settle(tester);

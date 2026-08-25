@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
+import 'generated/schema_v2.dart' as v2;
 
 void main() {
   late SchemaVerifier verifier;
@@ -37,6 +38,56 @@ void main() {
 
     await database.close();
   });
+
+  test('a fresh database matches the committed v3 snapshot', () async {
+    final connection = await verifier.startAt(3);
+    final database = AppDatabase.forTesting(connection);
+
+    await verifier.migrateAndValidate(database, 3);
+
+    await database.close();
+  });
+
+  test(
+    'migrating v2 to v3 keeps existing readings and adds the settings table',
+    () async {
+      // A reading written before the settings table existed must survive the
+      // upgrade untouched, and the new table must be present and usable.
+      final schema = await verifier.schemaAt(2);
+      final oldDatabase = v2.DatabaseAtV2(schema.newConnection());
+      await oldDatabase.customStatement(
+        "INSERT INTO sessions (id) VALUES ('s1')",
+      );
+      await oldDatabase.customStatement(
+        "INSERT INTO readings (id, session_id, systolic, diastolic, taken_at) "
+        "VALUES ('r1', 's1', 128, 84, '2026-08-24T07:10:00.000Z')",
+      );
+      await oldDatabase.close();
+
+      final database = AppDatabase.forTesting(schema.newConnection());
+      await verifier.migrateAndValidate(database, 3);
+
+      final reading = await database
+          .customSelect("SELECT systolic FROM readings WHERE id = 'r1'")
+          .getSingle();
+      expect(reading.read<int>('systolic'), 128);
+
+      // The new table exists and takes a row.
+      await database.customStatement(
+        "INSERT INTO app_settings (setting_key, setting_value) "
+        "VALUES ('disclaimerAcknowledged', 'true')",
+      );
+      final setting = await database
+          .customSelect(
+            "SELECT setting_value FROM app_settings "
+            "WHERE setting_key = 'disclaimerAcknowledged'",
+          )
+          .getSingle();
+      expect(setting.read<String>('setting_value'), 'true');
+
+      await database.close();
+    },
+  );
 
   test(
     'migrating v1 to v2 keeps existing readings and leaves context null',

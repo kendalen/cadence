@@ -15,7 +15,7 @@ part 'app_database.g.dart';
 /// The file lives in the application documents directory, never in a cache
 /// directory (CLAUDE.md §5); `drift_flutter` puts it there. Timestamps are
 /// stored as UTC ISO-8601 text — see `build.yaml`.
-@DriftDatabase(tables: [Sessions, Readings])
+@DriftDatabase(tables: [Sessions, Readings, AppSettings])
 class AppDatabase extends _$AppDatabase {
   /// Opens the on-device database.
   AppDatabase() : super(driftDatabase(name: _databaseName));
@@ -27,7 +27,7 @@ class AppDatabase extends _$AppDatabase {
   static const String _databaseName = 'cadence';
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   /// How the schema is created and migrated.
   ///
@@ -44,6 +44,12 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(readings, readings.site);
         await m.addColumn(readings, readings.posture);
         await m.addColumn(readings, readings.medicationTiming);
+      }
+      // v2 -> v3: the app-settings key-value table (CLAUDE.md §1 first-run
+      // notice, later the deferred preferences). A brand-new table, so no
+      // existing diary data is touched.
+      if (from < 3) {
+        await m.createTable(appSettings);
       }
     },
     beforeOpen: (details) async {

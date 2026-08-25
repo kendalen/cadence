@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'data/database/app_database.dart';
 import 'data/ids/uuid_id_generator.dart';
 import 'data/sessions/drift_session_repository.dart';
+import 'data/settings/drift_settings_repository.dart';
 import 'ui/app.dart';
 
 /// Composition root: the one place that knows which implementations the app
@@ -23,6 +24,7 @@ void main() {
     CadenceApp(
       sessionRepository: DriftSessionRepository(database),
       idGenerator: const UuidIdGenerator(),
+      settingsRepository: DriftSettingsRepository(database),
     ),
   );
 }

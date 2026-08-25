@@ -435,6 +435,41 @@ CSV", "Export as PDF") beside JSON backup/import.
   the header row is body-weight; making it heavier needs a real bold instance
   (see ROADMAP).
 
+**Done (2026-08-25): S9a — first-run disclaimer + About.** S9 (roadmap) is being
+built in parts (§8 size): **S9a** = the §1 disclaimer + About + the settings-table
+foundation; **S9b** = export success toasts + empty/error + ease-of-use polish;
+then **B1 / release build** = a signed release APK on the Redmi (the maintainer's
+near-term goal — store publishing waits). Deferred features were **not** pulled
+in (maintainer's call — keep S9 lean).
+- **Disclaimer (§1):** a one-time, non-dismissible notice on first launch
+  (`showFirstRunNotice`, wording approved by the maintainer — "diary, not a
+  medical device; does not diagnose, interpret, or advise; discuss with your
+  doctor"). Shown by a thin `FirstRunGate` wrapping the list (`home:` in
+  `app.dart`): after the first frame it reads the flag and, if unacknowledged,
+  shows the notice then records acknowledgement. A failed write just reshows it
+  next launch (not fatal).
+- **About:** an "About" overflow-menu item, set apart by a `PopupMenuDivider`
+  from the data in/out actions (maintainer's call), opening the standard
+  `showAboutDialog` with the same disclaimer body (one source of the statement,
+  §8) + the built-in licences page (already lists the Hanken OFL).
+- **Persistence (maintainer chose A over a marker file):** a drift key-value
+  `AppSettings(settingKey, settingValue)` table — **schema v3**, additive
+  migration (`createTable`), committed `drift_schema_v3.json`, regenerated
+  migration helpers, and a v2→v3 migration test (readings survive, the table is
+  present + usable). `SettingsRepository` (domain) + `DriftSettingsRepository`
+  (data), one key so far (`disclaimerAcknowledged`). Deliberately a KV table so
+  the deferred Settings toggles (discard-day-1, time-format) need no future bump.
+- **Tests:** repo behaviour (default false, acknowledge, idempotent), the v3
+  migration, and a `FirstRunGate` behaviour test (shows when unacknowledged +
+  records it; silent once acknowledged) via a `FakeSettingsRepository`. The
+  log-session smoke test pre-acknowledges in setUp so the modal stays off the
+  screens under test. **211 green** (+7).
+- **Smell noted:** `session_list_screen.dart` is now ~380 lines (§6 flags >300);
+  the overflow menu + its handlers want extracting — planned for S9b when the
+  success toasts land there. Own branch `s9a-disclaimer-about`.
+- **Not yet run on a device this slice** — installing the v3 build on the Redmi
+  will run the migration and show the notice once; eyeball it + About there.
+
 ## Working reminders
 
 - Vertical slices, one branch per slice; a slice over ~400 lines of diff was two.
