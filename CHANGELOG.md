@@ -95,6 +95,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Build tooling: debug builds now install as a separate app
+  (`net.kendalen.cadence.debug`, labelled "Cadence Debug") beside the release
+  build instead of replacing it. Debug and release use different signing keys, so
+  installing a debug build over a release one used to force an uninstall — which
+  wipes the on-device diary (Auto Backup is off, §5). The suffix lets both live on
+  the device with separate data. The release app id and label are unchanged.
 - The "Last 7 days" summary is now compact in landscape: the same title, counts
   and average that stack over a few lines in portrait flow onto a single line
   when the phone is rotated, so the short landscape height is left for the

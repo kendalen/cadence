@@ -43,6 +43,9 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Default launcher label; the debug build type overrides it so the two
+        // installs are told apart on the home screen (see buildTypes below).
+        manifestPlaceholders["appLabel"] = "Cadence"
     }
 
     signingConfigs {
@@ -57,6 +60,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Install the debug build as a separate package beside the release
+            // build, with its own data. Same signing key clash would otherwise
+            // force `flutter run` to uninstall the release app; keeping them
+            // apart protects the real on-device diary. See device-install notes.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            manifestPlaceholders["appLabel"] = "Cadence Debug"
+        }
         release {
             // Sign with the real upload key when it is present (the release
             // machine); otherwise keep debug signing so CI and fresh clones
