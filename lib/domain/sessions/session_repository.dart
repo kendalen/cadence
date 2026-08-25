@@ -1,5 +1,6 @@
 import '../core/result.dart';
 import '../core/unit.dart';
+import 'ids.dart';
 import 'persistence_failure.dart';
 import 'session.dart';
 
@@ -26,4 +27,11 @@ abstract interface class SessionRepository {
   /// The non-reactive read behind history-aware features such as seeding the
   /// entry form; use [watchAll] for anything that must track later changes.
   Future<List<Session>> recentHistory();
+
+  /// Removes the session with [id] and all its readings, as one unit.
+  ///
+  /// Deleting a session that is not stored is not an error: the outcome the
+  /// caller wants — no session with that id — already holds, so it returns
+  /// [Ok]. Returns [WriteFailed] only if the store rejected the delete.
+  Future<Result<Unit, PersistenceFailure>> delete(SessionId id);
 }

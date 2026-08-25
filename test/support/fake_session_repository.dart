@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cadence/domain/core/result.dart';
 import 'package:cadence/domain/core/unit.dart';
+import 'package:cadence/domain/sessions/ids.dart';
 import 'package:cadence/domain/sessions/persistence_failure.dart';
 import 'package:cadence/domain/sessions/session.dart';
 import 'package:cadence/domain/sessions/session_repository.dart';
@@ -24,6 +25,20 @@ class FakeSessionRepository implements SessionRepository {
       return Err(refusal);
     }
     added.add(session);
+    _sessions.add(List.of(added));
+    return const Ok(unit);
+  }
+
+  /// When set, [delete] reports this instead of removing.
+  PersistenceFailure? refuseDeleteWith;
+
+  @override
+  Future<Result<Unit, PersistenceFailure>> delete(SessionId id) async {
+    final refusal = refuseDeleteWith;
+    if (refusal != null) {
+      return Err(refusal);
+    }
+    added.removeWhere((session) => session.id == id);
     _sessions.add(List.of(added));
     return const Ok(unit);
   }

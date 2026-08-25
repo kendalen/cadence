@@ -177,5 +177,37 @@
   "sessionReadingsTitle": "Readings",
   "@sessionReadingsTitle": {
     "description": "Header above the list of individual readings on the session detail screen."
+  },
+  "deleteSession": "Delete this occasion",
+  "@deleteSession": {
+    "description": "Button on the session detail screen that removes the whole occasion and all its readings."
+  },
+  "deleteSessionConfirmTitle": "Delete this occasion?",
+  "@deleteSessionConfirmTitle": {
+    "description": "Title of the dialog confirming a whole-occasion delete."
+  },
+  "deleteSessionConfirmBody": "This removes the occasion and all its readings. You can undo straight afterwards.",
+  "@deleteSessionConfirmBody": {
+    "description": "Body of the delete-confirmation dialog, telling the user what will be removed and that it can be undone."
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Dismisses a confirmation dialog without acting."
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Confirms a delete in a confirmation dialog."
+  },
+  "sessionDeleted": "Occasion deleted",
+  "@sessionDeleted": {
+    "description": "Snackbar shown after an occasion is deleted, alongside an undo action."
+  },
+  "undo": "Undo",
+  "@undo": {
+    "description": "Action on the delete snackbar that restores the just-deleted occasion."
+  },
+  "errorDeleteFailed": "Couldn''t delete this occasion. Please try again.",
+  "@errorDeleteFailed": {
+    "description": "Snackbar shown when deleting an occasion failed, so nothing was removed."
   }
 }

@@ -12,8 +12,8 @@ import 'session_list_state.dart';
 
 /// The recorded readings, newest first.
 ///
-/// Read-only in this slice: editing and deleting are data-loss-adjacent and
-/// get their own slice, with confirmation and undo (CLAUDE.md §6).
+/// The list itself is read-only: an occasion is opened, edited, and deleted on
+/// the [SessionDetailScreen] a tap away, not from here.
 class SessionListScreen extends StatelessWidget {
   /// Shows the sessions held by the repository provided above this widget.
   const SessionListScreen({super.key});

@@ -61,7 +61,10 @@ stand and what's next*.
   behaviour tests (average shown/omitted, each reading listed), `NumberStepper`
   behaviour tests, the `suggestedFirstReading` / `mostRecentReading` domain
   stats, `recentHistory`, the cubit's `initialSeed`, and a golden test on the
-  readings-list empty state. All green (127).
+  readings-list empty state, plus `SessionDetailScreen` delete-flow behaviour
+  tests (confirm, cancel, delete + undo, restore, failure) and the
+  `SessionRepository.delete` data tests (removes + cascades, absent-session
+  no-op). All green (134).
 - **Verified running:** the theme + S4 were run and eyeballed on a **physical
   Android device** (Redmi 2312DRA50G, Android 16 / API 36) on 2026-08-25 — the
   warm theme, Hanken type, big teal steppers and teal Save button all render
@@ -183,15 +186,35 @@ render; tested by direct-pump behaviour tests + the navigation smoke test. Own
 branch `s4-session-detail` (merged to `main`). **Verified on a physical device**
 2026-08-25 — see "Verified running" above.
 
-**Next up — S5:**
+**Done (2026-08-25): S5a — delete an occasion.** The `SessionDetailScreen` can
+now delete the whole occasion: a confirmation dialog, then on success it leaves
+the screen and shows an "Undo" that re-adds the kept `Session` as-is (its id is
+free again after the delete, so the restore cannot collide) — confirm + undo
+per the maintainer's call (CLAUDE.md §6). New `SessionRepository.delete(SessionId)`
+(readings cascade away; an absent-session delete is a no-op that still returns
+`Ok`) with drift-repo + fake coverage; a thin `SessionDetailCubit` (state is the
+`Session`) so the screen reaches the store through a cubit, not directly. The
+undo snackbar rides the app-root `ScaffoldMessenger`, shown just before the pop
+so it lands on the list; navigator/messenger/repository are captured before the
+awaits (no reach for a disposed context). Own branch `s5a-delete-session`. 134
+tests green; not yet on a device. **S5 was split** at the ~400-line budget
+(CLAUDE.md §8) — the reactive detail (watch the store) and the shared reading
+widgets land with S5b, where editing needs them.
 
-1. **S5 — Edit / delete** (roadmap Phase 2, `ROADMAP.md`). Correct a mistyped
-   reading; remove a session. Data-loss-adjacent, so it **confirms before acting
-   and is reversible where possible** (CLAUDE.md §6) — and it lives on the
-   `SessionDetailScreen` S4 just built (the mockup puts edit/delete on the opened
-   session, not on every list row). Own branch. Touches data (an update path and
-   a delete path on the repository) + domain + UI, so it is a fuller slice than
-   S4 — watch the ~400-line budget and split if needed.
+**Next up — S5b:**
+
+1. **S5b — Edit a reading & remove a single reading** (roadmap Phase 2). Tap a
+   reading on the `SessionDetailScreen` to edit its numbers/pulse/notes/context/
+   time, reusing `NumberStepper` + `ReadingContextDetails` + `ReadingInput.validate`;
+   and a per-reading remove (removing the last reading deletes the occasion via
+   the S5a `delete`). Domain (TDD): `Session.withReadingReplaced` /
+   `withoutReading` (→ `Session?`, encoding the ≥1-reading rule). Data: a new
+   `update(Session)` (transaction: delete this session's readings, re-insert).
+   Make `SessionDetailCubit` watch the store (reuse `watchAll()`, filter by id)
+   so an edit's new values show without a stale snapshot, and pop when the
+   session is gone. Own branch. Decided in brainstorm: edit one reading at a
+   time (not the whole occasion in the entry form); single-reading remove gets
+   undo only (no dialog), the whole-occasion delete keeps its dialog.
 
 ## Working reminders
 

@@ -125,3 +125,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   shows just the reading, since its average would only repeat it. This replaces
   the S2d in-place row expansion with one consistent path to a session's
   readings, and is where editing and deleting (a later slice) will live.
+- Delete an occasion (S5a): the session detail screen can remove the whole
+  occasion and its readings. It confirms first with a dialog, then — on success
+  — leaves the screen and shows an "Undo" that restores the occasion as it was
+  (CLAUDE.md §6, data-loss-adjacent actions confirm and are reversible). Backed
+  by a new `SessionRepository.delete(SessionId)` (readings cascade away with the
+  session; deleting an absent session is a no-op that still succeeds) and a small
+  `SessionDetailCubit` so the UI reaches the store through a cubit, not directly
+  (CLAUDE.md §3).

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../domain/core/result.dart';
 import '../../domain/core/unit.dart';
+import '../../domain/sessions/ids.dart';
 import '../../domain/sessions/persistence_failure.dart';
 import '../../domain/sessions/session.dart';
 import '../../domain/sessions/session_repository.dart';
@@ -38,6 +39,24 @@ class DriftSessionRepository implements SessionRepository {
       // full disk, constraint) is an expected failure the user must be told
       // about, and drift wraps them in several unrelated exception types. The
       // cause is kept, not swallowed, and Error still propagates as a bug.
+      return Err(WriteFailed(error));
+    }
+  }
+
+  @override
+  Future<Result<Unit, PersistenceFailure>> delete(SessionId id) async {
+    try {
+      // Readings go with it via the schema's cascade (CLAUDE.md §4: a session
+      // owns its readings). A no-match delete affects zero rows and still
+      // succeeds — the caller's goal already holds.
+      await (_database.delete(
+        _database.sessions,
+      )..where((session) => session.id.equals(id.value))).go();
+      return const Ok(unit);
+    } on Exception catch (error) {
+      // Broad for the same reason as add: every way sqlite can refuse a write
+      // is an expected failure the user must be told about, not a bug to crash
+      // on. The cause is kept; Error still propagates.
       return Err(WriteFailed(error));
     }
   }

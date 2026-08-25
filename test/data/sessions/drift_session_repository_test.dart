@@ -193,6 +193,32 @@ void main() {
     expect(history.single.readings, hasLength(2));
   });
 
+  test('delete removes the session and its readings', () async {
+    await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
+    await repository.add(sessionOf('s2', [readingOf('r2', evening)]));
+
+    final result = await repository.delete(const SessionId('s1'));
+
+    expect(result, const Ok<Unit, PersistenceFailure>(unit));
+    final remaining = (await repository.watchAll().first)
+        .map((session) => session.id.value)
+        .toList();
+    expect(remaining, ['s2']);
+    expect(await database.select(database.readings).get(), hasLength(1));
+  });
+
+  test(
+    'deleting an absent session succeeds without changing anything',
+    () async {
+      await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
+
+      final result = await repository.delete(const SessionId('gone'));
+
+      expect(result, const Ok<Unit, PersistenceFailure>(unit));
+      expect(await repository.watchAll().first, hasLength(1));
+    },
+  );
+
   test('takenAt is stored as UTC ISO-8601 text', () async {
     await repository.add(sessionOf('s1', [readingOf('r1', morning)]));
 
