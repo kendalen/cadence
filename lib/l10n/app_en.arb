@@ -230,8 +230,8 @@
   "@editReading": {
     "description": "Title of the screen for correcting one recorded reading, and the label of the edit action on each reading in the session detail screen."
   },
-  "removeReading": "Remove this reading",
-  "@removeReading": {
+  "removeReadingFromOccasion": "Remove this reading",
+  "@removeReadingFromOccasion": {
     "description": "Label of the action that removes one reading from an occasion that holds more than one."
   },
   "readingRemoved": "Reading removed",

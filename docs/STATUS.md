@@ -557,8 +557,9 @@ a device set to Italian renders in Italian. Apostrophes escaped as `''`
 1 occasione" / "Aggiunte N occasioni"). A focused test
 (`test/l10n/italian_localization_test.dart`) guards the mechanics — locale
 resolves, plurals (=0/=1/other) render, escaped apostrophe decodes. **215 tests
-green.** Own branch `s10-italian` — **not merged**: the maintainer (native
-speaker) reviews the wording first, especially the §1 disclaimer/medical strings.
+green.** Own branch `s10-italian` — **merged to `main`** (2026-08-25, HEAD
+`7191463`, plus two follow-ups fixing PDF column widths). The maintainer (native
+speaker) still owns a wording pass, especially the §1 disclaimer/medical strings.
 Notes for that review:
 - **Register:** all strings use informal "tu"; the maintainer chose it, but this
   is the place to catch any string that reads better formally.
@@ -574,10 +575,34 @@ Notes for that review:
 
 ## Known issues (open)
 
-- **`removeReading` duplicated in `app_en.arb`** (see S10 note above): two entries
-  share the key, the later winning, so the entry-form "remove during entry"
-  tooltip shows "Remove this reading" instead of "Remove". Low impact; fix by
-  splitting into two keys (e.g. `removeReading` + `removeReadingFromOccasion`).
+- **Landscape layout & system-bar insets (several symptoms, one family).**
+  Observed on the Redmi 2312DRA50G rotated to landscape; UI-only, no data risk.
+  - **Bottom buttons hide under the system bars.** On the reading add/edit form
+    (`ReadingFormScreen`), the bottom actions (e.g. **Save**) slide behind the
+    Android navigation/status bar and can't be tapped. Likely a `SafeArea` /
+    bottom-inset gap when the usable height shrinks — the entry form got a
+    `withSystemBottomInset` fix in S5a/b/c, so check whether the add/edit form
+    path was fully covered.
+  - **"Last 7 days" card is too tall in landscape**, eating the vertical space
+    so too little is left for the readings list beneath it. Wants a more compact
+    layout (or a different arrangement) when the screen is short and wide.
+  - **Side borders hidden under the side system bar.** In landscape the nav bar
+    / cutout sits on a *side* edge, and both the summary card and the reading
+    cards run under it — their left/right border disappears. Points at a missing
+    **horizontal** `SafeArea`/inset on the list, not just the bottom one.
+
+  Common cause is almost certainly insets: the app handles the bottom inset in
+  places but not the horizontal ones, and the coverage card wasn't laid out for
+  a short-and-wide viewport. Worth fixing together as one "landscape pass".
+
+## Known issues (resolved)
+
+- **`removeReading` duplicated in `app_en.arb`** — *fixed 2026-08-25* (branch
+  `fix-remove-reading-duplicate-key`). Two entries shared the key, the later
+  ("Remove this reading") silently winning, so the entry-form remove tooltip
+  showed the wrong text. Split into `removeReading` (entry form) +
+  `removeReadingFromOccasion` (session detail); Italian split to match;
+  regression test added. 216 tests green. Not yet merged to `main`.
 
 ## Working reminders
 

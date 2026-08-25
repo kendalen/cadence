@@ -4,6 +4,7 @@
 // itself is the maintainer's to review; this only guards the mechanics.
 
 import 'package:cadence/l10n/app_localizations.dart';
+import 'package:cadence/l10n/app_localizations_en.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,6 +29,15 @@ void main() {
 
   testWidgets('Italian is a supported locale', (tester) async {
     expect(AppLocalizations.supportedLocales, contains(const Locale('it')));
+  });
+
+  // Regression: app_en.arb once defined "removeReading" twice, so the short
+  // entry-form tooltip silently rendered "Remove this reading". The two actions
+  // now have distinct keys — the short "Remove" and the long form must not collide.
+  test('the two remove-reading strings are distinct', () {
+    final en = AppLocalizationsEn();
+    expect(en.removeReading, 'Remove');
+    expect(en.removeReadingFromOccasion, 'Remove this reading');
   });
 
   testWidgets('resolves Italian, including plurals and escaped apostrophes', (

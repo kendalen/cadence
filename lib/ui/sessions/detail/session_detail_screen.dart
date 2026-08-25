@@ -337,7 +337,7 @@ class _ReadingRow extends StatelessWidget {
         if (canRemove)
           IconButton(
             icon: const Icon(Icons.close),
-            tooltip: l10n.removeReading,
+            tooltip: l10n.removeReadingFromOccasion,
             onPressed: onRemove,
           ),
       ],
