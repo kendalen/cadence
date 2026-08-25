@@ -775,9 +775,11 @@ reading cards.
 About.** A new `SettingsScreen` (`lib/ui/settings/`), reached from a **gear icon**
 in the readings-list app bar (beside the trends icon), is now the home of the
 readings export and About. Own branch `s-settings-and-ranged-export` (HEAD
-`9a6ada3`), **249 tests green**, no schema change → no migration. **Not yet
-device-verified** — the CSV/PDF share hand-off is native (share_plus), so it wants
-an on-device eyeball as usual.
+`9a6ada3`), **249 tests green**, no schema change → no migration. **Verified on
+the physical device** (Redmi 2312DRA50G) 2026-08-25: a same-key release update
+installed over the existing diary (data intact); the gear-icon Settings screen,
+the ranged CSV/PDF export and the versioned About all render/work correctly.
+Branch pushed to `origin`; **not yet merged to `main`** (maintainer to merge).
 - **Date-bounded export (maintainer ask).** Preset ranges — Last 7 / 30 / 90 days
   / All — chosen with a `RadioGroup`, then Export CSV / Export PDF. Default is
   **Last 30 days** (matches the trends default). The only new logic is one pure
