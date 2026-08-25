@@ -152,4 +152,60 @@ void main() {
       expect(series.daily, hasLength(2));
     });
   });
+
+  group('time-of-day filter (noon split)', () {
+    final now = DateTime.utc(2026, 8, 24, 20);
+
+    test('morning keeps only before-noon occasions', () {
+      final series = build(
+        [
+          _occasion(
+            systolic: 118,
+            takenAt: DateTime.utc(2026, 8, 24, 8),
+          ), // morning
+          _occasion(
+            systolic: 140,
+            takenAt: DateTime.utc(2026, 8, 24, 19),
+          ), // evening
+        ],
+        filter: TimeOfDayFilter.morning,
+        now: now,
+      );
+
+      expect(series.daily, hasLength(1));
+      expect(series.daily.single.systolic, 118);
+    });
+
+    test('evening keeps only from-noon occasions; noon itself is evening', () {
+      final series = build(
+        [
+          _occasion(
+            systolic: 118,
+            takenAt: DateTime.utc(2026, 8, 24, 8),
+          ), // morning
+          _occasion(
+            systolic: 140,
+            takenAt: DateTime.utc(2026, 8, 24, 12),
+          ), // noon → evening
+        ],
+        filter: TimeOfDayFilter.evening,
+        now: now,
+      );
+
+      expect(series.daily, hasLength(1));
+      expect(series.daily.single.systolic, 140);
+    });
+
+    test('all keeps both halves', () {
+      final series = build(
+        [
+          _occasion(takenAt: DateTime.utc(2026, 8, 24, 8)),
+          _occasion(takenAt: DateTime.utc(2026, 8, 24, 19)),
+        ],
+        filter: TimeOfDayFilter.all,
+        now: now,
+      );
+      expect(series.daily.single.occasionCount, 2);
+    });
+  });
 }

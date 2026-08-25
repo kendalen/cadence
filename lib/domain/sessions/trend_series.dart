@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'first_reading_suggestion.dart';
 import 'session.dart';
 import 'session_average.dart';
 
@@ -121,7 +122,11 @@ TrendSeries buildTrendSeries(
       ? null
       : DateTime.utc(today.year, today.month, today.day - (days - 1));
 
-  final inWindow = sessions
+  final byTimeOfDay = sessions.where(
+    (session) => _matchesFilter(session, filter, toLocalTime),
+  );
+
+  final inWindow = byTimeOfDay
       .where(
         (session) =>
             windowStart == null ||
@@ -191,4 +196,23 @@ TrendPoint _pointOf(DateTime date, List<Session> sessions) {
     pulse: pulses.isEmpty ? null : roundedMean(pulses),
     occasionCount: sessions.length,
   );
+}
+
+/// Whether [session] belongs in [filter], by the local-noon [DayBucket] of its
+/// start. Reuses the one split rule the app already uses (§8, no second way).
+bool _matchesFilter(
+  Session session,
+  TimeOfDayFilter filter,
+  DateTime Function(DateTime) toLocal,
+) {
+  switch (filter) {
+    case TimeOfDayFilter.all:
+      return true;
+    case TimeOfDayFilter.morning:
+      return DayBucket.ofLocalTime(toLocal(session.occurredAt)) ==
+          DayBucket.morning;
+    case TimeOfDayFilter.evening:
+      return DayBucket.ofLocalTime(toLocal(session.occurredAt)) ==
+          DayBucket.evening;
+  }
 }
