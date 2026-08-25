@@ -8,6 +8,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Italian localisation (S10): the full UI string set is translated to Italian, so
+  a device set to Italian shows the app in Italian. English stays the source
+  locale (CLAUDE.md §9); the register is informal ("tu"). Dropping in `app_it.arb`
+  wires `it` into the supported locales automatically — no Dart change. ICU
+  plurals and elided apostrophes are handled and covered by a test; the wording
+  is pending a native-speaker review before release.
 - Export confirmation (S9b): after the whole diary is shared as a JSON backup,
   CSV, or PDF, a brief message confirms it ("Backup shared." / "Readings
   exported.") — feedback the older audience was missing when the share sheet
