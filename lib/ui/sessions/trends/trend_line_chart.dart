@@ -179,16 +179,23 @@ class _TrendLineChartState extends State<TrendLineChart> {
     );
   }
 
-  /// Pins the touched point's tooltip so it stays after the finger lifts.
+  /// Pins the touched point's tooltip so it stays after the finger lifts, and
+  /// dismisses it when the pinned point is tapped again (a toggle).
   ///
   /// It reacts to any touch that lands on an averaged line and never clears on
-  /// its own — the finger-up event arrives with no spot, so clearing there is
+  /// its own finger-up — that event arrives with no spot, so clearing there is
   /// what made the tooltip vanish on release. Dragging along the line scrubs the
-  /// pinned point from one to the next.
+  /// pinned point from one to the next. Only a discrete tap-up toggles the
+  /// already-pinned point off, so the tap-down/tap-up pair of one tap can't
+  /// toggle it twice.
   void _onTouch(FlTouchEvent event, LineTouchResponse? response) {
     for (final spot in response?.lineBarSpots ?? const <LineBarSpot>[]) {
       if (spot.barIndex < widget.series.length) {
-        if (spot.x != _selectedX) setState(() => _selectedX = spot.x);
+        if (event is FlTapUpEvent && spot.x == _selectedX) {
+          setState(() => _selectedX = null);
+        } else if (spot.x != _selectedX) {
+          setState(() => _selectedX = spot.x);
+        }
         return;
       }
     }
