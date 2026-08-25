@@ -10,9 +10,6 @@ const int expectedWeeklyOccasions = 14;
 /// How many distinct days the 7-2-2 protocol spans — the "7" in 7-2-2.
 const int expectedMonitoringDays = 7;
 
-/// How long the rolling coverage window looks back.
-const Duration _coverageWindow = Duration(days: 7);
-
 /// How well the last seven days keep to the 7-2-2 protocol (CLAUDE.md §4).
 ///
 /// Coverage is a first-class output: it reports occasions *logged* against
@@ -67,23 +64,36 @@ final class MonitoringCoverage extends Equatable {
   ];
 }
 
-/// Coverage of the seven days ending at [now], over [sessions].
+/// Coverage of the last seven days ending at [now], over [sessions].
 ///
-/// An occasion counts when its [Session.occurredAt] is no earlier than seven
-/// days before [now] (the boundary is inclusive). [now] is supplied by the
-/// caller so this stays a pure function; it is compared in UTC, as occasion
-/// times are stored. [toLocal] converts an occasion's UTC instant to the local
-/// time whose calendar day it belongs to — injected so day-grouping is testable;
-/// it defaults to [DateTime.toLocal].
+/// "Last 7 days" means the local calendar day of [now] and the six days before
+/// it — an occasion counts when its local date is on or after the start of that
+/// window. Anchoring to local midnight (not a rolling 168-hour cutoff) keeps the
+/// window exactly seven dates wide, so [MonitoringCoverage.daysLogged] can never
+/// exceed seven — a rolling cutoff straddles eight calendar days when [now] is
+/// mid-day (CLAUDE.md §4). [now] is supplied by the caller so this stays a pure
+/// function. [toLocal] converts a stored UTC instant to the local time whose
+/// calendar day it belongs to — injected so the window is testable regardless of
+/// the machine's timezone; it defaults to [DateTime.toLocal].
 MonitoringCoverage weeklyCoverage(
   List<Session> sessions, {
   required DateTime now,
   DateTime Function(DateTime)? toLocal,
 }) {
   final toLocalDate = toLocal ?? (utc) => utc.toLocal();
-  final cutoff = now.toUtc().subtract(_coverageWindow);
+  final today = toLocalDate(now);
+  // Local midnight of the earliest day in the window. Building the date from
+  // its parts (not subtracting a Duration) lands on midnight regardless of any
+  // DST shift between then and today.
+  final windowStart = DateTime(
+    today.year,
+    today.month,
+    today.day - (expectedMonitoringDays - 1),
+  );
   final inWindow = sessions
-      .where((session) => !session.occurredAt.isBefore(cutoff))
+      .where(
+        (session) => !_localDate(session, toLocalDate).isBefore(windowStart),
+      )
       .toList();
 
   return MonitoringCoverage(
@@ -93,17 +103,19 @@ MonitoringCoverage weeklyCoverage(
   );
 }
 
+/// The local calendar day an occasion falls on, under [toLocal] — the shared
+/// notion of "which day" used both to filter the window and to count days, so
+/// the two never disagree.
+DateTime _localDate(Session session, DateTime Function(DateTime) toLocal) {
+  final local = toLocal(session.occurredAt);
+  return DateTime(local.year, local.month, local.day);
+}
+
 /// How many distinct local calendar days [sessions] fall on, under [toLocal].
 int _distinctDays(
   List<Session> sessions,
   DateTime Function(DateTime) toLocal,
-) => sessions
-    .map((session) {
-      final local = toLocal(session.occurredAt);
-      return DateTime(local.year, local.month, local.day);
-    })
-    .toSet()
-    .length;
+) => sessions.map((session) => _localDate(session, toLocal)).toSet().length;
 
 /// The mean of [sessions]' averages, each session weighing once (§4). Pulse is
 /// meaned over only the sessions whose average recorded one, or `null` when
