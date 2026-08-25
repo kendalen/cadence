@@ -572,12 +572,38 @@ Notes for that review:
   reading". The Italian file has it once ("Rimuovi questa misurazione"). Worth a
   separate English fix (split into two keys) — out of S10's scope.
 
+**Done (2026-08-25): landscape pass — system-bar insets + compact coverage
+card.** Two fixes for problems the maintainer hit rotating the phone to
+landscape (own branch `landscape-insets`, off `main`):
+- **Content under the system side bars.** Edge-to-edge draws behind Android's
+  bars; the scroll-padding helper only grew the *bottom*, so in landscape — where
+  the nav bar and any cutout move to a *side* edge — a Save button or a card's
+  side border slid off under the bar. `withSystemBottomInset` was generalised to
+  `withSystemInsets` (grows left/right/bottom by the system inset; top stays with
+  the app bar) and applied to all four scroll screens; the pinned coverage card
+  gets a side-only `SafeArea` so it clears a side bar without a bottom gap.
+- **"Last 7 days" card too tall in landscape.** In landscape the title/counts/
+  average now flow onto a **single line** (via a `Wrap`, so a very large font
+  scale wraps instead of clipping) rather than stacking over three, leaving the
+  short height for the readings. Stays pinned + visible; portrait unchanged.
+  (Maintainer chose compact-in-place over unpin-and-scroll.)
+
+**218 tests green** (+ new `withSystemInsets` side-inset tests and a portrait
+coverage-card test; the card's existing tests run in the default landscape-shaped
+window and now exercise the one-line layout). No schema change → no migration.
+**On-device landscape check still pending** — rendering behind the bars can only
+be confirmed by eye; verify on the Redmi as usual before merge.
+
 ## Known issues (open)
 
 - **`removeReading` duplicated in `app_en.arb`** (see S10 note above): two entries
   share the key, the later winning, so the entry-form "remove during entry"
   tooltip shows "Remove this reading" instead of "Remove". Low impact; fix by
   splitting into two keys (e.g. `removeReading` + `removeReadingFromOccasion`).
+  **Fixed on branch `fix-remove-reading-duplicate-key`** (not yet merged).
+- **Landscape rendering not yet eyeballed on device.** The landscape pass above
+  is tests-green but not confirmed on the Redmi — do that before merging
+  `landscape-insets`.
 
 ## Working reminders
 
