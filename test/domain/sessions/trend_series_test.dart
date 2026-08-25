@@ -208,4 +208,67 @@ void main() {
       expect(series.daily.single.occasionCount, 2);
     });
   });
+
+  group('adaptive bucketing (keyed off data span)', () {
+    // now anchors "today"; spans are measured oldest-occasion → today.
+    final now = DateTime.utc(2026, 8, 24, 8);
+
+    test('span <= 30 days → daily buckets; averaged == daily', () {
+      final series = build([
+        _occasion(takenAt: DateTime.utc(2026, 8, 4, 8)), // 20 days back
+        _occasion(takenAt: DateTime.utc(2026, 8, 24, 8)),
+      ], now: now);
+
+      expect(series.bucketSize, const Duration(days: 1));
+      expect(series.averaged, series.daily);
+    });
+
+    test('31–90 day span → 7-day buckets', () {
+      // Oldest 45 days back → span 45 → weekly. Two occasions in one 7-day
+      // bucket average together into a single averaged point; daily keeps both.
+      final series = build([
+        _occasion(
+          systolic: 120,
+          takenAt: DateTime.utc(2026, 7, 10, 8),
+        ), // 45d back
+        _occasion(
+          systolic: 130,
+          takenAt: DateTime.utc(2026, 7, 12, 8),
+        ), // same week
+        _occasion(systolic: 110, takenAt: DateTime.utc(2026, 8, 24, 8)),
+      ], now: now);
+
+      expect(series.bucketSize, const Duration(days: 7));
+      expect(series.daily, hasLength(3));
+      // First weekly bucket (anchored at 2026-07-10) holds the first two.
+      final firstBucket = series.averaged.first;
+      expect(firstBucket.localDate, DateTime.utc(2026, 7, 10));
+      expect(firstBucket.systolic, 125); // mean(120,130)
+      expect(firstBucket.occasionCount, 2);
+    });
+
+    test('span > 90 days → 30-day buckets', () {
+      final series = build([
+        _occasion(takenAt: DateTime.utc(2026, 1, 1, 8)), // ~235d back
+        _occasion(takenAt: DateTime.utc(2026, 8, 24, 8)),
+      ], now: now);
+      expect(series.bucketSize, const Duration(days: 30));
+    });
+
+    test(
+      'bucket size follows real span, not the preset (new user on "all")',
+      () {
+        // Only 12 days of data but range=all → still daily, not a lonely point.
+        final series = build(
+          [
+            _occasion(takenAt: DateTime.utc(2026, 8, 12, 8)),
+            _occasion(takenAt: DateTime.utc(2026, 8, 24, 8)),
+          ],
+          range: TrendRange.all,
+          now: now,
+        );
+        expect(series.bucketSize, const Duration(days: 1));
+      },
+    );
+  });
 }

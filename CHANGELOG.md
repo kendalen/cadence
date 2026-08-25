@@ -16,6 +16,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Trend-series domain aggregation (`buildTrendSeries`): range windowing,
+  morning/evening filter, and adaptive daily/weekly/monthly averaging of
+  session averages, for the upcoming trends chart. Domain-only (no UI yet).
 - Italian localisation (S10): the full UI string set is translated to Italian, so
   a device set to Italian shows the app in Italian. English stays the source
   locale (CLAUDE.md §9); the register is informal ("tu"). Dropping in `app_it.arb`

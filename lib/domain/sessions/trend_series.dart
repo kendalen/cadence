@@ -136,10 +136,20 @@ TrendSeries buildTrendSeries(
 
   final daily = _pointsByBucket(inWindow, toLocalTime, bucketDays: 1);
 
+  final bucketDays = _bucketDaysForSpan(inWindow, toLocalTime, now);
+  final averaged = bucketDays == 1
+      ? daily
+      : _pointsByBucket(
+          inWindow,
+          toLocalTime,
+          bucketDays: bucketDays,
+          anchor: windowStart,
+        );
+
   return TrendSeries(
     daily: daily,
-    averaged: daily,
-    bucketSize: const Duration(days: 1),
+    averaged: averaged,
+    bucketSize: Duration(days: bucketDays),
   );
 }
 
@@ -215,4 +225,22 @@ bool _matchesFilter(
       return DayBucket.ofLocalTime(toLocal(session.occurredAt)) ==
           DayBucket.evening;
   }
+}
+
+/// The averaged-bucket width for [sessions]' actual span (oldest occasion to
+/// [now]): daily up to 30 days, 7-day up to 90, else 30-day. Keyed off the data,
+/// not the chosen range, so "All" with little history still shows daily points.
+int _bucketDaysForSpan(
+  List<Session> sessions,
+  DateTime Function(DateTime) toLocal,
+  DateTime now,
+) {
+  if (sessions.isEmpty) return 1;
+  final oldest = sessions
+      .map((session) => _localDate(session, toLocal))
+      .reduce((a, b) => a.isBefore(b) ? a : b);
+  final spanDays = _civilDate(toLocal(now)).difference(oldest).inDays;
+  if (spanDays <= 30) return 1;
+  if (spanDays <= 90) return 7;
+  return 30;
 }
