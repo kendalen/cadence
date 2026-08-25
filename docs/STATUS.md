@@ -371,10 +371,15 @@ validates it **before** writing, confirms, merges, and reports.
   change → no migration snapshot. Own branch `s7b-backup-import` (off
   `s7a-backup-export`). Spec:
   `docs/superpowers/specs/2026-08-25-json-backup-import-design.md`.
-- **Not yet on a device** — `file_selector` + `share_plus` both have native
-  code; the whole S7 round-trip (export a backup, reinstall/clear, import it
-  back) wants one on-device pass on the Redmi. That's the maintainer's planned
-  test of "the entire update".
+- **Verified on the physical device** (Redmi 2312DRA50G) 2026-08-25: the full
+  S7 round-trip works — **export** shared the `.json` out through the Android
+  share sheet and the maintainer saved it (`share_plus` confirmed); after
+  clearing the app's data, **import** picked the file (`file_selector`
+  confirmed), the confirm dialog and summary showed the **right occasion
+  count**, and re-importing the same file **added nothing** (merge-by-id,
+  local-wins confirmed). (Aside: HyperOS blocks `adb uninstall`/`pm clear`
+  without "USB debugging (Security settings)", which is off — the maintainer
+  cleared app data by hand; `flutter run` install + launch works without it.)
 
 **Next up — S8 (CSV export).** Export-only, for handing a doctor the numbers;
 joins the same overflow menu. PDF stays a 1.x fast-follow (roadmap). S7a is on
