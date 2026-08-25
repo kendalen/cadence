@@ -164,6 +164,10 @@ class _TrendLineChartState extends State<TrendLineChart> {
                 ]),
               ],
         lineTouchData: LineTouchData(
+          // Drive the tooltip entirely from our pinned selection, not from
+          // fl_chart's built-in touch state — the built-in handler clears its
+          // tooltip on finger-up, which is what made a tapped tooltip vanish.
+          handleBuiltInTouches: false,
           touchCallback: _onTouch,
           touchTooltipData: LineTouchTooltipData(
             getTooltipColor: (_) => theme.colorScheme.inverseSurface,

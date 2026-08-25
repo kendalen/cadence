@@ -101,22 +101,26 @@ class _TrendsScreenState extends State<TrendsScreen> {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _verticalChoice<TrendRange>(
-              _rangeOptions(l10n),
-              _range,
-              (value) => setState(() => _range = value),
-            ),
-            const SizedBox(height: 12),
-            _verticalChoice<TimeOfDayFilter>(
-              _filterOptions(l10n),
-              _filter,
-              (value) => setState(() => _filter = value),
-            ),
-          ],
+        // Scrollable so the stacked buttons stay reachable when they are taller
+        // than the short landscape height.
+        SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _verticalChoice<TrendRange>(
+                _rangeOptions(l10n),
+                _range,
+                (value) => setState(() => _range = value),
+              ),
+              const SizedBox(height: 12),
+              _verticalChoice<TimeOfDayFilter>(
+                _filterOptions(l10n),
+                _filter,
+                (value) => setState(() => _filter = value),
+              ),
+            ],
+          ),
         ),
         const SizedBox(width: 20),
         Expanded(
@@ -160,12 +164,15 @@ class _TrendsScreenState extends State<TrendsScreen> {
   ) => ToggleButtons(
     direction: Axis.vertical,
     borderRadius: BorderRadius.circular(8),
+    // A uniform min size so every button is the same width (the shorter labels
+    // like "All" no longer sit narrow and left) and a comfortable tap height.
+    constraints: const BoxConstraints(minWidth: 132, minHeight: 44),
     isSelected: [for (final (value, _) in options) value == selected],
     onPressed: (index) => onChanged(options[index].$1),
     children: [
       for (final (_, label) in options)
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(label),
         ),
     ],
