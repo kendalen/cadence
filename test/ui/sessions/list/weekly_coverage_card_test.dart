@@ -51,6 +51,31 @@ void main() {
     expect(find.text('128/82'), findsOneWidget);
   });
 
+  testWidgets('stacks onto multiple lines in portrait', (tester) async {
+    // The default test window is landscape-shaped (800x600), which exercises the
+    // one-line layout; force a tall, narrow window for the stacked portrait one.
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await pump(
+      tester,
+      const MonitoringCoverage(
+        occasionsLogged: 9,
+        daysLogged: 4,
+        periodAverage: SessionAverage(systolic: 128, diastolic: 82),
+      ),
+    );
+
+    // Same content in the narrow layout — all present, and nothing overflows (a
+    // RenderFlex overflow throws and fails the test).
+    expect(find.text('Last 7 days'), findsOneWidget);
+    expect(find.text('9 of 14 occasions'), findsOneWidget);
+    expect(find.text('4 of 7 days'), findsOneWidget);
+    expect(find.text('Average'), findsOneWidget);
+    expect(find.text('128/82'), findsOneWidget);
+  });
+
   testWidgets('omits the average when nothing falls in the window', (
     tester,
   ) async {

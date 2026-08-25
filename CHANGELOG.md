@@ -87,6 +87,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The "Last 7 days" summary is now compact in landscape: the same title, counts
+  and average that stack over a few lines in portrait flow onto a single line
+  when the phone is rotated, so the short landscape height is left for the
+  readings instead of the summary. It stays pinned and visible either way, and
+  falls back to more lines under very large font scales rather than clipping.
 - Session detail: the occasion average now reads as the screen's hero — larger
   and in the teal brand colour, with the pulse smaller on its own line beneath —
   and the individual readings sit in their own card. New/edit reading forms give
