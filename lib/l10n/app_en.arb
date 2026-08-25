@@ -294,6 +294,30 @@
   "@exportReadingsSuccess": {
     "description": "Confirmation shown after the CSV or PDF readings export has been shared successfully through the system share sheet."
   },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Title of the Settings screen, reached from the gear icon in the readings list app bar."
+  },
+  "settingsExportHeading": "Export readings",
+  "@settingsExportHeading": {
+    "description": "Heading of the Settings section where the user picks a date range and exports the readings as CSV or PDF."
+  },
+  "settingsExportRangeLast7": "Last 7 days",
+  "@settingsExportRangeLast7": {
+    "description": "Export date-range option: only readings from the last 7 calendar days."
+  },
+  "settingsExportRangeLast30": "Last 30 days",
+  "@settingsExportRangeLast30": {
+    "description": "Export date-range option: only readings from the last 30 calendar days."
+  },
+  "settingsExportRangeLast90": "Last 90 days",
+  "@settingsExportRangeLast90": {
+    "description": "Export date-range option: only readings from the last 90 calendar days."
+  },
+  "settingsExportRangeAll": "All readings",
+  "@settingsExportRangeAll": {
+    "description": "Export date-range option: every recorded reading, no date limit."
+  },
   "exportTitle": "Blood pressure readings",
   "@exportTitle": {
     "description": "Title shown at the top of the exported PDF document."

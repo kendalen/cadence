@@ -62,6 +62,11 @@ dependencies:
     sdk: flutter
   # Used by the generated localisations for message and plural formatting.
   intl: any
+  # Reads the app version at runtime for the About dialog. Flutter has no
+  # built-in for this and hardcoding the version is forbidden (CLAUDE.md §2, §9);
+  # same fluttercommunity/plus_plugins monorepo as share_plus. BSD-3 — verified
+  # in the resolved package's LICENSE.
+  package_info_plus: ^10.2.1
   # Pure-Dart PDF generation for the readings export (S8). No native code, no
   # network, no font asset (built-in Helvetica covers Latin-1, incl. Italian
   # accents). We share the produced bytes through the existing share sheet, so

@@ -6,8 +6,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- A **Settings screen**, reached from a gear icon in the readings list. It is the
+  new home of the readings export and the About dialog.
+- **Date-bounded CSV / PDF export.** From Settings you can now export only the
+  last 7, 30 or 90 days (or all readings) rather than the whole diary — handy for
+  handing a clinician just a recent window. "Last N days" means N calendar days,
+  the same window meaning the coverage card uses.
+- The **About dialog now shows the app version**, read from the built app at
+  runtime.
+
 ### Changed
 
+- CSV / PDF export and About **moved from the overflow menu to the new Settings
+  screen**, so each has a single home. The overflow menu now holds just the
+  whole-diary JSON backup and its import.
 - The pinned "Last 7 days" coverage card now has a soft sand background, setting
   the summary apart from the white reading cards below it. The tint is a neutral
   warm colour, never a status colour — colouring it good/bad would cross the

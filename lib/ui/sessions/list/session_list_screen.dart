@@ -6,6 +6,7 @@ import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/weekly_coverage.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../settings/settings_screen.dart';
 import '../../system_insets.dart';
 import '../detail/session_detail_screen.dart';
 import '../entry/session_entry_screen.dart';
@@ -39,6 +40,15 @@ class SessionListScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (context) => const TrendsScreen(),
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: l10n.settingsTitle,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => const SettingsScreen(),
                 ),
               ),
             ),
