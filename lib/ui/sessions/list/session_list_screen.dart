@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
 import '../../../l10n/app_localizations.dart';
+import '../detail/session_detail_screen.dart';
 import '../entry/session_entry_screen.dart';
-import 'reading_detail.dart';
 import 'session_list_cubit.dart';
 import 'session_list_state.dart';
 
@@ -79,12 +79,11 @@ class _EmptyList extends StatelessWidget {
 
 /// One occasion in the list, shown as the average of its readings (CLAUDE.md §4).
 ///
-/// The average of a single reading is that reading, so a one-off entry reads
-/// exactly as before; a badge marks the occasions holding more than one so the
-/// averaged row is never mistaken for a single measurement. A row that holds
-/// hidden detail — more than one reading, or any recorded context or note —
-/// expands in place to show each reading; a bare single reading does not, since
-/// expanding it would only repeat the header.
+/// The average of a single reading is that reading, so a one-off entry reads as
+/// itself; a badge marks the occasions holding more than one so the averaged row
+/// is never mistaken for a single measurement. Tapping the row opens the
+/// occasion in full ([SessionDetailScreen]) — the one place its individual
+/// readings, context and notes are shown.
 class _SessionTile extends StatelessWidget {
   const _SessionTile(this.session);
 
@@ -100,39 +99,24 @@ class _SessionTile extends StatelessWidget {
         .add_jm()
         .format(session.occurredAt.toLocal());
 
-    final title = Row(
-      children: [
-        Text(l10n.readingPressure(average.systolic, average.diastolic)),
-        if (readingCount > 1) ...[
-          const SizedBox(width: 8),
-          _ReadingCountBadge(readingCount),
+    return ListTile(
+      title: Row(
+        children: [
+          Text(l10n.readingPressure(average.systolic, average.diastolic)),
+          if (readingCount > 1) ...[
+            const SizedBox(width: 8),
+            _ReadingCountBadge(readingCount),
+          ],
+          const Spacer(),
+          if (average.pulse != null) Text(l10n.readingPulse(average.pulse!)),
         ],
-        const Spacer(),
-        if (average.pulse != null) Text(l10n.readingPulse(average.pulse!)),
-      ],
-    );
-    final subtitle = Text(takenAt);
-
-    final hasHiddenDetail =
-        readingCount > 1 ||
-        session.readings.any(
-          (reading) => reading.hasContext || reading.notes != null,
-        );
-    if (!hasHiddenDetail) {
-      return ListTile(title: title, subtitle: subtitle);
-    }
-
-    return ExpansionTile(
-      title: title,
-      subtitle: subtitle,
-      shape: const Border(),
-      collapsedShape: const Border(),
-      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      expandedCrossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Divider(height: 1),
-        for (final reading in session.readingsByTime) ReadingDetail(reading),
-      ],
+      ),
+      subtitle: Text(takenAt),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => SessionDetailScreen(session),
+        ),
+      ),
     );
   }
 }

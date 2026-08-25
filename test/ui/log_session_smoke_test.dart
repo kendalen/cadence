@@ -295,9 +295,7 @@ void main() {
     await disposeApp(tester);
   });
 
-  testWidgets('an occasion expands to show its individual readings', (
-    tester,
-  ) async {
+  testWidgets('tapping an occasion opens its detail screen', (tester) async {
     await pumpApp(tester);
     await openEntryForm(tester);
 
@@ -309,16 +307,18 @@ void main() {
     await setValue(tester, diastolicStepper, '79');
     await save(tester);
 
-    // The row shows the average (mean of 120/80 and 118/79) and stays
-    // collapsed: the individual readings are not on screen yet.
+    // The list shows only the average (mean of 120/80 and 118/79); the
+    // individual readings are not on the list itself.
     expect(find.text('119/80'), findsOneWidget);
     expect(find.text('120/80'), findsNothing);
     expect(find.text('118/79'), findsNothing);
 
+    // Tapping the row opens the occasion in full: the average, and each
+    // reading behind it.
     await tester.tap(find.text('119/80'));
     await settle(tester);
 
-    // Expanded: both readings behind the average are now shown.
+    expect(find.text('Average'), findsOneWidget);
     expect(find.text('120/80'), findsOneWidget);
     expect(find.text('118/79'), findsOneWidget);
 
