@@ -96,6 +96,12 @@ void main() {
   });
 
   testWidgets('empty diary golden', (tester) async {
+    // The default test window is landscape-shaped (800x600); force a portrait
+    // window so the golden captures the primary (stacked) empty-state layout.
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     await pump(tester);
     repository.emit(const []);
     await tester.pumpAndSettle();

@@ -36,7 +36,12 @@ class TrendChartSeries {
 /// This is the one place the app talks to `fl_chart` (CLAUDE.md §8, one way to
 /// do a thing). It draws neutral lines only — no threshold, no reference range,
 /// no good/bad colour (CLAUDE.md §1). The chart's meaning is left to the reader.
-class TrendLineChart extends StatelessWidget {
+///
+/// Tapping a point pins its tooltip until another point is tapped (or an empty
+/// area dismisses it), rather than the tooltip vanishing when the finger lifts —
+/// the diary's audience skews older, and a value they have to hold a finger on
+/// is hard to read (STATUS: ease of use is a cross-cutting requirement).
+class TrendLineChart extends StatefulWidget {
   /// Draws [series] over the [TrendSeries] point lists.
   const TrendLineChart({super.key, required this.series, required this.data});
 
@@ -45,6 +50,14 @@ class TrendLineChart extends StatelessWidget {
 
   /// The daily scatter and averaged line to plot.
   final TrendSeries data;
+
+  @override
+  State<TrendLineChart> createState() => _TrendLineChartState();
+}
+
+class _TrendLineChartState extends State<TrendLineChart> {
+  /// The x (civil-date-as-ms) of the point whose tooltip is pinned, or `null`.
+  double? _selectedX;
 
   /// The x position of a point: its civil date as milliseconds. [TrendPoint]
   /// dates are already DST-free `DateTime.utc` values, so this is stable.
@@ -56,19 +69,38 @@ class TrendLineChart extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final locale = Localizations.localeOf(context).toString();
+    final series = widget.series;
+    final data = widget.data;
 
     final bounds = _Bounds.of(data, series);
     final byX = {for (final point in data.averaged) _x(point): point};
     final oneDayBuckets = data.bucketSize.inDays <= 1;
 
-    // Averaged bars first (indices 0..n-1), daily dots after, so a tooltip's
-    // touched spots list the meaningful averaged lines before the faint dots.
+    // A pinned selection from an earlier range/filter may not exist now.
+    final selectedX = byX.containsKey(_selectedX) ? _selectedX : null;
+    final selectedIndex = selectedX == null
+        ? null
+        : data.averaged.indexWhere((point) => _x(point) == selectedX);
+
+    // Averaged bars occupy indices 0..n-1; the faint daily scatter, when it
+    // differs (only once buckets widen past a day), comes after. When buckets
+    // are one day wide the scatter *is* the line's points, so it is not drawn
+    // twice.
     final averagedBars = [
-      for (final s in series) _lineBar(s, data.averaged, isAveraged: true),
+      for (final s in series)
+        _lineBar(
+          s,
+          data.averaged,
+          isAveraged: true,
+          selectedIndex: selectedIndex,
+        ),
     ];
-    final dailyBars = [
-      for (final s in series) _lineBar(s, data.daily, isAveraged: false),
-    ];
+    final dailyBars = oneDayBuckets
+        ? const <LineChartBarData>[]
+        : [
+            for (final s in series)
+              _lineBar(s, data.daily, isAveraged: false, selectedIndex: null),
+          ];
 
     return LineChart(
       LineChartData(
@@ -119,7 +151,20 @@ class TrendLineChart extends StatelessWidget {
             ),
           ),
         ),
+        showingTooltipIndicators: selectedX == null
+            ? const []
+            : [
+                ShowingTooltipIndicators([
+                  for (var i = 0; i < averagedBars.length; i++)
+                    LineBarSpot(
+                      averagedBars[i],
+                      i,
+                      averagedBars[i].spots[selectedIndex!],
+                    ),
+                ]),
+              ],
         lineTouchData: LineTouchData(
+          touchCallback: _onTouch,
           touchTooltipData: LineTouchTooltipData(
             getTooltipColor: (_) => theme.colorScheme.inverseSurface,
             getTooltipItems: (spots) =>
@@ -130,13 +175,30 @@ class TrendLineChart extends StatelessWidget {
     );
   }
 
+  /// Pins the tapped point's tooltip; a tap that hits no averaged line clears
+  /// it. Only the settled tap event acts, so dragging does not thrash selection.
+  void _onTouch(FlTouchEvent event, LineTouchResponse? response) {
+    if (event is! FlTapUpEvent && event is! FlPanEndEvent) return;
+    final spots = response?.lineBarSpots;
+    double? hit;
+    for (final spot in spots ?? const <LineBarSpot>[]) {
+      if (spot.barIndex < widget.series.length) {
+        hit = spot.x;
+        break;
+      }
+    }
+    if (hit != _selectedX) setState(() => _selectedX = hit);
+  }
+
   /// One line: the averaged line is bold with dots; the daily scatter is faint
   /// dots only (zero-width line). Points where the series has no value are
-  /// dropped so a gap never reads as a zero.
+  /// dropped so a gap never reads as a zero. [selectedIndex], when set, keeps
+  /// that point's tooltip pinned.
   LineChartBarData _lineBar(
     TrendChartSeries s,
     List<TrendPoint> points, {
     required bool isAveraged,
+    required int? selectedIndex,
   }) {
     final spots = <FlSpot>[
       for (final point in points)
@@ -149,6 +211,7 @@ class TrendLineChart extends StatelessWidget {
       color: faint,
       barWidth: isAveraged ? 3 : 0,
       isCurved: false,
+      showingIndicators: selectedIndex == null ? const [] : [selectedIndex],
       dotData: FlDotData(
         show: true,
         getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
@@ -172,8 +235,7 @@ class TrendLineChart extends StatelessWidget {
     ThemeData theme,
     bool oneDayBuckets,
   ) {
-    // Averaged bars occupy the first `series.length` bar indices.
-    bool isAveraged(LineBarSpot spot) => spot.barIndex < series.length;
+    bool isAveraged(LineBarSpot spot) => spot.barIndex < widget.series.length;
     final averagedIndices = [
       for (final spot in spots)
         if (isAveraged(spot)) spot.barIndex,
@@ -190,22 +252,21 @@ class TrendLineChart extends StatelessWidget {
       for (final spot in spots)
         if (!isAveraged(spot))
           null
-        else
+        else if (spot.barIndex == firstAveraged)
+          // The first line carries the shared header (date, occasion count)
+          // then this series' value; the rest carry just their value.
           LineTooltipItem(
-            spot.barIndex == firstAveraged
-                ? '${_header(byX[spot.x], l10n, locale, oneDayBuckets)}\n'
-                      '${_valueLine(spot)}'
-                : _valueLine(spot),
-            spot.barIndex == firstAveraged ? headerStyle! : valueStyle!,
-            children: spot.barIndex == firstAveraged
-                ? [TextSpan(text: '\n${_valueLine(spot)}', style: valueStyle)]
-                : const [],
-          ),
+            '${_header(byX[spot.x], l10n, locale, oneDayBuckets)}\n'
+            '${_valueLine(spot)}',
+            headerStyle!,
+          )
+        else
+          LineTooltipItem(_valueLine(spot), valueStyle!),
     ];
   }
 
   String _valueLine(LineBarSpot spot) =>
-      '${series[spot.barIndex].label} ${spot.y.round()}';
+      '${widget.series[spot.barIndex].label} ${spot.y.round()}';
 
   String _header(
     TrendPoint? point,
@@ -220,7 +281,10 @@ class TrendLineChart extends StatelessWidget {
   }
 }
 
-/// The chart's axis bounds, padded so a flat or single-point series still draws.
+/// The chart's axis bounds. The value axis is snapped to whole multiples of its
+/// gridline step so every left-hand label sits on a gridline — otherwise the
+/// padded min/max print an odd number that collides with the nearest gridline
+/// label (the "151 over 150" overlap).
 class _Bounds {
   const _Bounds({
     required this.minX,
@@ -238,9 +302,9 @@ class _Bounds {
   final double xInterval;
   final double yInterval;
 
-  /// Derives padded bounds from every plotted value across [series].
+  /// Derives bounds from every plotted value across [series].
   factory _Bounds.of(TrendSeries data, List<TrendChartSeries> series) {
-    final xs = [for (final point in data.daily) TrendLineChart._x(point)];
+    final xs = [for (final point in data.daily) _TrendLineChartState._x(point)];
     final ys = [
       for (final point in data.daily)
         for (final s in series)
@@ -250,22 +314,24 @@ class _Bounds {
     // Empty is handled by the screen (empty state), but stay total.
     var minX = xs.isEmpty ? 0.0 : xs.reduce((a, b) => a < b ? a : b);
     var maxX = xs.isEmpty ? 1.0 : xs.reduce((a, b) => a > b ? a : b);
-    var minY = ys.isEmpty ? 0.0 : ys.reduce((a, b) => a < b ? a : b);
-    var maxY = ys.isEmpty ? 1.0 : ys.reduce((a, b) => a > b ? a : b);
+    final dataMin = ys.isEmpty ? 0.0 : ys.reduce((a, b) => a < b ? a : b);
+    final dataMax = ys.isEmpty ? 1.0 : ys.reduce((a, b) => a > b ? a : b);
 
     const day = 86400000.0; // ms in a day
     if (minX == maxX) {
       minX -= day;
       maxX += day;
     }
-    // Pad the value axis so a flat series is not a zero-height range, and lines
-    // never touch the top/bottom edge.
-    final valuePad = (maxY - minY) * 0.15;
-    final pad = valuePad < 4 ? 4.0 : valuePad;
-    minY -= pad;
-    maxY += pad;
 
-    final yInterval = _niceStep(maxY - minY);
+    final yInterval = _niceStep(dataMax - dataMin);
+    // Snap the axis to gridline multiples so labels never overlap, and keep a
+    // gridline of headroom above and below the data so points aren't on the edge.
+    var minY = (dataMin / yInterval).floorToDouble() * yInterval;
+    var maxY = (dataMax / yInterval).ceilToDouble() * yInterval;
+    if (minY == dataMin) minY -= yInterval;
+    if (maxY == dataMax) maxY += yInterval;
+    if (minY < 0) minY = 0; // a pressure or pulse is never negative
+
     // Aim for ~4 date labels; keep it a whole number of days.
     final xSteps = ((maxX - minX) / (day * 4)).ceilToDouble();
     final xInterval = xSteps < 1 ? day : xSteps * day;
@@ -280,7 +346,7 @@ class _Bounds {
     );
   }
 
-  /// A readable gridline step for a value [span] (~4 lines), rounded to 5s.
+  /// A readable gridline step for a value [span] (~4 lines), rounded up to 5s.
   static double _niceStep(double span) {
     final raw = span / 4;
     if (raw <= 5) return 5;

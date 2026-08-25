@@ -50,26 +50,59 @@ class _TrendsScreenState extends State<TrendsScreen> {
             filter: _filter,
             now: DateTime.now(),
           );
-          return SingleChildScrollView(
-            padding: withSystemInsets(context, const EdgeInsets.all(16)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _rangeControl(l10n),
-                const SizedBox(height: 12),
-                _filterControl(l10n),
-                const SizedBox(height: 20),
-                if (series.daily.isEmpty)
-                  _EmptyTrends(l10n.trendsEmpty)
-                else
-                  _bloodPressureChart(l10n, series),
-              ],
-            ),
-          );
+          final landscape =
+              MediaQuery.orientationOf(context) == Orientation.landscape;
+          return landscape ? _landscape(l10n, series) : _portrait(l10n, series);
         },
       ),
     );
   }
+
+  // Portrait: controls stacked above the chart, the whole thing scrollable.
+  Widget _portrait(AppLocalizations l10n, TrendSeries series) =>
+      SingleChildScrollView(
+        padding: withSystemInsets(context, const EdgeInsets.all(16)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _rangeControl(l10n),
+            const SizedBox(height: 12),
+            _filterControl(l10n),
+            const SizedBox(height: 20),
+            if (series.daily.isEmpty)
+              _EmptyTrends(l10n.trendsEmpty)
+            else
+              _bloodPressureChart(l10n, series, fill: false),
+          ],
+        ),
+      );
+
+  // Landscape: controls in a compact side column, the chart taking the rest of
+  // the width and the full height (maintainer's call — the short landscape
+  // height is precious, so the controls move off the top).
+  Widget _landscape(AppLocalizations l10n, TrendSeries series) => Padding(
+    padding: withSystemInsets(context, const EdgeInsets.all(16)),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _rangeControl(l10n),
+            const SizedBox(height: 12),
+            _filterControl(l10n),
+          ],
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: series.daily.isEmpty
+              ? _EmptyTrends(l10n.trendsEmpty)
+              : _bloodPressureChart(l10n, series, fill: true),
+        ),
+      ],
+    ),
+  );
 
   Widget _rangeControl(AppLocalizations l10n) => SegmentedButton<TrendRange>(
     showSelectedIcon: false,
@@ -111,20 +144,30 @@ class _TrendsScreenState extends State<TrendsScreen> {
             setState(() => _filter = selection.first),
       );
 
-  Widget _bloodPressureChart(AppLocalizations l10n, TrendSeries series) {
-    final systolic = TrendChartSeries(
-      label: l10n.fieldSystolic,
-      color: CadenceColors.systolic,
-      valueOf: (point) => point.systolic,
-    );
-    final diastolic = TrendChartSeries(
-      label: l10n.fieldDiastolic,
-      color: CadenceColors.diastolic,
-      valueOf: (point) => point.diastolic,
-    );
-    final chartSeries = [systolic, diastolic];
+  /// The blood-pressure chart with its heading and legend. When [fill] the chart
+  /// expands to the available height (landscape); otherwise it takes a fixed
+  /// height inside the scrolling portrait column.
+  Widget _bloodPressureChart(
+    AppLocalizations l10n,
+    TrendSeries series, {
+    required bool fill,
+  }) {
+    final chartSeries = [
+      TrendChartSeries(
+        label: l10n.fieldSystolic,
+        color: CadenceColors.systolic,
+        valueOf: (point) => point.systolic,
+      ),
+      TrendChartSeries(
+        label: l10n.fieldDiastolic,
+        color: CadenceColors.diastolic,
+        valueOf: (point) => point.diastolic,
+      ),
+    ];
+    final chart = TrendLineChart(series: chartSeries, data: series);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
       children: [
         Text(
           l10n.trendsChartBloodPressure,
@@ -133,10 +176,10 @@ class _TrendsScreenState extends State<TrendsScreen> {
         const SizedBox(height: 4),
         _Legend(chartSeries),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 280,
-          child: TrendLineChart(series: chartSeries, data: series),
-        ),
+        if (fill)
+          Expanded(child: chart)
+        else
+          SizedBox(height: 280, child: chart),
       ],
     );
   }

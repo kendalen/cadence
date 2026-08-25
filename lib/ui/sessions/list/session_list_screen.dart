@@ -34,7 +34,7 @@ class SessionListScreen extends StatelessWidget {
           title: Text(l10n.appTitle),
           actions: [
             IconButton(
-              icon: const Icon(Icons.show_chart),
+              icon: const Icon(Icons.stacked_line_chart),
               tooltip: l10n.trendsTitle,
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
