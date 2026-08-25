@@ -6,7 +6,7 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-25 (trends-chart T1 domain + coverage-card sand tint)
+**Last updated:** 2026-08-25 (trends-chart T2 — BP trends screen)
 
 ---
 
@@ -660,15 +660,52 @@ spec `docs/superpowers/specs/2026-08-25-trends-chart-design.md`, plan
   `main` + pushed** (HEAD `b3b81e5`). **233 tests green.**
 - **Not device-verified (nothing to see):** T1 is domain-only, no UI yet.
 
-**Next: trends chart T2 + T3** (each its own plan/branch when picked up):
-- **T2 — BP trends screen.** Adds `fl_chart` (MIT per pub.dev; **re-verify the
-  resolved package LICENSE before committing**, §9), an app-bar chart-icon entry
-  point, the range (7/30/90/All) + AM/PM (All/Morning/Evening) segmented
-  controls, a shared `TrendLineChart` (faint daily dots + averaged lines +
-  legend + tap-tooltips), Chart A (sys+dia), an empty-state golden, and ARB
-  strings (EN + IT for the wording pass). May split at the §8 budget.
-- **T3 — pulse chart.** Chart B reusing `TrendLineChart`; needs its own pulse
-  line-colour token (a muted slate proposed, maintainer's call).
+**Done (2026-08-25): trends chart — T2 (BP trends screen).** A read-only
+`TrendsScreen` reachable from a `show_chart` icon in the readings-list app bar
+(before the overflow menu). Two `SegmentedButton`s — range (7/30/90/All,
+defaulting to 30) and time-of-day (All/Morning/Evening) — are local widget
+state; the screen watches the store via a plain `StreamBuilder<List<Session>>`
+(read-only, so **no cubit** — the one deliberate deviation from the "reach the
+store through a cubit" pattern the detail screen uses; flagged for the
+maintainer) and runs `buildTrendSeries` in `build` with `DateTime.now()`, like
+the coverage card. Chart A (systolic teal / diastolic ochre) is drawn by a
+shared `TrendLineChart` that **contains all of `fl_chart`** (§8, one way): faint
+per-day scatter (zero-width line + low-opacity dots) behind the bold averaged
+lines, a legend, y/x axis labels, and tap-tooltips (date + values, plus the
+occasion count when a bucket averages >1 — `trendsTooltipOccasions`, §4). §1 held
+— neutral lines only, no threshold/colour/verdict. Empty window → a calm centred
+message (`trendsEmpty`), not an empty axis. Wrapped in `withSystemInsets` for
+landscape.
+- **Dependency (§9):** `fl_chart` **^1.2.0** — **MIT verified in the resolved
+  package's LICENSE** (`~/.pub-cache/.../fl_chart-1.2.0/LICENSE`), pure-Flutter,
+  no native/network/asset. Latest 1.2.0.
+- **Strings:** 12 new ARB keys (EN + IT) — `trendsTitle`, `trendsRange*`,
+  `trendsFilter*`, `trendsChartBloodPressure`, `trendsEmpty`,
+  `trendsTooltipOccasions` (plural). Legend reuses `fieldSystolic`/
+  `fieldDiastolic`. Italian flagged for the maintainer's wording pass (as S10);
+  `trendsChartPulse` deferred to T3.
+- **Tests:** two behaviour tests (narrowing the range past the data, and
+  filtering to morning past the data, each swap the chart for the empty state —
+  proving the controls re-run the aggregation) + one **empty-state golden**
+  (`goldens/trends_empty.png`, timezone-free). Populated charts are **not**
+  goldened (fl_chart pixels are too platform-variable, per the spec). **236
+  green** (+3). No schema change → no migration. Own branch
+  `t2-bp-trends-screen`. Spec:
+  `docs/superpowers/specs/2026-08-25-trends-chart-design.md`.
+- **Kept within the §8 budget** — did not split; `TrendLineChart` (the shared,
+  T3-ready seam) and the screen are separate files.
+- **Not yet run on a device** — the chart's real rendering (and whether the
+  4-segment range control overflows on a narrow phone at a large font scale)
+  wants an on-device eyeball; the behaviour tests cover the logic. Verify on the
+  Redmi as usual.
+
+**Next: trends chart T3** (its own plan/branch when picked up):
+- **T3 — pulse chart.** Chart B below Chart A, reusing `TrendLineChart` with a
+  single pulse series (`TrendChartSeries` already supports a nullable `valueOf`
+  so bucketed points with no pulse are skipped). Needs its own pulse
+  line-colour token in `cadence_colors.dart` (a muted slate proposed, clear of
+  teal/ochre/clay — maintainer's call) and `trendsChartPulse` ARB strings
+  (EN + IT). Small.
 
 **Done (2026-08-25): coverage-card sand tint.** The pinned "Last 7 days" card
 now has a soft **sand** (`CadenceColors.sand` `#F3ECE4`) background so it reads

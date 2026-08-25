@@ -10,6 +10,7 @@ import '../../system_insets.dart';
 import '../detail/session_detail_screen.dart';
 import '../entry/session_entry_screen.dart';
 import '../pressure_text.dart';
+import '../trends/trends_screen.dart';
 import 'session_list_cubit.dart';
 import 'session_list_state.dart';
 import 'session_overflow_menu.dart';
@@ -31,7 +32,18 @@ class SessionListScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.appTitle),
-          actions: const [SessionOverflowMenu()],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.show_chart),
+              tooltip: l10n.trendsTitle,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => const TrendsScreen(),
+                ),
+              ),
+            ),
+            const SessionOverflowMenu(),
+          ],
         ),
         body: BlocBuilder<SessionListCubit, SessionListState>(
           builder: (context, state) => switch (state) {
