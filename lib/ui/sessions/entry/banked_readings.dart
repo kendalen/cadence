@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../domain/sessions/ids.dart';
 import '../../../domain/sessions/reading.dart';
 import '../../../l10n/app_localizations.dart';
+import '../pressure_text.dart';
 
 /// The readings already banked for this occasion, each removable.
 class BankedReadings extends StatelessWidget {
@@ -38,9 +39,7 @@ class BankedReadings extends StatelessWidget {
         for (final reading in readings)
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(
-              l10n.readingPressure(reading.systolic, reading.diastolic),
-            ),
+            title: PressureText(reading.systolic, reading.diastolic),
             subtitle: Text(time.format(reading.takenAt.toLocal())),
             trailing: IconButton(
               icon: const Icon(Icons.close),

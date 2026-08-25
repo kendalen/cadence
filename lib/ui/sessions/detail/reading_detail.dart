@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../domain/sessions/reading.dart';
 import '../../../l10n/app_localizations.dart';
+import '../pressure_text.dart';
 import '../reading_context_labels.dart';
 
 /// One reading shown in the session detail screen.
@@ -33,8 +34,9 @@ class ReadingDetail extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  l10n.readingPressure(reading.systolic, reading.diastolic),
+                child: PressureText(
+                  reading.systolic,
+                  reading.diastolic,
                   style: theme.textTheme.bodyLarge,
                 ),
               ),

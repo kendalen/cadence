@@ -9,6 +9,7 @@ import '../../../domain/sessions/reading_input.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
+import '../section_card.dart';
 import '../validation_messages.dart';
 import 'number_stepper.dart';
 import 'reading_context_details.dart';
@@ -118,24 +119,35 @@ class _ReadingFormScreenState extends State<ReadingFormScreen> {
             errorText: messageForField(ReadingField.pulse, _failures, l10n),
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _notes,
-            decoration: InputDecoration(labelText: l10n.notesLabel),
-            maxLines: 2,
+          SectionCard(
+            margin: EdgeInsets.zero,
+            child: TextField(
+              controller: _notes,
+              decoration: InputDecoration(labelText: l10n.notesLabel),
+              maxLines: 2,
+            ),
           ),
-          ReadingContextDetails(
-            site: _site,
-            posture: _posture,
-            medicationTiming: _medicationTiming,
-            onSite: (value) => setState(() => _site = value),
-            onPosture: (value) => setState(() => _posture = value),
-            onMedication: (value) => setState(() => _medicationTiming = value),
+          const SizedBox(height: 12),
+          SectionCard(
+            margin: EdgeInsets.zero,
+            child: ReadingContextDetails(
+              site: _site,
+              posture: _posture,
+              medicationTiming: _medicationTiming,
+              onSite: (value) => setState(() => _site = value),
+              onPosture: (value) => setState(() => _posture = value),
+              onMedication: (value) =>
+                  setState(() => _medicationTiming = value),
+            ),
           ),
-          const SizedBox(height: 8),
-          TakenAtField(
-            takenAt: _takenAt,
-            error: messageForField(ReadingField.takenAt, _failures, l10n),
-            onChange: _pickTakenAt,
+          const SizedBox(height: 12),
+          SectionCard(
+            margin: EdgeInsets.zero,
+            child: TakenAtField(
+              takenAt: _takenAt,
+              error: messageForField(ReadingField.takenAt, _failures, l10n),
+              onChange: _pickTakenAt,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton(onPressed: _save, child: Text(l10n.saveReading)),

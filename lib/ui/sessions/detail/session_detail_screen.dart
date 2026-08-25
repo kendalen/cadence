@@ -10,6 +10,8 @@ import '../../../domain/sessions/session_repository.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
 import '../entry/reading_form_screen.dart';
+import '../pressure_text.dart';
+import '../section_card.dart';
 import 'reading_detail.dart';
 import 'session_detail_cubit.dart';
 
@@ -64,27 +66,34 @@ class _SessionDetailView extends StatelessWidget {
               const EdgeInsets.symmetric(vertical: 8),
             ),
             children: [
-              if (showsAverage) ...[
-                _AverageCard(session),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                  child: Text(
-                    l10n.sessionReadingsTitle,
-                    style: theme.textTheme.titleSmall,
-                  ),
+              if (showsAverage) _AverageCard(session),
+              SectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (showsAverage) ...[
+                      Text(
+                        l10n.sessionReadingsTitle,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    for (final (index, reading) in readings.indexed) ...[
+                      if (index > 0) const Divider(),
+                      _ReadingRow(
+                        reading: reading,
+                        // Removing a lone reading is the same as deleting the
+                        // occasion, so it is offered only when others remain;
+                        // the "Delete this occasion" button covers the
+                        // single-reading case.
+                        canRemove: readings.length > 1,
+                        onEdit: () => _editReading(context, reading),
+                        onRemove: () => _removeReading(context, reading.id),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-              for (final reading in readings)
-                _ReadingRow(
-                  reading: reading,
-                  // Removing a lone reading is the same as deleting the
-                  // occasion, so it is offered only when others remain; the
-                  // "Delete this occasion" button covers the single-reading
-                  // case.
-                  canRemove: readings.length > 1,
-                  onEdit: () => _editReading(context, reading),
-                  onRemove: () => _removeReading(context, reading.id),
-                ),
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: OutlinedButton.icon(
@@ -315,25 +324,23 @@ class _ReadingRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: ReadingDetail(reading)),
+    // No padding of its own: the SectionCard it sits in provides the inset.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: ReadingDetail(reading)),
+        IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          tooltip: l10n.editReading,
+          onPressed: onEdit,
+        ),
+        if (canRemove)
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: l10n.editReading,
-            onPressed: onEdit,
+            icon: const Icon(Icons.close),
+            tooltip: l10n.removeReading,
+            onPressed: onRemove,
           ),
-          if (canRemove)
-            IconButton(
-              icon: const Icon(Icons.close),
-              tooltip: l10n.removeReading,
-              onPressed: onRemove,
-            ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -363,25 +370,20 @@ class _AverageCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  l10n.readingPressure(average.systolic, average.diastolic),
-                  style: theme.textTheme.displaySmall,
-                ),
-                if (average.pulse != null) ...[
-                  const SizedBox(width: 12),
-                  Text(
-                    l10n.readingPulse(average.pulse!),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
+            PressureText(
+              average.systolic,
+              average.diastolic,
+              style: theme.textTheme.displayMedium?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
             ),
+            if (average.pulse != null)
+              Text(
+                l10n.readingPulse(average.pulse!),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
             const SizedBox(height: 4),
             Text(
               l10n.readingCount(session.readings.length),

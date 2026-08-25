@@ -15,6 +15,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Session detail: the occasion average now reads as the screen's hero — larger
+  and in the teal brand colour, with the pulse smaller on its own line beneath —
+  and the individual readings sit in their own card. New/edit reading forms give
+  the notes, "Add details" and "Taken at" sections each their own card. Shared
+  `SectionCard` keeps the padded-card look consistent (one way to do it, §8).
+- Blood-pressure values are now shown in bold everywhere they appear (list,
+  coverage summary, session average, each reading), via a shared `PressureText`
+  widget that holds that design invariant and the one value formatting in a
+  single place (§8).
 - Device launcher name is now "Cadence" (was lowercase "cadence").
 
 ### Fixed

@@ -11,6 +11,7 @@ import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/validation_failure.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
+import '../section_card.dart';
 import '../validation_messages.dart';
 import 'banked_readings.dart';
 import 'number_stepper.dart';
@@ -168,25 +169,35 @@ class _SessionEntryFormState extends State<_SessionEntryForm> {
                 errorText: messageForField(ReadingField.pulse, failures, l10n),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: _notes,
-                decoration: InputDecoration(labelText: l10n.notesLabel),
-                maxLines: 2,
+              SectionCard(
+                margin: EdgeInsets.zero,
+                child: TextField(
+                  controller: _notes,
+                  decoration: InputDecoration(labelText: l10n.notesLabel),
+                  maxLines: 2,
+                ),
               ),
-              ReadingContextDetails(
-                site: _site,
-                posture: _posture,
-                medicationTiming: _medicationTiming,
-                onSite: (value) => setState(() => _site = value),
-                onPosture: (value) => setState(() => _posture = value),
-                onMedication: (value) =>
-                    setState(() => _medicationTiming = value),
+              const SizedBox(height: 12),
+              SectionCard(
+                margin: EdgeInsets.zero,
+                child: ReadingContextDetails(
+                  site: _site,
+                  posture: _posture,
+                  medicationTiming: _medicationTiming,
+                  onSite: (value) => setState(() => _site = value),
+                  onPosture: (value) => setState(() => _posture = value),
+                  onMedication: (value) =>
+                      setState(() => _medicationTiming = value),
+                ),
               ),
-              const SizedBox(height: 8),
-              TakenAtField(
-                takenAt: state.takenAt,
-                error: messageForField(ReadingField.takenAt, failures, l10n),
-                onChange: () => _pickTakenAt(state.takenAt),
+              const SizedBox(height: 12),
+              SectionCard(
+                margin: EdgeInsets.zero,
+                child: TakenAtField(
+                  takenAt: state.takenAt,
+                  error: messageForField(ReadingField.takenAt, failures, l10n),
+                  onChange: () => _pickTakenAt(state.takenAt),
+                ),
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
