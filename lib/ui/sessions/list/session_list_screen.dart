@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/backup/backup_decoder.dart';
+import '../../../data/export/csv_codec.dart';
+import '../../../data/export/pdf_report.dart';
+import '../../../data/export/reading_export.dart';
 import '../../../domain/core/result.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
@@ -12,9 +16,10 @@ import '../../../domain/sessions/weekly_coverage.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
 import '../backup/pick_backup.dart';
-import '../backup/share_backup.dart';
 import '../detail/session_detail_screen.dart';
 import '../entry/session_entry_screen.dart';
+import '../export/export_labels.dart';
+import '../export/share_export.dart';
 import '../pressure_text.dart';
 import 'session_list_cubit.dart';
 import 'session_list_state.dart';
@@ -97,12 +102,23 @@ enum _MenuAction {
   /// Save the whole diary as a JSON backup and share it.
   export,
 
+  /// Share the readings as a CSV spreadsheet.
+  exportCsv,
+
+  /// Share the readings as a PDF document.
+  exportPdf,
+
   /// Restore occasions from a JSON backup file.
   import,
 }
 
-/// The app-bar overflow (⋮) menu, home of the data in/out actions. CSV export
-/// (S8) joins it later.
+/// One shareable readings format. Both share the same build-and-share path;
+/// only the encoder, filename extension and MIME type differ.
+enum _ReadingsFormat { csv, pdf }
+
+/// The app-bar overflow (⋮) menu, home of the data in/out actions: JSON backup
+/// (restorable), CSV and PDF export (one-way, for handing a clinician the
+/// numbers), and import.
 class _OverflowMenu extends StatelessWidget {
   const _OverflowMenu();
 
@@ -112,6 +128,8 @@ class _OverflowMenu extends StatelessWidget {
     return PopupMenuButton<_MenuAction>(
       onSelected: (action) => unawaited(switch (action) {
         _MenuAction.export => _exportBackup(context),
+        _MenuAction.exportCsv => _exportReadings(context, _ReadingsFormat.csv),
+        _MenuAction.exportPdf => _exportReadings(context, _ReadingsFormat.pdf),
         _MenuAction.import => _importBackup(context),
       }),
       itemBuilder: (context) => [
@@ -120,11 +138,78 @@ class _OverflowMenu extends StatelessWidget {
           child: Text(l10n.exportBackup),
         ),
         PopupMenuItem(
+          value: _MenuAction.exportCsv,
+          child: Text(l10n.exportCsv),
+        ),
+        PopupMenuItem(
+          value: _MenuAction.exportPdf,
+          child: Text(l10n.exportPdf),
+        ),
+        PopupMenuItem(
           value: _MenuAction.import,
           child: Text(l10n.importBackup),
         ),
       ],
     );
+  }
+
+  /// Builds the readings in [format] and opens the share sheet.
+  ///
+  /// One row per reading, oldest first, with a "diary, not a diagnosis" line
+  /// (CLAUDE.md §1). An empty diary shows a note instead of an empty file; any
+  /// failure preparing or sharing is reported rather than surfaced raw
+  /// (CLAUDE.md §6), and backing out of the share sheet is not a failure. The
+  /// current locale drives the headers, context wording and date formatting
+  /// (CLAUDE.md §9). The full diary is already in the loaded state (the list
+  /// watches every session), so no extra read is needed.
+  Future<void> _exportReadings(
+    BuildContext context,
+    _ReadingsFormat format,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final state = context.read<SessionListCubit>().state;
+    final locale = Localizations.localeOf(context).toString();
+
+    if (state is! SessionListLoaded || state.sessions.isEmpty) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.exportEmpty)));
+      return;
+    }
+
+    try {
+      final now = DateTime.now();
+      final labels = exportLabels(l10n);
+      final rows = buildReadingRows(state.sessions, labels, locale: locale);
+      switch (format) {
+        case _ReadingsFormat.csv:
+          // The disclaimer rides as a one-cell leading row so the whole file is
+          // valid CSV; the header row follows, then the readings.
+          final csv = encodeCsv([
+            [labels.disclaimer],
+            labels.columnHeaders,
+            ...rows,
+          ]);
+          await shareExportBytes(
+            utf8.encode(csv),
+            filename: readingsFilename(now, extension: 'csv'),
+            mimeType: 'text/csv',
+          );
+        case _ReadingsFormat.pdf:
+          final pdf = await buildReadingsPdf(
+            title: labels.title,
+            headers: labels.columnHeaders,
+            rows: rows,
+            disclaimer: labels.disclaimer,
+          );
+          await shareExportBytes(
+            pdf,
+            filename: readingsFilename(now, extension: 'pdf'),
+            mimeType: 'application/pdf',
+          );
+      }
+    } on Exception {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.exportFailed)));
+    }
   }
 
   /// Builds the whole diary as a JSON backup and opens the share sheet.

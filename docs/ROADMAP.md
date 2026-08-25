@@ -94,8 +94,10 @@ cluster and are best built in sequence.
 - **S7 · JSON backup export + import.** The only restorable backup format
   (`CLAUDE.md` §2, §5): versioned, tolerant of unknown fields, never silently
   dropping data. Goes through the Android share sheet / SAF.
-- **S8 · CSV export.** Export-only, for handing a doctor the numbers. The
-  killer use of a BP diary. (PDF is a 1.x fast-follow — see below.)
+- **S8 · CSV + PDF export.** Export-only, for handing a doctor the numbers. The
+  killer use of a BP diary. (PDF was pulled forward from 1.x into this slice.)
+  Both export the **whole** diary for now; a date-range option is deferred —
+  see below.
 
 ### Phase 4 — pre-flight
 
@@ -145,7 +147,15 @@ to ship.
   a "consult your physician" pointer, and interpretive features are a maintainer
   decision (`CLAUDE.md` §1, §10). Off the v1.0 line by default; if it goes in, it
   is designed with the maintainer signing off on the exact wording.
-- **PDF export** (once CSV proves the export path).
+- **PDF export** — *done*, pulled forward into S8.
+- **Date-bounded exports (CSV/PDF).** S8 exports the whole diary; a from–to range
+  (or a "last N days" / "this monitoring period" shortcut) would make the numbers
+  handed to a doctor far more meaningful — a visit usually concerns a recent
+  window, not years. The backup stays a **complete** snapshot (it must, §5); only
+  the human-facing CSV/PDF gain the range. Design note: `buildReadingRows`
+  already takes the session list, so filtering is a pure pre-step; the open
+  question is the picker UX for the older audience (a plain from–to vs named
+  shortcuts). Surfaced 2026-08-25 by the maintainer while shipping S8.
 - **Trends / charts** over time.
 - **Discard-day-1 toggle** and a Settings screen — unless S6 pulls them in.
 - **Time-format preference (12-hour vs 24-hour).** Times currently follow the

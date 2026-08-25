@@ -381,9 +381,49 @@ validates it **before** writing, confirms, merges, and reports.
   without "USB debugging (Security settings)", which is off — the maintainer
   cleared app data by hand; `flutter run` install + launch works without it.)
 
-**Next up — S8 (CSV export).** Export-only, for handing a doctor the numbers;
-joins the same overflow menu. PDF stays a 1.x fast-follow (roadmap). S7a is on
-`s7a-backup-export`, S7b on `s7b-backup-import` (off it) — merge both to `main`.
+**Done (2026-08-25): S8 — CSV + PDF export.** PDF was **pulled forward** from
+1.x into this slice (maintainer ask) — both are export-only, for handing a
+clinician the numbers, and both join the readings-list overflow menu ("Export as
+CSV", "Export as PDF") beside JSON backup/import.
+- **Shared shape:** one row **per reading** (not per occasion — a clinician
+  wants the raw numbers), oldest-first, numbered by occasion so paired readings
+  stay grouped without exposing ids. Columns: date, time, occasion, systolic,
+  diastolic, pulse, where, position, medication, note. No derived values (§4).
+- **Layers (§3):** file export is a data job. Pure, TDD'd:
+  `lib/data/export/reading_export.dart` (`buildReadingRows` + the `ExportLabels`
+  bundle — the real logic: ordering, occasion numbering, null→blank, localized
+  values; injected `toLocal` for tz-independent tests), `csv_codec.dart`
+  (`encodeCsv`, RFC-4180 quoting — no `csv` dependency, escaping is ~10 lines),
+  `pdf_report.dart` (`buildReadingsPdf` → `Uint8List` via the `pdf` package).
+  The UI gathers localized labels (`lib/ui/sessions/export/export_labels.dart`,
+  reusing `reading_context_labels.dart` — §8) and shares the bytes.
+- **i18n (maintainer call):** labels **and** context values localized; dates via
+  `DateFormat(locale)`. Column headers reuse existing field labels where they
+  exist (`fieldSystolic/Diastolic/Pulse`, `site/posture/medicationFieldLabel`);
+  10 new ARB strings for the rest. Only `app_en.arb` exists — Italian is a later
+  translation pass; the strings are all translatable.
+- **§1 boundary (maintainer call):** both carry a "self-recorded diary — not a
+  medical diagnosis. Discuss any concerns with your doctor." line (PDF footer on
+  every page; CSV as a one-cell leading row so the file stays valid CSV).
+- **Share:** `share_backup.dart` → **renamed** `lib/ui/sessions/export/`
+  `share_export.dart`; its core generalized to `shareExportBytes(bytes,
+  filename, mimeType)` — json/csv/pdf now share through one place (§8) —
+  plus `readingsFilename(at, extension:)`.
+- **Dependency (§9):** `pdf` 3.13.0 — **Apache-2.0** (verified in the resolved
+  package's LICENSE, not reputation), dart_pdf, current. Pure-Dart, no native,
+  no network, no font asset (built-in Helvetica/WinAnsi covers Italian accents;
+  a `ponytail:` note in `pdf_report.dart` flags embedding the already-bundled
+  Hanken TTF if glyphs outside Latin-1 are ever needed). `printing` deliberately
+  **not** added — we only need bytes to share.
+- **Tests:** `csv_codec_test` (escaping edges, ragged rows, empty),
+  `reading_export_test` (column order, occasion numbering, oldest-first, by-time
+  within an occasion, null→blank, empty), `pdf_report_test` (smoke: `%PDF-`,
+  non-empty, empty table). **202 green** (+15). No schema change → no migration.
+  UI glue (menu tap → share) is native (share_plus) and untested, same boundary
+  as the JSON export/import handlers. Own branch `s8-csv-pdf-export`.
+- **Not yet run on a device this slice** — the pieces are covered by the suite;
+  the actual share-sheet hand-off and the rendered PDF/CSV want an on-device
+  eyeball when convenient (verify on the Redmi as with S6/S7).
 
 ## Working reminders
 

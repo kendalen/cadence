@@ -57,6 +57,12 @@ dependencies:
     sdk: flutter
   # Used by the generated localisations for message and plural formatting.
   intl: any
+  # Pure-Dart PDF generation for the readings export (S8). No native code, no
+  # network, no font asset (built-in Helvetica covers Latin-1, incl. Italian
+  # accents). We share the produced bytes through the existing share sheet, so
+  # the `printing` package (OS print dialog) is deliberately not pulled in.
+  # Apache-2.0 — verified in the resolved package's LICENSE (CLAUDE.md §9).
+  pdf: ^3.11.0
   # UUID v7 for client-generated, time-ordered entity ids. MIT.
   share_plus: ^13.3.0
   uuid: ^4.6.0

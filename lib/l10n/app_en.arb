@@ -254,6 +254,46 @@
   "@exportBackupFailed": {
     "description": "Shown when preparing or sharing the backup failed."
   },
+  "exportCsv": "Export as CSV",
+  "@exportCsv": {
+    "description": "Menu item in the readings list that saves the readings as a CSV spreadsheet file and opens the system share sheet."
+  },
+  "exportPdf": "Export as PDF",
+  "@exportPdf": {
+    "description": "Menu item in the readings list that saves the readings as a PDF document and opens the system share sheet."
+  },
+  "exportEmpty": "No readings to export yet.",
+  "@exportEmpty": {
+    "description": "Shown when the user asks to export to CSV or PDF but has recorded nothing yet."
+  },
+  "exportFailed": "Couldn''t export the readings.",
+  "@exportFailed": {
+    "description": "Shown when preparing or sharing the CSV or PDF export failed."
+  },
+  "exportTitle": "Blood pressure readings",
+  "@exportTitle": {
+    "description": "Title shown at the top of the exported PDF document."
+  },
+  "exportDisclaimer": "Self-recorded blood-pressure diary — not a medical diagnosis. Discuss any concerns with your doctor.",
+  "@exportDisclaimer": {
+    "description": "Footer line on the PDF and leading line in the CSV, stating that the export is a diary and not a clinical assessment (CLAUDE.md §1)."
+  },
+  "exportColumnDate": "Date",
+  "@exportColumnDate": {
+    "description": "Header of the export column holding the date a reading was taken."
+  },
+  "exportColumnTime": "Time",
+  "@exportColumnTime": {
+    "description": "Header of the export column holding the time of day a reading was taken."
+  },
+  "exportColumnOccasion": "Occasion",
+  "@exportColumnOccasion": {
+    "description": "Header of the export column numbering the measurement occasion a reading belongs to, so readings taken together share a number."
+  },
+  "exportColumnNote": "Note",
+  "@exportColumnNote": {
+    "description": "Header of the export column holding the note attached to a reading."
+  },
   "importBackup": "Import backup",
   "@importBackup": {
     "description": "Menu item in the readings list that restores occasions from a JSON backup file."
