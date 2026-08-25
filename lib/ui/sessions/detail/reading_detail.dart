@@ -5,14 +5,14 @@ import '../../../domain/sessions/reading.dart';
 import '../../../l10n/app_localizations.dart';
 import '../reading_context_labels.dart';
 
-/// One reading shown inside an expanded occasion.
+/// One reading shown in the session detail screen.
 ///
 /// Shows the reading's own pressure, time and pulse, with any recorded context
 /// (arm, posture, medication) as chips and the note beneath. This is where a
-/// reading's context surfaces to the user for the first time; it is a record of
-/// fact, not interpreted (CLAUDE.md §4).
+/// reading's context surfaces to the user; it is a record of fact, not
+/// interpreted (CLAUDE.md §4).
 class ReadingDetail extends StatelessWidget {
-  /// Shows [reading] as a row within an expanded occasion.
+  /// Shows [reading] as a row in the session detail screen.
   const ReadingDetail(this.reading, {super.key});
 
   /// The reading to show.

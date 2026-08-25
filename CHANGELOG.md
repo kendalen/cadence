@@ -86,18 +86,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Pulse stays optional: it shows a dash until set and has a clear button back to
   "not recorded" (CLAUDE.md §4). The morning/evening-average prefill for the
   first reading is the next slice (S3b).
-- Design foundation: the approved "warm & reassuring" visual language turned
-  into a Material 3 theme (`lib/ui/theme/`). An explicit warm `ColorScheme` —
-  teal as the structural accent, one reserved terracotta "clay" action colour,
-  warm paper/sand surfaces — and Hanken Grotesk, bundled as a single
-  variable-weight app asset under the SIL Open Font License 1.1 rather than the
-  network-fetching `google_fonts` package (CLAUDE.md §2), with card,
-  filled-button, app-bar, and floating-action-button component themes. Wired into
-  `MaterialApp`, so the existing screens re-skin centrally. Colour is never used
-  to grade a reading and no threshold line is drawn (CLAUDE.md §1, §4). The "Add
-  a reading" button is now a labelled extended FAB. A golden test pins the
-  readings-list empty state, through a tolerant comparator so one committed
-  baseline holds across the maintainer's macOS and the Linux CI runner.
 - History-aware first-reading prefill (S3b): a new occasion's first reading now
   opens on the user's own numbers instead of the fixed 120/80. The estimate is
   the mean of past occasion averages, preferring the most specific data
@@ -116,3 +104,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   for a one-shot history read (`SessionRepository.recentHistory`) before it
   opens, so the numbers never change under the user (roadmap ease-of-use
   principle; the audience skews older).
+- Design foundation: the approved "warm & reassuring" visual language turned
+  into a Material 3 theme (`lib/ui/theme/`). An explicit warm `ColorScheme` —
+  teal as the structural accent, one reserved terracotta "clay" action colour,
+  warm paper/sand surfaces — and Hanken Grotesk, bundled as a single
+  variable-weight app asset under the SIL Open Font License 1.1 rather than the
+  network-fetching `google_fonts` package (CLAUDE.md §2), with card,
+  filled-button, app-bar, and floating-action-button component themes. Wired into
+  `MaterialApp`, so the existing screens re-skin centrally. Colour is never used
+  to grade a reading and no threshold line is drawn (CLAUDE.md §1, §4). The "Add
+  a reading" button is now a labelled extended FAB. A golden test pins the
+  readings-list empty state, through a tolerant comparator so one committed
+  baseline holds across the maintainer's macOS and the Linux CI runner.
+- Session detail (S4): tapping an occasion in the list opens a read-only detail
+  screen showing its individual readings — each with its time, pulse, and any
+  recorded context and note (`ReadingDetail`) — and, when the occasion holds more
+  than one, their average above them (`Session.average`, CLAUDE.md §4). The
+  average is shown as a fact about the occasion, never coloured or labelled good
+  or bad and with no threshold (CLAUDE.md §1, §4); a single-reading occasion
+  shows just the reading, since its average would only repeat it. This replaces
+  the S2d in-place row expansion with one consistent path to a session's
+  readings, and is where editing and deleting (a later slice) will live.

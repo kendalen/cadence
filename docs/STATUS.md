@@ -6,7 +6,7 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-24
+**Last updated:** 2026-08-25
 
 ---
 
@@ -32,10 +32,13 @@ stand and what's next*.
   (arm/wrist, body position, before/after medication) — **S2 landed (a + b)**.
   The list shows each occasion as its **average** (`Session.average`, §4) with a
   reading-count badge on multi-reading rows — **S2c** (it closed a gap S2 left:
-  the tile still showed only the first reading). A row **expands in place** to
-  show its individual readings, each with its own time, pulse and any recorded
-  context/note (`Session.readingsByTime`; first place context surfaces in the
-  UI) — **S2d**; a lone reading with no extra detail does not expand.
+  the tile still showed only the first reading). Tapping a row opens a read-only
+  **session detail screen** (`SessionDetailScreen`) showing the occasion's
+  individual readings — each with time, pulse and any recorded context/note
+  (`ReadingDetail`) — and, for a multi-reading occasion, their **average** above
+  them; a single-reading occasion shows just the reading (§4) — **S4 landed**.
+  (This replaced S2d's in-place row expansion: one path to a session's readings,
+  and the home for the later edit/delete slice. Context first surfaces here.)
   The three number fields are now big −/+ **steppers** (`NumberStepper`), sized
   for the older audience — large type, >48dp targets, screen-reader labels;
   still typeable, and typing stays unclamped so `ReadingInput.validate` is the
@@ -52,12 +55,13 @@ stand and what's next*.
   `SessionRepository.recentHistory` read before it opens, so nothing changes
   under the user — **S3b landed**.
 - **Tests:** domain + data covered; an end-to-end smoke test (incl. a
-  two-reading occasion, a context round-trip, expanding a row, stepper defaults,
-  carry-over prefill, a stepped value being what is saved, and a fresh occasion
-  prefilled from history), plus `NumberStepper` behaviour tests, the
-  `suggestedFirstReading` / `mostRecentReading` domain stats, `recentHistory`,
-  the cubit's `initialSeed`, and a golden test on the readings-list empty state.
-  All green (125).
+  two-reading occasion, a context round-trip, tapping a row through to the detail
+  screen, stepper defaults, carry-over prefill, a stepped value being what is
+  saved, and a fresh occasion prefilled from history), plus `SessionDetailScreen`
+  behaviour tests (average shown/omitted, each reading listed), `NumberStepper`
+  behaviour tests, the `suggestedFirstReading` / `mostRecentReading` domain
+  stats, `recentHistory`, the cubit's `initialSeed`, and a golden test on the
+  readings-list empty state. All green (127).
 - **Verified running:** debug APK builds and runs on a physical Android device
   (as of the "log a session" slice).
 - **Design foundation — now in code (2026-08-24).** The *warm & reassuring*
@@ -165,14 +169,25 @@ bullet under Current state for the details, tokens, and decisions (teal =
 asset; light-only; golden on the empty state via a tolerant comparator). UI-only,
 own branch `design-foundation-theme`.
 
-**Next up — S4:**
+**Done (2026-08-25): S4 — session detail.** Tapping a list row opens a read-only
+`SessionDetailScreen` (the occasion's readings via `ReadingDetail`, plus their
+average for multi-reading occasions). Replaced S2d's in-place expansion; no
+domain or data change (`Session.average` already existed); two new ARB strings
+(`Average` / `Readings`). Built and eyeballed in the new theme via a throwaway
+render; tested by direct-pump behaviour tests + the navigation smoke test. Own
+branch `s4-session-detail`. **Still not run on a physical device** — a device
+run is overdue (last one was the "log a session" slice); worth doing before or
+during S5.
 
-1. **S4 — Session detail + session average** (roadmap Phase 2), built in the new
-   language. A screen showing one occasion's readings and their mean (§4);
-   `Session.average` already exists, so it's largely a read-only detail screen over
-   it, plus new "Average"/"Readings" localised strings. Own branch. This is the
-   first screen built *in* the new theme, and a good moment to confirm the app on
-   a physical device.
+**Next up — S5:**
+
+1. **S5 — Edit / delete** (roadmap Phase 2, `ROADMAP.md`). Correct a mistyped
+   reading; remove a session. Data-loss-adjacent, so it **confirms before acting
+   and is reversible where possible** (CLAUDE.md §6) — and it lives on the
+   `SessionDetailScreen` S4 just built (the mockup puts edit/delete on the opened
+   session, not on every list row). Own branch. Touches data (an update path and
+   a delete path on the repository) + domain + UI, so it is a fuller slice than
+   S4 — watch the ~400-line budget and split if needed.
 
 ## Working reminders
 

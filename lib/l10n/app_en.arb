@@ -169,5 +169,13 @@
   "clearPulse": "Clear pulse",
   "@clearPulse": {
     "description": "Accessible label of the button that empties the optional pulse field back to 'not recorded'."
+  },
+  "sessionAverageTitle": "Average",
+  "@sessionAverageTitle": {
+    "description": "Header of the average block on the session detail screen, shown when an occasion holds more than one reading (CLAUDE.md §4). A statement of fact, not a verdict."
+  },
+  "sessionReadingsTitle": "Readings",
+  "@sessionReadingsTitle": {
+    "description": "Header above the list of individual readings on the session detail screen."
   }
 }
