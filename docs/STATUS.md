@@ -470,22 +470,40 @@ in (maintainer's call — keep S9 lean).
 - **Not yet run on a device this slice** — installing the v3 build on the Redmi
   will run the migration and show the notice once; eyeball it + About there.
 
+**Done (2026-08-25): S9b — coverage fix + export confirmation + menu extract.**
+Three separable threads on one branch (`s9b-coverage-fix-and-polish`), one commit
+each:
+- **Coverage "8 of 7 days" fixed** (the known issue below). `weeklyCoverage`
+  anchored its window to `now − 168h`, a rolling cutoff that straddles **8
+  calendar days** when opened mid-day. It now means the **local calendar day of
+  `now` and the six days before it** — `windowStart = DateTime(y, m, day−6)`
+  built from parts so it lands on local midnight regardless of DST, using the
+  same injected `toLocal` the day-grouping already uses. `daysLogged` can no
+  longer exceed 7 and the occasions window matches (§4). Domain-only. TDD: a
+  regression test reproduces the reported 8/7 first; the existing coverage tests
+  were updated to calendar-day semantics and made timezone-independent (they now
+  inject `toLocal: identity`, because the window depends on the local day of
+  `now`). The now-unused `_coverageWindow` constant was deleted; a shared
+  `_localDate` keeps the filter and the day-count using the same "which day".
+- **Export confirmation** — after a JSON backup / CSV / PDF is actually shared,
+  a brief toast confirms it ("Backup shared." / "Readings exported."); silent
+  when the user backs out (the older audience was missing feedback when the share
+  sheet just closed — maintainer's call, §10). The `share_export` wrappers now
+  return a plain `bool` (shared?) instead of leaking share_plus's `ShareResult`,
+  keeping share_plus contained to that one file (§8). Two new ARB strings.
+- **Overflow menu extracted** — the app-bar menu + its export/import handlers
+  moved out of `session_list_screen.dart` (**459 → 196 lines**, clearing the §6
+  >300 smell) into `list/session_overflow_menu.dart` as `SessionOverflowMenu`.
+  Pure move; the success toasts were folded into the handlers as they moved.
+- **Tests: 213 green** (+2 over S9a's 211: the 8/7 regression + a boundary split).
+  No schema change → no migration. UI glue (menu tap → share) stays native and
+  untested, same boundary as before. **Not yet run on a device this slice** — the
+  toast hand-off and the corrected coverage counts want an on-device eyeball with
+  the pending v3 build (S9a) on the Redmi.
+
 ## Known issues (open)
 
-- **Coverage can show "8 of 7 days" (S6 `weeklyCoverage`).** Reported on-device
-  2026-08-25 with readings spanning from 18/08. Root cause: the window is a
-  **168-hour rolling cutoff** (`now.toUtc() - 7d`), which can straddle **8
-  calendar days** — e.g. now Aug 25 12:00 → cutoff Aug 18 12:00, so a reading on
-  the evening of Aug 18 through readings on Aug 25 covers Aug 18–25 = 8 distinct
-  local days, and "distinct days / 7" reads 8/7. The occasions/14 count is not
-  affected the same way; the days-covered count is the visible symptom. Fix is a
-  **semantics decision (maintainer, §4):** "last 7 days" should almost certainly
-  mean the last **7 calendar days** — cutoff at the **start of `(today − 6 days)`
-  in local time** (using the same injected `toLocal` the day-grouping already
-  uses), which caps distinct days at 7 and also tightens the occasions window.
-  Start the fix with a failing `weeklyCoverage` test reproducing 8/7
-  (`weekly_coverage.dart` / `weekly_coverage_test.dart`), per §7. Investigate in
-  the S9b session.
+- None.
 
 ## Working reminders
 
