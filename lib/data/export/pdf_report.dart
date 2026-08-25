@@ -46,6 +46,14 @@ Future<Uint8List> buildReadingsPdf({
         pw.TableHelper.fromTextArray(
           headers: headers,
           data: rows,
+          // The leading date / time / numeric columns size to their content, so
+          // a date or number is never broken across lines; the trailing text
+          // columns (where measured, body position, medication, note) flex to
+          // share the remaining width and wrap at word boundaries. Without this
+          // every column is squeezed to an equal share and longer localised
+          // words break mid-word. Column order follows buildReadingRows
+          // (reading_export.dart): the first six are the short columns.
+          columnWidths: _columnWidths(headers.length),
           cellStyle: const pw.TextStyle(fontSize: 9),
           headerStyle: pw.TextStyle(
             fontSize: 9,
@@ -64,4 +72,23 @@ Future<Uint8List> buildReadingsPdf({
     ),
   );
   return document.save();
+}
+
+/// Column widths for the readings table of [columnCount] columns.
+///
+/// The first six columns (date, time, occasion, systolic, diastolic, pulse) are
+/// [pw.IntrinsicColumnWidth] so they never wrap a date or number; the rest flex.
+/// The last column (the note) gets double flex, as free text is usually longest.
+Map<int, pw.TableColumnWidth> _columnWidths(int columnCount) {
+  const shortLeadingColumns = 6;
+  final widths = <int, pw.TableColumnWidth>{
+    for (var i = 0; i < columnCount; i++)
+      i: i < shortLeadingColumns
+          ? const pw.IntrinsicColumnWidth()
+          : const pw.FlexColumnWidth(),
+  };
+  if (columnCount > 0) {
+    widths[columnCount - 1] = const pw.FlexColumnWidth(2);
+  }
+  return widths;
 }

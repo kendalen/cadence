@@ -100,6 +100,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- PDF export column widths (S10 follow-up): the readings table gave every column
+  an equal share, so longer localised text — and even dates and times — broke
+  across lines mid-value ("Sistolic/a", "18/08/202/6"). The date, time and
+  numeric columns now size to their content (never wrapping a value) and the text
+  columns flex and wrap only at word boundaries.
 - "Last 7 days" coverage could read "8 of 7 days" (S9b): the window was a rolling
   168-hour cutoff, which straddles eight calendar days when opened mid-day. It is
   now the local calendar day of today plus the six days before it, so the
