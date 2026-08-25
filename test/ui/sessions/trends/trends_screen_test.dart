@@ -97,23 +97,25 @@ void main() {
     expect(find.text('Blood pressure'), findsNothing);
   });
 
-  testWidgets('pulse chart shows only when the range holds a pulse', (
+  testWidgets('the pulse tab shows a chart with a pulse, a message without', (
     tester,
   ) async {
-    // A pulse-carrying occasion in the default window shows the pulse chart.
+    // With a pulse recorded, opening the pulse tab shows its chart, not the
+    // "no pulse" message.
     await pump(tester);
     repository.emit([_occasion(daysAgo(10), pulse: 72)]);
     await tester.pumpAndSettle();
 
-    expect(find.text('Blood pressure'), findsOneWidget);
-    expect(find.text('Pulse'), findsOneWidget);
+    await tester.tap(find.text('Pulse'));
+    await tester.pumpAndSettle();
+    expect(find.text('No pulse recorded in this range.'), findsNothing);
 
-    // Replace it with a pulse-less occasion: the pulse chart drops away.
+    // Replace it with a pulse-less occasion: the pulse tab now explains it has
+    // nothing to plot, while the blood-pressure tab is unaffected.
     repository.emit([_occasion(daysAgo(10))]);
     await tester.pumpAndSettle();
-
+    expect(find.text('No pulse recorded in this range.'), findsOneWidget);
     expect(find.text('Blood pressure'), findsOneWidget);
-    expect(find.text('Pulse'), findsNothing);
   });
 
   testWidgets('empty diary golden', (tester) async {

@@ -25,11 +25,24 @@ class TrendsScreen extends StatefulWidget {
   State<TrendsScreen> createState() => _TrendsScreenState();
 }
 
-class _TrendsScreenState extends State<TrendsScreen> {
+class _TrendsScreenState extends State<TrendsScreen>
+    with SingleTickerProviderStateMixin {
   // A month is the default: a week is usually too few points to read as a
   // trend, a quarter buries recent change. The user can widen or narrow it.
   TrendRange _range = TrendRange.month;
   TimeOfDayFilter _filter = TimeOfDayFilter.all;
+
+  // Blood pressure and pulse each get their own tab so one chart fills the space
+  // rather than two being stacked (which crowds the short landscape height). The
+  // range/filter controls above the tabs apply to both. Held on the State so the
+  // chosen tab survives a control change and a rotation.
+  late final TabController _tabs = TabController(length: 2, vsync: this);
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,23 +99,8 @@ class _TrendsScreenState extends State<TrendsScreen> {
             const SizedBox(height: 20),
             if (series.daily.isEmpty)
               _EmptyTrends(l10n.trendsEmpty)
-            else ...[
-              _chart(
-                l10n.trendsChartBloodPressure,
-                _bpSeries(l10n),
-                series,
-                fill: false,
-              ),
-              if (_hasPulse(series)) ...[
-                const SizedBox(height: 24),
-                _chart(
-                  l10n.fieldPulse,
-                  _pulseSeries(l10n),
-                  series,
-                  fill: false,
-                ),
-              ],
-            ],
+            else
+              _tabbedCharts(l10n, series, fill: false),
           ],
         ),
       );
@@ -141,31 +139,7 @@ class _TrendsScreenState extends State<TrendsScreen> {
         Expanded(
           child: series.daily.isEmpty
               ? _EmptyTrends(l10n.trendsEmpty)
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Two charts share the height evenly; one chart fills it.
-                    Expanded(
-                      child: _chart(
-                        l10n.trendsChartBloodPressure,
-                        _bpSeries(l10n),
-                        series,
-                        fill: true,
-                      ),
-                    ),
-                    if (_hasPulse(series)) ...[
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: _chart(
-                          l10n.fieldPulse,
-                          _pulseSeries(l10n),
-                          series,
-                          fill: true,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+              : _tabbedCharts(l10n, series, fill: true),
         ),
       ],
     ),
@@ -246,34 +220,59 @@ class _TrendsScreenState extends State<TrendsScreen> {
   bool _hasPulse(TrendSeries series) =>
       series.daily.any((point) => point.pulse != null);
 
-  /// A titled chart with its lines. A legend is shown only for a multi-line
-  /// chart (blood pressure); a single-line chart's heading already names it, so
-  /// the heading (e.g. [AppLocalizations.fieldPulse]) doubles as the label. When
-  /// [fill] the chart expands to the available height (landscape); otherwise it
-  /// takes a fixed height inside the scrolling portrait column.
-  Widget _chart(
-    String heading,
-    List<TrendChartSeries> chartSeries,
+  /// A blood-pressure tab and a pulse tab sharing the [_tabs] controller. Each
+  /// tab shows one chart filling its area. When [fill] the tab view expands to
+  /// the available height (landscape); otherwise it takes a fixed height inside
+  /// the scrolling portrait column (a [TabBarView] needs a bounded height).
+  Widget _tabbedCharts(
+    AppLocalizations l10n,
     TrendSeries series, {
     required bool fill,
   }) {
-    final chart = TrendLineChart(series: chartSeries, data: series);
+    final view = TabBarView(
+      controller: _tabs,
+      children: [_bpTab(l10n, series), _pulseTab(l10n, series)],
+    );
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
       children: [
-        Text(heading, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
-        if (chartSeries.length > 1) ...[
-          _Legend(chartSeries),
-          const SizedBox(height: 12),
-        ] else
-          const SizedBox(height: 8),
-        if (fill)
-          Expanded(child: chart)
-        else
-          SizedBox(height: 280, child: chart),
+        TabBar(
+          controller: _tabs,
+          tabs: [
+            Tab(text: l10n.trendsChartBloodPressure),
+            Tab(text: l10n.fieldPulse),
+          ],
+        ),
+        if (fill) Expanded(child: view) else SizedBox(height: 320, child: view),
       ],
+    );
+  }
+
+  // The blood-pressure tab: its two-line legend, then the chart filling the rest.
+  Widget _bpTab(AppLocalizations l10n, TrendSeries series) {
+    final chartSeries = _bpSeries(l10n);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Legend(chartSeries),
+          const SizedBox(height: 8),
+          Expanded(
+            child: TrendLineChart(series: chartSeries, data: series),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // The pulse tab: the single pulse line, or a calm message when the range holds
+  // no recorded pulse (a user who never logs pulse still has a blood-pressure
+  // trend). A single line needs no legend — the tab already names it.
+  Widget _pulseTab(AppLocalizations l10n, TrendSeries series) {
+    if (!_hasPulse(series)) return _EmptyTrends(l10n.trendsNoPulse);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: TrendLineChart(series: _pulseSeries(l10n), data: series),
     );
   }
 }

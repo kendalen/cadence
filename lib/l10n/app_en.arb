@@ -404,6 +404,10 @@
   "@trendsEmpty": {
     "description": "Shown on the trends screen when the chosen range and time-of-day filter hold no occasions."
   },
+  "trendsNoPulse": "No pulse recorded in this range.",
+  "@trendsNoPulse": {
+    "description": "Shown on the pulse tab of the trends screen when the range holds readings but none recorded a pulse."
+  },
   "trendsTooltipOccasions": "{count, plural, =1{averages 1 occasion} other{averages {count} occasions}}",
   "@trendsTooltipOccasions": {
     "description": "Line in a chart point's tooltip stating how many occasions that point averages, so an averaged point is never read as a single reading (CLAUDE.md §4).",

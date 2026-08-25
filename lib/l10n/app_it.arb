@@ -97,5 +97,6 @@
   "trendsFilterEvening": "Sera",
   "trendsChartBloodPressure": "Pressione",
   "trendsEmpty": "Ancora nessuna misurazione in questo periodo.",
+  "trendsNoPulse": "Nessun battito registrato in questo periodo.",
   "trendsTooltipOccasions": "{count, plural, =1{media di 1 occasione} other{media di {count} occasioni}}"
 }

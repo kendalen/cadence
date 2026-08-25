@@ -23,11 +23,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Trends chart (T3): a pulse chart below the blood-pressure one on the trends
-  screen, reusing the same line chart with a single pulse series (its own muted
-  slate colour). It appears only when the chosen range and filter actually hold
-  a recorded pulse, so a user who never logs pulse never sees an empty second
-  chart. Buckets with no pulse are skipped, never drawn as zero.
+- Trends chart (T3): a pulse chart on the trends screen, in its own tab beside
+  blood pressure (the shared range/time-of-day controls drive both). Tabs let
+  each chart fill the space instead of two being stacked. The pulse chart reuses
+  the same line chart with a single pulse series in its own muted slate colour;
+  when the chosen range holds no recorded pulse the pulse tab says so rather than
+  drawing an empty axis, and buckets with no pulse are skipped, never drawn as
+  zero.
 - Trends screen (T2): a read-only blood-pressure chart reachable from a chart
   icon on the readings list. Two segmented controls choose the range (7 / 30 /
   90 days / All) and the time of day (all / morning / evening); the chart draws a
