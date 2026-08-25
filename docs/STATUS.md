@@ -677,7 +677,10 @@ token, never a status colour** — a teal/green "good" tint would cross §1's
 no-verdict boundary (maintainer's call). One-line UI change; golden unaffected
 (empty state shows no card), behaviour tests assert no colour. Own branch
 `coverage-card-sand-tint`, **merged to `main` + pushed** (HEAD `a105ee0`).
-**On-device eyeball pending** (needs ≥1 logged session for the card to appear).
+**Verified on the physical device** (Redmi 2312DRA50G) 2026-08-25: a same-key
+release update installed over the existing diary (data intact), and the "Ultimi
+7 giorni" card renders on the soft sand background, set apart from the white
+reading cards.
 
 ## Known issues (open)
 
