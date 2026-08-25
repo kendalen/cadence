@@ -39,8 +39,10 @@ enum TimeOfDayFilter {
 /// One plotted point: a civil date and the mean blood pressure (and pulse,
 /// when recorded) of the occasions in that point's time bucket.
 ///
-/// [localDate] is a DST-free civil date (`DateTime.utc(y, m, d)`); read its
-/// y/m/d for the axis — do not convert it with `toLocal` again.
+/// [localDate] is a DST-free civil value; read its fields for the axis — do not
+/// convert it with `toLocal` again. For a bucketed point it is a date at
+/// midnight (`DateTime.utc(y, m, d)`); for a per-occasion point (the 7-day view)
+/// it also carries the occasion's hour/minute so same-day occasions separate.
 final class TrendPoint extends Equatable {
   /// Creates a trend point.
   const TrendPoint({
@@ -51,7 +53,9 @@ final class TrendPoint extends Equatable {
     this.pulse,
   });
 
-  /// The point's position on the time axis: local midnight as a civil date.
+  /// The point's position on the time axis, as a DST-free civil value: a date
+  /// at midnight for a bucketed point, or the occasion's local time for a
+  /// per-occasion point (see the class doc).
   final DateTime localDate;
 
   /// Mean systolic pressure of the bucket, in mmHg.
@@ -94,7 +98,8 @@ final class TrendSeries extends Equatable {
   /// is one day.
   final List<TrendPoint> averaged;
 
-  /// How wide each [averaged] bucket is (1, 7, or 30 days).
+  /// How wide each [averaged] bucket is (1, 7, or 30 days), or [Duration.zero]
+  /// when points are per occasion rather than bucketed (the 7-day view).
   final Duration bucketSize;
 
   @override
@@ -134,6 +139,20 @@ TrendSeries buildTrendSeries(
       )
       .toList();
 
+  // The 7-day view shows every occasion as its own point rather than a daily
+  // mean: over a week the morning/evening split (the 7-2-2 protocol's two
+  // occasions a day, §4) is the whole point, and collapsing to one point per day
+  // would hide it. Points sit at their local time so same-day occasions
+  // separate on the axis. A zero bucket flags "per occasion" to the chart.
+  if (range == TrendRange.week) {
+    final perOccasion = _pointsPerOccasion(inWindow, toLocalTime);
+    return TrendSeries(
+      daily: perOccasion,
+      averaged: perOccasion,
+      bucketSize: Duration.zero,
+    );
+  }
+
   final daily = _pointsByBucket(inWindow, toLocalTime, bucketDays: 1);
 
   final bucketDays = _bucketDaysForSpan(inWindow, toLocalTime, now);
@@ -153,9 +172,43 @@ TrendSeries buildTrendSeries(
   );
 }
 
+/// One point per occasion, at its local time so occasions on the same day
+/// separate on the axis (the 7-day view). Each point is a single
+/// [Session.average] (session-as-unit, §4), never a cross-occasion mean.
+/// Returned in time order.
+List<TrendPoint> _pointsPerOccasion(
+  List<Session> sessions,
+  DateTime Function(DateTime) toLocal,
+) {
+  final sorted = [...sessions]
+    ..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
+  return [
+    for (final session in sorted)
+      _occasionPoint(_civilDateTime(toLocal(session.occurredAt)), session),
+  ];
+}
+
+/// A single occasion's point at civil-local [at], carrying its [Session.average]
+/// as-is (occasionCount 1).
+TrendPoint _occasionPoint(DateTime at, Session session) {
+  final average = session.average;
+  return TrendPoint(
+    localDate: at,
+    systolic: average.systolic,
+    diastolic: average.diastolic,
+    pulse: average.pulse,
+    occasionCount: 1,
+  );
+}
+
 /// The civil calendar date (no time, no DST) of [local].
 DateTime _civilDate(DateTime local) =>
     DateTime.utc(local.year, local.month, local.day);
+
+/// [local] as a DST-free civil date-time — keeps the hour/minute so per-occasion
+/// points on the same day sit apart on the axis, without a timezone offset.
+DateTime _civilDateTime(DateTime local) =>
+    DateTime.utc(local.year, local.month, local.day, local.hour, local.minute);
 
 /// The civil date an occasion falls on, under [toLocal].
 DateTime _localDate(Session session, DateTime Function(DateTime) toLocal) =>

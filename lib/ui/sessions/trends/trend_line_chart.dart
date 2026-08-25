@@ -75,6 +75,9 @@ class _TrendLineChartState extends State<TrendLineChart> {
     final bounds = _Bounds.of(data, series);
     final byX = {for (final point in data.averaged) _x(point): point};
     final oneDayBuckets = data.bucketSize.inDays <= 1;
+    // Per-occasion points (the 7-day view) sit at their local time; the tooltip
+    // shows that time so two occasions on the same day are told apart.
+    final perOccasion = data.bucketSize == Duration.zero;
 
     // A pinned selection from an earlier range/filter may not exist now.
     final selectedX = byX.containsKey(_selectedX) ? _selectedX : null;
@@ -171,8 +174,15 @@ class _TrendLineChartState extends State<TrendLineChart> {
           touchCallback: _onTouch,
           touchTooltipData: LineTouchTooltipData(
             getTooltipColor: (_) => theme.colorScheme.inverseSurface,
-            getTooltipItems: (spots) =>
-                _tooltipItems(spots, byX, l10n, locale, theme, oneDayBuckets),
+            getTooltipItems: (spots) => _tooltipItems(
+              spots,
+              byX,
+              l10n,
+              locale,
+              theme,
+              oneDayBuckets,
+              perOccasion,
+            ),
           ),
         ),
       ),
@@ -245,6 +255,7 @@ class _TrendLineChartState extends State<TrendLineChart> {
     String locale,
     ThemeData theme,
     bool oneDayBuckets,
+    bool perOccasion,
   ) {
     bool isAveraged(LineBarSpot spot) => spot.barIndex < widget.series.length;
     final averagedIndices = [
@@ -267,7 +278,7 @@ class _TrendLineChartState extends State<TrendLineChart> {
           // The first line carries the shared header (date, occasion count)
           // then this series' value; the rest carry just their value.
           LineTooltipItem(
-            '${_header(byX[spot.x], l10n, locale, oneDayBuckets)}\n'
+            '${_header(byX[spot.x], l10n, locale, oneDayBuckets, perOccasion)}\n'
             '${_valueLine(spot)}',
             headerStyle!,
           )
@@ -284,9 +295,13 @@ class _TrendLineChartState extends State<TrendLineChart> {
     AppLocalizations l10n,
     String locale,
     bool oneDayBuckets,
+    bool perOccasion,
   ) {
     if (point == null) return '';
-    final date = DateFormat.MMMEd(locale).format(point.localDate);
+    final format = perOccasion
+        ? DateFormat.MMMEd(locale).add_jm()
+        : DateFormat.MMMEd(locale);
+    final date = format.format(point.localDate);
     if (oneDayBuckets || point.occasionCount <= 1) return date;
     return '$date · ${l10n.trendsTooltipOccasions(point.occasionCount)}';
   }

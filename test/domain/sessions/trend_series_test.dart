@@ -136,7 +136,10 @@ void main() {
         now: now,
       );
 
-      expect(series.daily.map((p) => p.localDate), [DateTime.utc(2026, 8, 18)]);
+      // The week view is per-occasion, so the point carries the occasion's time.
+      expect(series.daily.map((p) => p.localDate), [
+        DateTime.utc(2026, 8, 18, 8),
+      ]);
     });
 
     test('all keeps everything', () {
@@ -206,6 +209,78 @@ void main() {
         now: now,
       );
       expect(series.daily.single.occasionCount, 2);
+    });
+  });
+
+  group('week view is per occasion, not per day', () {
+    test('two same-day occasions stay two points, each its own average', () {
+      // A morning and an evening occasion on the same day. Daily bucketing would
+      // merge them into one point at their mean; the week view keeps both.
+      final now = DateTime.utc(2026, 8, 24, 21);
+      final series = build(
+        [
+          _occasion(
+            systolic: 120,
+            diastolic: 80,
+            takenAt: DateTime.utc(2026, 8, 24, 8),
+          ),
+          _occasion(
+            systolic: 140,
+            diastolic: 90,
+            takenAt: DateTime.utc(2026, 8, 24, 20),
+          ),
+        ],
+        range: TrendRange.week,
+        now: now,
+      );
+
+      expect(series.bucketSize, Duration.zero);
+      expect(series.averaged, series.daily);
+      expect(series.daily, hasLength(2));
+      // Each point is its own occasion average, not the two blended together.
+      expect(series.daily.map((p) => p.systolic), [120, 140]);
+      expect(series.daily.map((p) => p.diastolic), [80, 90]);
+      expect(series.daily.every((p) => p.occasionCount == 1), isTrue);
+      // Positioned at their local times so they separate on the axis.
+      expect(series.daily.map((p) => p.localDate), [
+        DateTime.utc(2026, 8, 24, 8),
+        DateTime.utc(2026, 8, 24, 20),
+      ]);
+    });
+
+    test('points are time-sorted ascending', () {
+      final now = DateTime.utc(2026, 8, 24, 21);
+      final series = build(
+        [
+          _occasion(takenAt: DateTime.utc(2026, 8, 24, 20)),
+          _occasion(takenAt: DateTime.utc(2026, 8, 20, 8)),
+          _occasion(takenAt: DateTime.utc(2026, 8, 24, 8)),
+        ],
+        range: TrendRange.week,
+        now: now,
+      );
+
+      expect(series.daily.map((p) => p.localDate), [
+        DateTime.utc(2026, 8, 20, 8),
+        DateTime.utc(2026, 8, 24, 8),
+        DateTime.utc(2026, 8, 24, 20),
+      ]);
+    });
+
+    test('the time-of-day filter still applies (morning only)', () {
+      final now = DateTime.utc(2026, 8, 24, 21);
+      final series = build(
+        [
+          _occasion(systolic: 118, takenAt: DateTime.utc(2026, 8, 24, 8)),
+          _occasion(systolic: 140, takenAt: DateTime.utc(2026, 8, 24, 20)),
+        ],
+        range: TrendRange.week,
+        filter: TimeOfDayFilter.morning,
+        now: now,
+      );
+
+      expect(series.daily, hasLength(1));
+      expect(series.daily.single.systolic, 118);
     });
   });
 

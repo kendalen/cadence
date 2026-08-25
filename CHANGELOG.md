@@ -21,6 +21,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   distinct keys (`removeReading` / `removeReadingFromOccasion`), so each reads
   correctly; the Italian translation was split to match.
 
+### Changed
+
+- The 7-day trends view now plots every occasion as its own point instead of one
+  average per day, so a day's morning and evening readings (the 7-2-2 protocol's
+  two occasions a day) stay visible rather than being blended together. Points
+  sit at their local time so same-day occasions separate on the axis, and their
+  tooltip shows the time. The 30/90-day and All views keep their daily/adaptive
+  averaging. Applies to every time-of-day filter (all / morning / evening).
+
 ### Added
 
 - Trends chart (T3): a pulse chart on the trends screen, in its own tab beside
