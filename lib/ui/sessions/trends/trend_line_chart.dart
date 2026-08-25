@@ -175,19 +175,19 @@ class _TrendLineChartState extends State<TrendLineChart> {
     );
   }
 
-  /// Pins the tapped point's tooltip; a tap that hits no averaged line clears
-  /// it. Only the settled tap event acts, so dragging does not thrash selection.
+  /// Pins the touched point's tooltip so it stays after the finger lifts.
+  ///
+  /// It reacts to any touch that lands on an averaged line and never clears on
+  /// its own — the finger-up event arrives with no spot, so clearing there is
+  /// what made the tooltip vanish on release. Dragging along the line scrubs the
+  /// pinned point from one to the next.
   void _onTouch(FlTouchEvent event, LineTouchResponse? response) {
-    if (event is! FlTapUpEvent && event is! FlPanEndEvent) return;
-    final spots = response?.lineBarSpots;
-    double? hit;
-    for (final spot in spots ?? const <LineBarSpot>[]) {
+    for (final spot in response?.lineBarSpots ?? const <LineBarSpot>[]) {
       if (spot.barIndex < widget.series.length) {
-        hit = spot.x;
-        break;
+        if (spot.x != _selectedX) setState(() => _selectedX = spot.x);
+        return;
       }
     }
-    if (hit != _selectedX) setState(() => _selectedX = hit);
   }
 
   /// One line: the averaged line is bold with dots; the daily scatter is faint

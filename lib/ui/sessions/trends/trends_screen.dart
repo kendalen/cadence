@@ -58,6 +58,21 @@ class _TrendsScreenState extends State<TrendsScreen> {
     );
   }
 
+  // The choices, single-sourced so the portrait (horizontal) and landscape
+  // (vertical) controls can never drift apart.
+  List<(TrendRange, String)> _rangeOptions(AppLocalizations l10n) => [
+    (TrendRange.week, l10n.trendsRangeWeek),
+    (TrendRange.month, l10n.trendsRangeMonth),
+    (TrendRange.quarter, l10n.trendsRangeQuarter),
+    (TrendRange.all, l10n.trendsRangeAll),
+  ];
+
+  List<(TimeOfDayFilter, String)> _filterOptions(AppLocalizations l10n) => [
+    (TimeOfDayFilter.all, l10n.trendsFilterAll),
+    (TimeOfDayFilter.morning, l10n.trendsFilterMorning),
+    (TimeOfDayFilter.evening, l10n.trendsFilterEvening),
+  ];
+
   // Portrait: controls stacked above the chart, the whole thing scrollable.
   Widget _portrait(AppLocalizations l10n, TrendSeries series) =>
       SingleChildScrollView(
@@ -65,9 +80,9 @@ class _TrendsScreenState extends State<TrendsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _rangeControl(l10n),
+            _horizontalRange(l10n),
             const SizedBox(height: 12),
-            _filterControl(l10n),
+            _horizontalFilter(l10n),
             const SizedBox(height: 20),
             if (series.daily.isEmpty)
               _EmptyTrends(l10n.trendsEmpty)
@@ -77,9 +92,10 @@ class _TrendsScreenState extends State<TrendsScreen> {
         ),
       );
 
-  // Landscape: controls in a compact side column, the chart taking the rest of
-  // the width and the full height (maintainer's call — the short landscape
-  // height is precious, so the controls move off the top).
+  // Landscape: controls as compact vertical button stacks on the side, the
+  // chart taking the rest of the width and the full height. The short landscape
+  // height is precious, and a horizontal 4-segment control also ate too much
+  // width — so the segments stack vertically (maintainer's call).
   Widget _landscape(AppLocalizations l10n, TrendSeries series) => Padding(
     padding: withSystemInsets(context, const EdgeInsets.all(16)),
     child: Row(
@@ -89,9 +105,17 @@ class _TrendsScreenState extends State<TrendsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _rangeControl(l10n),
+            _verticalChoice<TrendRange>(
+              _rangeOptions(l10n),
+              _range,
+              (value) => setState(() => _range = value),
+            ),
             const SizedBox(height: 12),
-            _filterControl(l10n),
+            _verticalChoice<TimeOfDayFilter>(
+              _filterOptions(l10n),
+              _filter,
+              (value) => setState(() => _filter = value),
+            ),
           ],
         ),
         const SizedBox(width: 20),
@@ -104,45 +128,48 @@ class _TrendsScreenState extends State<TrendsScreen> {
     ),
   );
 
-  Widget _rangeControl(AppLocalizations l10n) => SegmentedButton<TrendRange>(
+  Widget _horizontalRange(AppLocalizations l10n) => SegmentedButton<TrendRange>(
     showSelectedIcon: false,
     segments: [
-      ButtonSegment(value: TrendRange.week, label: Text(l10n.trendsRangeWeek)),
-      ButtonSegment(
-        value: TrendRange.month,
-        label: Text(l10n.trendsRangeMonth),
-      ),
-      ButtonSegment(
-        value: TrendRange.quarter,
-        label: Text(l10n.trendsRangeQuarter),
-      ),
-      ButtonSegment(value: TrendRange.all, label: Text(l10n.trendsRangeAll)),
+      for (final (value, label) in _rangeOptions(l10n))
+        ButtonSegment(value: value, label: Text(label)),
     ],
     selected: {_range},
     onSelectionChanged: (selection) => setState(() => _range = selection.first),
   );
 
-  Widget _filterControl(AppLocalizations l10n) =>
+  Widget _horizontalFilter(AppLocalizations l10n) =>
       SegmentedButton<TimeOfDayFilter>(
         showSelectedIcon: false,
         segments: [
-          ButtonSegment(
-            value: TimeOfDayFilter.all,
-            label: Text(l10n.trendsFilterAll),
-          ),
-          ButtonSegment(
-            value: TimeOfDayFilter.morning,
-            label: Text(l10n.trendsFilterMorning),
-          ),
-          ButtonSegment(
-            value: TimeOfDayFilter.evening,
-            label: Text(l10n.trendsFilterEvening),
-          ),
+          for (final (value, label) in _filterOptions(l10n))
+            ButtonSegment(value: value, label: Text(label)),
         ],
         selected: {_filter},
         onSelectionChanged: (selection) =>
             setState(() => _filter = selection.first),
       );
+
+  /// A vertical stack of connected single-select buttons — the same choice as
+  /// the horizontal [SegmentedButton], turned on its side to fit the landscape
+  /// side rail.
+  Widget _verticalChoice<T>(
+    List<(T, String)> options,
+    T selected,
+    ValueChanged<T> onChanged,
+  ) => ToggleButtons(
+    direction: Axis.vertical,
+    borderRadius: BorderRadius.circular(8),
+    isSelected: [for (final (value, _) in options) value == selected],
+    onPressed: (index) => onChanged(options[index].$1),
+    children: [
+      for (final (_, label) in options)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Text(label),
+        ),
+    ],
+  );
 
   /// The blood-pressure chart with its heading and legend. When [fill] the chart
   /// expands to the available height (landscape); otherwise it takes a fixed
