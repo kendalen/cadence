@@ -57,6 +57,7 @@ dependencies:
   # Used by the generated localisations for message and plural formatting.
   intl: any
   # UUID v7 for client-generated, time-ordered entity ids. MIT.
+  share_plus: ^13.3.0
   uuid: ^4.6.0
 
 dev_dependencies:

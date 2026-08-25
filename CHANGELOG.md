@@ -8,6 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- JSON backup export (S7a): an "Export backup" item in the readings-list
+  overflow menu saves the whole diary as a versioned JSON document and opens the
+  Android share sheet. The format carries a top-level `format`/`version` and each
+  reading's raw stored fields only — enums by name, timestamps UTC ISO-8601,
+  optional fields omitted when unset, derived values never written (CLAUDE.md §4,
+  §5). Encoding goes through `dart:convert`, so notes with quotes or newlines are
+  escaped safely. The diary is read through the repository, not by copying the
+  database file. Export only; restoring a backup (import) is a later slice.
+  Adds `share_plus` (BSD-3) for the share sheet, sharing in-memory bytes with no
+  temporary file.
 - Weekly coverage summary (S6): a "Last 7 days" card pinned above the readings
   list reports two dimensions of coverage against the 7-2-2 protocol — occasions
   logged against the 14 expected (two a day), and distinct days logged against

@@ -288,10 +288,54 @@ formatting in a single place — §8). Committed separately from the coverage sl
   settings), so navigation was driven by hand; `flutter run` + `adb screencap`
   and `kill -USR1 <pid>` (hot reload) were the loop.
 
-**Next up — S7 (JSON backup export + import), see the roadmap.** The only
-restorable backup format (§2, §5): versioned, tolerant of unknown fields, never
-silently dropping data; through the Android share sheet / SAF. S6 is merged and
-pushed.
+**Done (2026-08-25): S7a — JSON backup export.** S7 was **split** into export
+(S7a) and import (S7b) at the maintainer's call — import carries the real
+data-safety weight (§5 merge/replace semantics) and the pair would blow the
+~400-line budget (§8). S7a is export only; the format it writes is nonetheless
+the durable contract S7b must read.
+- **Format** (the contract): a single JSON object with top-level `format`
+  (`"cadence.backup"`, a guard so the S7b importer can reject unrelated JSON) and
+  `version` (`1`, independent of the DB `schemaVersion`), an `exportedAt` UTC
+  ISO-8601 stamp, and `sessions[]` → `readings[]`. Each reading carries its raw
+  stored fields only: enums by `.name` (the same stored contract the DB uses),
+  timestamps UTC ISO-8601, **optional fields omitted when null** (smaller; the
+  importer defaults missing keys anyway, §5), and **no derived values** (average,
+  MAP, pulse pressure are computed, never stored — §4). Encoding is always via
+  `dart:convert` `jsonEncode`, so a note with `"`, `\` or a newline is escaped
+  safely (tested). The backup is read through the repository, **not** by copying
+  the SQLite file, so §5's `wal_checkpoint(TRUNCATE)` rule does not apply here
+  (noted in a code comment).
+- **Layers:** pure `encodeBackup` + `backupFormatId`/`backupFormatVersion` in
+  `lib/data/backup/backup_codec.dart` (the tested heart, §3 serialisation is a
+  data job); `SessionListCubit.buildBackupJson({now})` reads every session via
+  the existing `recentHistory()` (reuse, no new repo method) and `jsonEncode`s;
+  a thin `lib/ui/sessions/backup/share_backup.dart` isolates share_plus
+  (`SharePlus.instance.share` of `XFile.fromData` bytes, filename forced via
+  `fileNameOverrides` since `XFile.name` is ignored on Android). Entry point: an
+  overflow (⋮) menu on the list app bar (CSV/S8 joins it later — no Settings
+  screen for one action).
+- **Dependency (§9):** `share_plus` 13.3.0 — BSD-3 (verified in the pub-cache
+  `LICENSE`), `fluttercommunity/plus_plugins`, current. Shares in-memory bytes,
+  so no temp file, no `path_provider`, no manifest change (share_plus ships its
+  own `FileProvider`).
+- **Errors (§6):** empty diary → "No readings to back up yet" (no empty file);
+  user dismissing the share sheet → not an error; failure → "Couldn't export
+  backup" (`on Exception`, so real bugs still crash). Three new ARB strings.
+- **Tests:** `backup_codec_test` (exact-map freeze of the format, null-omission,
+  enum-by-name, ISO-8601, the escaping check, empty diary) + a cubit test that
+  `buildBackupJson` encodes every stored session. **175 green** (+6). No schema
+  change → no migration snapshot. Own branch `s7a-backup-export`. Design spec:
+  `docs/superpowers/specs/2026-08-25-json-backup-export-design.md`.
+- **Not yet run on a device this slice** — `share_plus` has native code, so the
+  actual share-sheet hand-off wants an on-device check when convenient (the
+  codec + cubit are covered by the suite). Verify on the Redmi as with S6.
+
+**Next up — S7b (JSON backup import).** The restorable half: read a backup file
+back (SAF file-pick), tolerate unknown fields, supply defaults for missing ones,
+and **never silently drop data — on ambiguity report and ask** (§5). Its own
+brainstorm, where the real open question is **merge vs replace** conflict
+semantics (a maintainer/domain call, §10). S7a is on branch `s7a-backup-export`;
+merge it before starting S7b.
 
 ## Working reminders
 

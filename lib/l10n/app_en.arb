@@ -241,5 +241,17 @@
       "logged": { "type": "int" },
       "total": { "type": "int" }
     }
+  },
+  "exportBackup": "Export backup",
+  "@exportBackup": {
+    "description": "Menu item in the readings list that saves the whole diary as a JSON backup and opens the system share sheet."
+  },
+  "exportBackupEmpty": "No readings to back up yet.",
+  "@exportBackupEmpty": {
+    "description": "Shown when the user asks to export a backup but has recorded nothing yet."
+  },
+  "exportBackupFailed": "Couldn''t export backup.",
+  "@exportBackupFailed": {
+    "description": "Shown when preparing or sharing the backup failed."
   }
 }

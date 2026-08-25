@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cadence/domain/sessions/ids.dart';
 import 'package:cadence/domain/sessions/reading.dart';
 import 'package:cadence/domain/sessions/session.dart';
@@ -59,5 +61,27 @@ void main() {
     repository.emit([sessionOf('s1')]);
 
     expect(cubit.state, const SessionListLoading());
+  });
+
+  test('builds a backup JSON of every stored session', () async {
+    repository.history = [sessionOf('s1')];
+
+    final json = await cubit.buildBackupJson(now: DateTime.utc(2026, 8, 25));
+    final backup = jsonDecode(json) as Map<String, Object?>;
+
+    expect(backup['format'], 'cadence.backup');
+    expect(backup['version'], 1);
+    expect(backup['exportedAt'], '2026-08-25T00:00:00.000Z');
+    expect((backup['sessions'] as List).single, {
+      'id': 's1',
+      'readings': [
+        {
+          'id': 's1-r1',
+          'systolic': 132,
+          'diastolic': 84,
+          'takenAt': '2026-08-23T06:40:00.000Z',
+        },
+      ],
+    });
   });
 }

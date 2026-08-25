@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +9,7 @@ import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/weekly_coverage.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
+import '../backup/share_backup.dart';
 import '../detail/session_detail_screen.dart';
 import '../entry/session_entry_screen.dart';
 import '../pressure_text.dart';
@@ -28,7 +31,10 @@ class SessionListScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => SessionListCubit(context.read<SessionRepository>()),
       child: Scaffold(
-        appBar: AppBar(title: Text(l10n.appTitle)),
+        appBar: AppBar(
+          title: Text(l10n.appTitle),
+          actions: const [_OverflowMenu()],
+        ),
         body: BlocBuilder<SessionListCubit, SessionListState>(
           builder: (context, state) => switch (state) {
             SessionListLoading() => const Center(
@@ -80,6 +86,50 @@ class SessionListScreen extends StatelessWidget {
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (context) => const SessionEntryScreen()),
     );
+  }
+}
+
+/// The app-bar overflow (⋮) menu. Home of the data-out actions; CSV export
+/// (S8) joins it later, which is why a single item still lives in a menu.
+class _OverflowMenu extends StatelessWidget {
+  const _OverflowMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return PopupMenuButton<void>(
+      onSelected: (_) => unawaited(_exportBackup(context)),
+      itemBuilder: (context) => [
+        PopupMenuItem<void>(child: Text(l10n.exportBackup)),
+      ],
+    );
+  }
+
+  /// Builds the whole diary as a JSON backup and opens the share sheet.
+  ///
+  /// A backup with nothing in it is not worth sharing, so an empty diary shows
+  /// a note instead. Any failure preparing or sharing the file is reported to
+  /// the user rather than surfaced raw (CLAUDE.md §6); a user who backs out of
+  /// the share sheet is not a failure. One clock read stamps both the document
+  /// and the filename so they always agree.
+  Future<void> _exportBackup(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final cubit = context.read<SessionListCubit>();
+
+    final state = cubit.state;
+    if (state is SessionListLoaded && state.sessions.isEmpty) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.exportBackupEmpty)));
+      return;
+    }
+
+    try {
+      final now = DateTime.now().toUtc();
+      final json = await cubit.buildBackupJson(now: now);
+      await shareBackup(json, filename: backupFilename(now));
+    } on Exception {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.exportBackupFailed)));
+    }
   }
 }
 
