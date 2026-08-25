@@ -8,6 +8,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Export confirmation (S9b): after the whole diary is shared as a JSON backup,
+  CSV, or PDF, a brief message confirms it ("Backup shared." / "Readings
+  exported.") — feedback the older audience was missing when the share sheet
+  simply closed. It appears only when the share actually completes; backing out
+  of the share sheet stays silent, as before.
 - First-run disclaimer + About (S9a): on first launch, a one-time notice states
   plainly that Cadence is a diary for recording readings you measure yourself —
   not a medical device, and it does not diagnose, interpret, or advise — and
@@ -89,6 +94,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- "Last 7 days" coverage could read "8 of 7 days" (S9b): the window was a rolling
+  168-hour cutoff, which straddles eight calendar days when opened mid-day. It is
+  now the local calendar day of today plus the six days before it, so the
+  distinct-days count can never exceed seven and the occasions window matches
+  (CLAUDE.md §4).
 - The readings list now has room at its end so the last card scrolls clear of
   the floating "Add a reading" button instead of hiding behind it.
 - Scrollable forms (entry, edit reading, session detail) now pad their bottom

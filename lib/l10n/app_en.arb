@@ -270,6 +270,10 @@
   "@exportBackupFailed": {
     "description": "Shown when preparing or sharing the backup failed."
   },
+  "exportBackupSuccess": "Backup shared.",
+  "@exportBackupSuccess": {
+    "description": "Confirmation shown after the JSON backup has been shared successfully through the system share sheet."
+  },
   "exportCsv": "Export as CSV",
   "@exportCsv": {
     "description": "Menu item in the readings list that saves the readings as a CSV spreadsheet file and opens the system share sheet."
@@ -285,6 +289,10 @@
   "exportFailed": "Couldn''t export the readings.",
   "@exportFailed": {
     "description": "Shown when preparing or sharing the CSV or PDF export failed."
+  },
+  "exportReadingsSuccess": "Readings exported.",
+  "@exportReadingsSuccess": {
+    "description": "Confirmation shown after the CSV or PDF readings export has been shared successfully through the system share sheet."
   },
   "exportTitle": "Blood pressure readings",
   "@exportTitle": {

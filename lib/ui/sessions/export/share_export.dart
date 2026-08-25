@@ -13,21 +13,27 @@ import 'package:share_plus/share_plus.dart';
 /// the filename is supplied through `fileNameOverrides` instead, otherwise the
 /// shared file arrives with an opaque cache name.
 ///
-/// Returns the share_plus [ShareResult]; a [ShareResultStatus.dismissed] means
-/// the user backed out of the share sheet, which is not an error.
-Future<ShareResult> shareExportBytes(
+/// Returns `true` when the share completed and `false` when the user backed out
+/// of the share sheet — an app-owned boolean rather than share_plus's own
+/// [ShareResult], so callers stay free of the dependency. Backing out is not an
+/// error, only "nothing to confirm".
+Future<bool> shareExportBytes(
   List<int> bytes, {
   required String filename,
   required String mimeType,
-}) => SharePlus.instance.share(
-  ShareParams(
-    files: [XFile.fromData(Uint8List.fromList(bytes), mimeType: mimeType)],
-    fileNameOverrides: [filename],
-  ),
-);
+}) async {
+  final result = await SharePlus.instance.share(
+    ShareParams(
+      files: [XFile.fromData(Uint8List.fromList(bytes), mimeType: mimeType)],
+      fileNameOverrides: [filename],
+    ),
+  );
+  return result.status == ShareResultStatus.success;
+}
 
-/// Shares a JSON backup [json] as `application/json`.
-Future<ShareResult> shareBackup(String json, {required String filename}) =>
+/// Shares a JSON backup [json] as `application/json`. Returns whether the share
+/// completed (see [shareExportBytes]).
+Future<bool> shareBackup(String json, {required String filename}) =>
     shareExportBytes(
       utf8.encode(json),
       filename: filename,
