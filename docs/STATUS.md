@@ -467,8 +467,9 @@ in (maintainer's call — keep S9 lean).
 - **Smell noted:** `session_list_screen.dart` is now ~380 lines (§6 flags >300);
   the overflow menu + its handlers want extracting — planned for S9b when the
   success toasts land there. Own branch `s9a-disclaimer-about`.
-- **Not yet run on a device this slice** — installing the v3 build on the Redmi
-  will run the migration and show the notice once; eyeball it + About there.
+- **Verified on the physical device 2026-08-25** (folded into the S9b device
+  run below): the v3 migration ran over the existing diary with all data intact,
+  and the first-run disclaimer showed once.
 
 **Done (2026-08-25): S9b — coverage fix + export confirmation + menu extract.**
 Three separable threads on one branch (`s9b-coverage-fix-and-polish`), one commit
@@ -497,9 +498,19 @@ each:
   Pure move; the success toasts were folded into the handlers as they moved.
 - **Tests: 213 green** (+2 over S9a's 211: the 8/7 regression + a boundary split).
   No schema change → no migration. UI glue (menu tap → share) stays native and
-  untested, same boundary as before. **Not yet run on a device this slice** — the
-  toast hand-off and the corrected coverage counts want an on-device eyeball with
-  the pending v3 build (S9a) on the Redmi.
+  untested, same boundary as before.
+- **Verified on the physical device** (Redmi 2312DRA50G) 2026-08-25: a debug
+  build carrying S9a+S9b installed over the existing diary — the **v3 migration
+  ran and all history survived** (so S9a's migration is now device-verified too).
+  The coverage card reads **"7 of 7 days"** where the old rolling window showed
+  8/7, and "16 of 14 occasions" (the honest over-logged count, uncapped by
+  design). Export **success toasts** confirmed by hand ("Backup shared." /
+  "Readings exported.", silent on cancel) and the **first-run disclaimer** (S9a)
+  shown once. Tap-injection stays off (Security settings), so the menu/export
+  were hand-driven; `flutter run` + `adb screencap` was the loop. **Android SDK
+  note for this Mac:** adb/`flutter devices` need `ANDROID_HOME=/opt/homebrew/
+  share/android-commandlinetools` exported (the SDK is the Homebrew
+  command-line-tools cask, not `~/Library/Android/sdk`).
 
 ## Known issues (open)
 
