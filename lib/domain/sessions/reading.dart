@@ -13,6 +13,10 @@ final class Reading extends Equatable {
   /// [takenAt] must be in UTC; convert to local time only for display. The
   /// context fields ([site], [posture], [medicationTiming]) are optional and
   /// default to `null` when the user did not record them (CLAUDE.md §4).
+  ///
+  /// Throws [ArgumentError] if [takenAt] is not UTC — the store keeps every
+  /// timestamp in UTC, and a local time would silently mis-place the reading in
+  /// time. A throw (not an `assert`) holds this in release builds too.
   Reading({
     required this.id,
     required this.systolic,
@@ -23,7 +27,11 @@ final class Reading extends Equatable {
     this.site,
     this.posture,
     this.medicationTiming,
-  }) : assert(takenAt.isUtc, 'takenAt must be UTC');
+  }) {
+    if (!takenAt.isUtc) {
+      throw ArgumentError.value(takenAt, 'takenAt', 'must be in UTC');
+    }
+  }
 
   /// Identity of this reading.
   final ReadingId id;

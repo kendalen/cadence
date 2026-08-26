@@ -85,18 +85,19 @@ final class TrendPoint extends Equatable {
 /// The full series a chart draws: a per-day scatter and an adaptive averaged
 /// line. The two are identical when the data span is one bucket wide.
 final class TrendSeries extends Equatable {
-  /// Creates a trend series.
-  const TrendSeries({
-    required this.daily,
-    required this.averaged,
+  /// Creates a trend series. The point lists are copied and held unmodifiable.
+  TrendSeries({
+    required List<TrendPoint> daily,
+    required List<TrendPoint> averaged,
     required this.bucketSize,
-  });
+  }) : daily = List.unmodifiable(daily),
+       averaged = List.unmodifiable(averaged);
 
-  /// One point per calendar day — the faint scatter.
+  /// One point per calendar day — the faint scatter. Unmodifiable.
   final List<TrendPoint> daily;
 
   /// Adaptive-bucket points — the bold line. Equals [daily] when [bucketSize]
-  /// is one day.
+  /// is one day. Unmodifiable.
   final List<TrendPoint> averaged;
 
   /// How wide each [averaged] bucket is (1, 7, or 30 days), or [Duration.zero]

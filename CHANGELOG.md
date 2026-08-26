@@ -33,6 +33,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Core data rules are now enforced in release builds, not just debug.** A
+  session must hold at least one reading and a reading's time must be UTC; these
+  were `assert`s, which Flutter strips from release builds. They now throw, and
+  a session's reading list is held unmodifiable so the rule can't be broken after
+  the fact. Internal hardening — no visible change.
 - **Importing a slightly-broken backup now tells you what it couldn't read.** A
   reading whose optional detail (pulse, note, or context) was malformed used to
   be imported with that detail silently dropped; the import summary now adds

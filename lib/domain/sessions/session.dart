@@ -10,13 +10,27 @@ import 'session_average.dart';
 /// (CLAUDE.md §4). It always holds at least one reading.
 final class Session extends Equatable {
   /// Creates a session from a non-empty list of [readings].
-  const Session({required this.id, required this.readings})
-    : assert(readings.length > 0, 'a session holds at least one reading');
+  ///
+  /// Throws [ArgumentError] if [readings] is empty: the session is the unit of
+  /// analysis and always holds at least one reading (CLAUDE.md §4). The list is
+  /// copied and held unmodifiable, so the invariant cannot be broken after
+  /// construction — unlike an `assert`, this holds in release builds too.
+  Session({required this.id, required List<Reading> readings})
+    : readings = List.unmodifiable(readings) {
+    if (this.readings.isEmpty) {
+      throw ArgumentError.value(
+        readings,
+        'readings',
+        'a session holds at least one reading',
+      );
+    }
+  }
 
   /// Identity of this session.
   final SessionId id;
 
-  /// The readings taken on this occasion, in the order they were taken.
+  /// The readings taken on this occasion, in the order they were taken. The
+  /// list is unmodifiable.
   final List<Reading> readings;
 
   /// This session's [readings] ordered by [Reading.takenAt], earliest first.

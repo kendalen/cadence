@@ -64,9 +64,23 @@ void main() {
 
   group('Session', () {
     test('rejects an empty reading list', () {
+      // Throws (not asserts) so the invariant holds in release builds too (§4).
       expect(
         () => Session(id: const SessionId('s1'), readings: const []),
-        throwsA(isA<AssertionError>()),
+        throwsArgumentError,
+      );
+    });
+
+    test('holds its readings unmodifiable', () {
+      final session = Session(
+        id: const SessionId('s1'),
+        readings: [readingAt('r1', DateTime.utc(2026, 8, 23, 7))],
+      );
+
+      expect(
+        () =>
+            session.readings.add(readingAt('r2', DateTime.utc(2026, 8, 23, 8))),
+        throwsUnsupportedError,
       );
     });
 
@@ -280,9 +294,10 @@ void main() {
     });
 
     test('rejects a takenAt that is not UTC', () {
+      // Throws (not asserts) so the invariant holds in release builds too (§4).
       expect(
         () => readingAt('r1', DateTime(2026, 8, 23, 7, 30)),
-        throwsA(isA<AssertionError>()),
+        throwsArgumentError,
       );
     });
 
