@@ -91,6 +91,7 @@
   "importBackupConfirmAction": "Importa",
   "importBackupSummary": "{count, plural, =0{Nessuna nuova occasione da aggiungere.} =1{Aggiunta 1 occasione.} other{Aggiunte {count} occasioni.}}",
   "importBackupSomeSkipped": "Alcune voci non sono state lette e sono state escluse.",
+  "importBackupSomeDetailsDropped": "Alcune misurazioni avevano dettagli che non è stato possibile leggere.",
   "importBackupNotABackup": "Questo file non è un backup di Cadence.",
   "importBackupUnreadable": "Impossibile leggere questo file come backup.",
   "importBackupTooNew": "Questo backup è stato creato da una versione più recente di Cadence.",

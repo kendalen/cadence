@@ -380,6 +380,10 @@
   "@importBackupSomeSkipped": {
     "description": "Appended to the import summary when some readings or occasions in the file could not be read."
   },
+  "importBackupSomeDetailsDropped": "Some readings had details that couldn''t be read.",
+  "@importBackupSomeDetailsDropped": {
+    "description": "Appended to the import summary when some readings were imported but a malformed optional field (pulse, note, or context) had to be left out."
+  },
   "importBackupNotABackup": "This file isn''t a Cadence backup.",
   "@importBackupNotABackup": {
     "description": "Shown when the chosen file is valid but is not a Cadence backup."

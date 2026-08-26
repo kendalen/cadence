@@ -24,6 +24,7 @@ final class BackupParsed extends BackupParse {
     required this.sessions,
     required this.skippedReadings,
     required this.skippedSessions,
+    required this.readingsWithDroppedDetails,
   });
 
   /// The sessions successfully read, in the order the document listed them.
@@ -36,6 +37,12 @@ final class BackupParsed extends BackupParse {
   /// Sessions that were skipped because none of their readings could be read
   /// (a session cannot be empty — CLAUDE.md §4).
   final int skippedSessions;
+
+  /// Readings that *were* imported but had a supplied optional field dropped
+  /// because it was malformed — an unknown enum value, a non-numeric pulse, a
+  /// non-text note. Counted so the drop is reported, not hidden (CLAUDE.md §5);
+  /// an *absent* optional is simply unrecorded and is not counted here.
+  final int readingsWithDroppedDetails;
 }
 
 /// A document that could not be treated as a backup at all; nothing was read.
@@ -67,10 +74,13 @@ enum BackupRejectedReason {
 /// ([BackupRejectedReason.tooNew]) — the format's own version field exists so a
 /// future shape is refused rather than guessed at (CLAUDE.md §5).
 ///
-/// Otherwise it reads every session it can: unknown fields are ignored, an
-/// unknown enum value is treated as unrecorded, and a reading missing a required
-/// field is skipped and counted (never dropped silently). A session left with no
-/// usable readings is skipped and counted.
+/// Otherwise it reads every session it can: unknown fields are ignored, a
+/// reading missing a required field is skipped and counted, and a session left
+/// with no usable readings is skipped and counted (never dropped silently). A
+/// reading whose *optional* field is present but malformed (an unknown enum, a
+/// non-numeric pulse) is still imported, with that detail dropped and counted in
+/// [BackupParsed.readingsWithDroppedDetails] — report-only, so a slightly broken
+/// backup still restores what it can while telling the user what it lost (§5).
 BackupParse decodeBackup(String source) {
   final Object? decoded;
   try {
@@ -100,6 +110,7 @@ BackupParse decodeBackup(String source) {
       sessions: [],
       skippedReadings: 0,
       skippedSessions: 0,
+      readingsWithDroppedDetails: 0,
     );
   }
   if (rawSessions is! List) {
@@ -109,6 +120,7 @@ BackupParse decodeBackup(String source) {
   final sessions = <Session>[];
   var skippedReadings = 0;
   var skippedSessions = 0;
+  var readingsWithDroppedDetails = 0;
 
   for (final rawSession in rawSessions) {
     if (rawSession is! Map<String, dynamic>) {
@@ -124,11 +136,14 @@ BackupParse decodeBackup(String source) {
 
     final readings = <Reading>[];
     for (final rawReading in rawReadings) {
-      final reading = _decodeReading(rawReading);
+      final (reading, droppedDetail) = _decodeReading(rawReading);
       if (reading == null) {
         skippedReadings++;
       } else {
         readings.add(reading);
+        if (droppedDetail) {
+          readingsWithDroppedDetails++;
+        }
       }
     }
 
@@ -145,17 +160,23 @@ BackupParse decodeBackup(String source) {
     sessions: sessions,
     skippedReadings: skippedReadings,
     skippedSessions: skippedSessions,
+    readingsWithDroppedDetails: readingsWithDroppedDetails,
   );
 }
 
-/// Reads one reading, or `null` when a required field is missing or malformed.
+/// Reads one reading, and reports whether a *supplied* optional field had to be
+/// dropped because it was malformed.
 ///
-/// Required: `id`, `systolic`, `diastolic`, `takenAt`. Optional fields default
-/// to unrecorded; an unknown enum value is treated as unrecorded rather than
-/// rejecting the reading.
-Reading? _decodeReading(Object? raw) {
+/// Required: `id`, `systolic`, `diastolic`, `takenAt` — the reading is `null`
+/// (unreadable) when any is missing or of the wrong type. Optional fields
+/// (`pulse`, `notes`, `site`, `posture`, `medicationTiming`) default to
+/// unrecorded; a value that is *present but unusable* (an unknown enum name, a
+/// pulse that is not a number, a note that is not text) is dropped and the
+/// returned `droppedDetail` flag is set so the caller can report it (§5). An
+/// *absent* optional is not a dropped detail.
+(Reading? reading, bool droppedDetail) _decodeReading(Object? raw) {
   if (raw is! Map<String, dynamic>) {
-    return null;
+    return (null, false);
   }
 
   final id = raw['id'];
@@ -163,32 +184,52 @@ Reading? _decodeReading(Object? raw) {
   final diastolic = raw['diastolic'];
   final rawTakenAt = raw['takenAt'];
   if (id is! String || systolic is! int || diastolic is! int) {
-    return null;
+    return (null, false);
   }
   if (rawTakenAt is! String) {
-    return null;
+    return (null, false);
   }
   final takenAt = DateTime.tryParse(rawTakenAt);
   if (takenAt == null) {
+    return (null, false);
+  }
+
+  // A supplied-but-unusable optional is a reported drop; an absent one (null)
+  // is simply unrecorded and is not.
+  var droppedDetail = false;
+  int? optionalInt(Object? value) {
+    if (value is int) return value;
+    if (value != null) droppedDetail = true;
     return null;
   }
 
-  final pulse = raw['pulse'];
-  final notes = raw['notes'];
-  return Reading(
+  String? optionalString(Object? value) {
+    if (value is String) return value;
+    if (value != null) droppedDetail = true;
+    return null;
+  }
+
+  T? optionalEnum<T extends Enum>(Object? value, List<T> values) {
+    final resolved = _enumByName(value, values);
+    if (resolved == null && value != null) droppedDetail = true;
+    return resolved;
+  }
+
+  final reading = Reading(
     id: ReadingId(id),
     systolic: systolic,
     diastolic: diastolic,
-    pulse: pulse is int ? pulse : null,
+    pulse: optionalInt(raw['pulse']),
     takenAt: takenAt.toUtc(),
-    notes: notes is String ? notes : null,
-    site: _enumByName(raw['site'], MeasurementSite.values),
-    posture: _enumByName(raw['posture'], Posture.values),
-    medicationTiming: _enumByName(
+    notes: optionalString(raw['notes']),
+    site: optionalEnum(raw['site'], MeasurementSite.values),
+    posture: optionalEnum(raw['posture'], Posture.values),
+    medicationTiming: optionalEnum(
       raw['medicationTiming'],
       MedicationTiming.values,
     ),
   );
+  return (reading, droppedDetail);
 }
 
 /// Resolves [raw] to the enum value of that name, or `null` when it is missing

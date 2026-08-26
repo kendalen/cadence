@@ -154,6 +154,11 @@ class SessionOverflowMenu extends StatelessWidget {
             ..write(' ')
             ..write(l10n.importBackupSomeSkipped);
         }
+        if (parsed.readingsWithDroppedDetails > 0) {
+          message
+            ..write(' ')
+            ..write(l10n.importBackupSomeDetailsDropped);
+        }
         messenger.showSnackBar(SnackBar(content: Text(message.toString())));
       case Err():
         messenger.showSnackBar(

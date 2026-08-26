@@ -61,6 +61,7 @@ void main() {
       expect(parsed.sessions, sessions);
       expect(parsed.skippedReadings, 0);
       expect(parsed.skippedSessions, 0);
+      expect(parsed.readingsWithDroppedDetails, 0);
     });
 
     test('rejects JSON that is not a Cadence backup', () {
@@ -155,8 +156,29 @@ void main() {
       expect(parsed.skippedSessions, 0);
     });
 
+    test('keeps a reading with an unknown enum value, dropping only that field', () {
+      final json = _backupJson([
+        {
+          'id': 'r1',
+          'systolic': 120,
+          'diastolic': 80,
+          'takenAt': '2026-08-25T06:30:00.000Z',
+          'site': 'foot',
+        },
+      ]);
+
+      final parsed = decodeBackup(json) as BackupParsed;
+      final reading = parsed.sessions.single.readings.single;
+      expect(reading.site, isNull);
+      expect(reading.systolic, 120);
+      // Report-only: the reading is kept, but the dropped detail is counted so
+      // it isn't lost silently (§5).
+      expect(parsed.readingsWithDroppedDetails, 1);
+      expect(parsed.skippedReadings, 0);
+    });
+
     test(
-      'keeps a reading with an unknown enum value, dropping only that field',
+      'keeps a reading with a malformed pulse, counting the dropped detail',
       () {
         final json = _backupJson([
           {
@@ -164,17 +186,31 @@ void main() {
             'systolic': 120,
             'diastolic': 80,
             'takenAt': '2026-08-25T06:30:00.000Z',
-            'site': 'foot',
+            'pulse': 'seventy', // not a number
           },
         ]);
 
-        final reading = (decodeBackup(
-          json,
-        ) as BackupParsed).sessions.single.readings.single;
-        expect(reading.site, isNull);
-        expect(reading.systolic, 120);
+        final parsed = decodeBackup(json) as BackupParsed;
+        expect(parsed.sessions.single.readings.single.pulse, isNull);
+        expect(parsed.readingsWithDroppedDetails, 1);
       },
     );
+
+    test('an absent optional field is not counted as a dropped detail', () {
+      // A reading that simply omits pulse/notes/context is complete as written,
+      // not a partial read.
+      final json = _backupJson([
+        {
+          'id': 'r1',
+          'systolic': 120,
+          'diastolic': 80,
+          'takenAt': '2026-08-25T06:30:00.000Z',
+        },
+      ]);
+
+      final parsed = decodeBackup(json) as BackupParsed;
+      expect(parsed.readingsWithDroppedDetails, 0);
+    });
 
     test('skips a session whose readings are all unusable', () {
       final json = _backupJson([

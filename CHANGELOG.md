@@ -33,6 +33,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Importing a slightly-broken backup now tells you what it couldn't read.** A
+  reading whose optional detail (pulse, note, or context) was malformed used to
+  be imported with that detail silently dropped; the import summary now adds
+  "some readings had details that couldn't be read." The reading itself is still
+  restored — nothing importable is lost (§5).
 - **Undo after deleting an occasion or removing a reading now reports if it
   fails.** The restore write was fire-and-forget, so a failed undo silently left
   the data gone while looking like it had come back. A failed undo now says so.
