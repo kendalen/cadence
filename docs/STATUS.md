@@ -6,8 +6,9 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-26 (audit findings CQ-14/02/03 merged to main;
-discard-day-1 shelved; undo-toast persistence explained — accessibility, not a bug)
+**Last updated:** 2026-08-26 (Italian accepted → S10 fully done; dark-theme slice
+brainstormed + approved, ready to build next session; undo-toast persistence
+explained). **Resume point: implement the dark theme — see "NEXT UP" below.**
 
 ---
 
@@ -814,6 +815,53 @@ Branch pushed to `origin`; **not yet merged to `main`** (maintainer to merge).
   + a `SettingsScreen` behaviour test (renders every range + About; an empty
   diary reports "nothing to export" instead of sharing). The menu-tap→native
   share stays untested, same boundary as the JSON backup and the old export.
+
+**NEXT UP — approved, not yet started: dark theme (a 1.x design slice).**
+Brainstormed and approved 2026-08-26; **resume in a fresh session** and implement
+directly (bounded, well under the §8 budget). Two maintainer decisions are made:
+- **Switching: follow the phone.** `MaterialApp` gets `theme` + `darkTheme`;
+  `themeMode` defaults to system when both are set. **No toggle, no Settings UI,
+  no persistence** — the whole point is to respect the device's light/dark
+  setting (today the app is light-only and shows the warm light theme even in
+  dark mode). A manual override toggle can be added later if ever wanted.
+- **Palette: I derive a warm-dark palette, the maintainer tunes the hex on the
+  Redmi** (as with the light palette and the pulse colour) — no design canvas.
+
+Approved structure:
+- `buildCadenceTheme([Brightness brightness = Brightness.light])` — builds the
+  current light theme or a new warm-dark one. Keep the arg **optional (default
+  light)** so the ~dozen widget-test pump helpers calling `buildCadenceTheme()`
+  don't churn.
+- `lib/ui/app.dart`: `theme: buildCadenceTheme(Brightness.light)`,
+  `darkTheme: buildCadenceTheme(Brightness.dark)`.
+- **One `ThemeExtension`** (e.g. `CadenceExtraColors`) carrying the four
+  non-Material colours — chart `systolic` / `diastolic` / `pulse` and the
+  coverage-card `sand` fill — defined for **both** brightnesses and attached to
+  both themes. The only four direct `CadenceColors.*` reads outside the theme
+  (`trends_screen.dart:203/208/218`, `weekly_coverage_card.dart:40`) switch to
+  reading it from `Theme.of(context)` — this also removes the one bit of
+  colour-coupling the widgets had.
+- `cardTheme.color` (hardcoded `CadenceColors.surface` white today) and the
+  scaffold background become brightness-aware (dark = lifted charcoal).
+- New dark hex consts in a `// Dark` block in `cadence_colors.dart` — a warm,
+  non-pure-black set for the maintainer to tune: surface ~`#17130F`, card
+  ~`#221D18`, sand/quiet fill ~`#2A241E`, border ~`#38302A`, ink ~`#F2EAE1` /
+  secondary ~`#C4B8AC` / tertiary ~`#8B8074`, teal ~`#5CB3A3`, tealTint
+  ~`#24463F`, clay ~`#E08769`, clayTint ~`#4A2C22`, error ~`#F2B8B5`, chart
+  systolic ~`#33B79C` / diastolic ~`#E0B24A` / pulse ~`#8CA6B8`. **All starting
+  points — retune on device.**
+- **§1 still holds in dark:** no threshold lines, no good/bad colour; keep the
+  chart series CVD-safe against each other after brightening.
+- **Tests:** a small unit test that `buildCadenceTheme(Brightness.dark)` is
+  actually dark (`colorScheme.brightness == dark`, dark surface) and the
+  `ThemeExtension` is present in **both** themes. **No dark golden** — the
+  maintainer will retune hex, and a pixel golden would break every tweak; the
+  light empty-state golden stays.
+- On-device: verify on the Redmi by toggling the phone's dark mode; tune hex.
+
+**Then (maintainer ask): review untapped 1.x+ capabilities.** After dark theme,
+walk through what the roadmap's "Deferred to 1.x" list and any newer ideas hold
+that we haven't looked at yet, and decide what (if anything) is worth pulling in.
 
 **Discard-day-1 toggle — SHELVED (maintainer's call, 2026-08-26).** Brainstormed
 and deferred, not built. The feature has no solid anchor in Cadence's model: the
