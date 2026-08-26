@@ -10,10 +10,17 @@ import 'ui/app.dart';
 
 /// Composition root: the one place that knows which implementations the app
 /// runs on.
-void main() {
+Future<void> main() async {
+  // Needed because we await a database read before runApp (below).
+  WidgetsFlutterBinding.ensureInitialized();
   _registerBundledFontLicenses();
 
   final database = AppDatabase();
+  final settingsRepository = DriftSettingsRepository(database);
+
+  // Read the chosen theme up front so the first frame is already in the right
+  // theme — no flash of the wrong one on launch. It is one tiny key-value read.
+  final themeMode = await settingsRepository.themeMode();
 
   // The database is deliberately not closed on teardown. Every write commits
   // in its own transaction, so there is nothing buffered to flush, and Android
@@ -24,7 +31,8 @@ void main() {
     CadenceApp(
       sessionRepository: DriftSessionRepository(database),
       idGenerator: const UuidIdGenerator(),
-      settingsRepository: DriftSettingsRepository(database),
+      settingsRepository: settingsRepository,
+      initialThemeMode: themeMode,
     ),
   );
 }

@@ -9,6 +9,7 @@ import 'package:cadence/data/database/app_database.dart';
 import 'package:cadence/data/ids/uuid_id_generator.dart';
 import 'package:cadence/data/sessions/drift_session_repository.dart';
 import 'package:cadence/data/settings/drift_settings_repository.dart';
+import 'package:cadence/domain/settings/app_theme_mode.dart';
 import 'package:cadence/ui/app.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -54,6 +55,7 @@ void main() {
         sessionRepository: DriftSessionRepository(database),
         idGenerator: const UuidIdGenerator(),
         settingsRepository: DriftSettingsRepository(database),
+        initialThemeMode: AppThemeMode.system,
       ),
     );
     await settle(tester);

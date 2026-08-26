@@ -1,3 +1,4 @@
+import '../../domain/settings/app_theme_mode.dart';
 import '../../domain/settings/settings_repository.dart';
 import '../database/app_database.dart';
 
@@ -14,6 +15,9 @@ class DriftSettingsRepository implements SettingsRepository {
 
   /// Key of the first-run acknowledgement flag.
   static const String _disclaimerKey = 'disclaimerAcknowledged';
+
+  /// Key of the chosen colour theme, stored as the [AppThemeMode] name.
+  static const String _themeModeKey = 'themeMode';
 
   @override
   Future<bool> isDisclaimerAcknowledged() async {
@@ -46,6 +50,44 @@ class DriftSettingsRepository implements SettingsRepository {
             AppSettingsCompanion.insert(
               settingKey: _disclaimerKey,
               settingValue: 'true',
+            ),
+          );
+    } on Object {
+      // Intentionally ignored — see contract note above.
+    }
+  }
+
+  @override
+  Future<AppThemeMode> themeMode() async {
+    // Missing, unknown, or unreadable → follow the phone (SettingsRepository
+    // contract). Broad catch for the same reason as the reads above: falling
+    // back to "system" is always safe, and a genuine bug surfaces as the theme
+    // reverting to system rather than crashing the whole app at startup.
+    try {
+      final row =
+          await (_database.select(_database.appSettings)
+                ..where((setting) => setting.settingKey.equals(_themeModeKey)))
+              .getSingleOrNull();
+      return AppThemeMode.values.firstWhere(
+        (mode) => mode.name == row?.settingValue,
+        orElse: () => AppThemeMode.system,
+      );
+    } on Object {
+      return AppThemeMode.system;
+    }
+  }
+
+  @override
+  Future<void> setThemeMode(AppThemeMode mode) async {
+    // A write failure is not fatal: the choice reverts to whatever is stored
+    // (or system) next launch. Broad for the same reason as the writes above.
+    try {
+      await _database
+          .into(_database.appSettings)
+          .insertOnConflictUpdate(
+            AppSettingsCompanion.insert(
+              settingKey: _themeModeKey,
+              settingValue: mode.name,
             ),
           );
     } on Object {

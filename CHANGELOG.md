@@ -8,11 +8,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- A **dark theme** that follows the phone's light/dark setting. Set the device to
-  dark mode and Cadence renders in a warm-dark palette (kept warm, not cold or
-  pure-black); light mode is unchanged. There is no in-app toggle — the app
-  respects the device setting. Colour still never grades a reading, and the chart
-  series stay colour-blind-safe against each other in dark.
+- A **dark theme** in a warm-dark palette (kept warm, not cold or pure-black).
+  Colour still never grades a reading, and the chart series stay
+  colour-blind-safe against each other in dark.
+- A **theme choice in Settings** — Follow system / Light / Dark. It defaults to
+  following the phone's light/dark setting; Light or Dark overrides the phone.
+  The choice is remembered across launches.
 
 - The **"Last 7 days" average now flags itself as partial** when it rests on
   fewer than four distinct logged days — a small "based on partial data" note, so

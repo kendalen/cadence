@@ -306,6 +306,22 @@
   "@settingsTitle": {
     "description": "Title of the Settings screen, reached from the gear icon in the readings list app bar."
   },
+  "settingsThemeHeading": "Appearance",
+  "@settingsThemeHeading": {
+    "description": "Heading of the Settings section where the user picks the app's colour theme (system, light or dark)."
+  },
+  "settingsThemeSystem": "Follow system",
+  "@settingsThemeSystem": {
+    "description": "Theme option: use the phone's light/dark setting."
+  },
+  "settingsThemeLight": "Light",
+  "@settingsThemeLight": {
+    "description": "Theme option: always use the light theme."
+  },
+  "settingsThemeDark": "Dark",
+  "@settingsThemeDark": {
+    "description": "Theme option: always use the dark theme."
+  },
   "settingsExportHeading": "Export readings",
   "@settingsExportHeading": {
     "description": "Heading of the Settings section where the user picks a date range and exports the readings as CSV or PDF."

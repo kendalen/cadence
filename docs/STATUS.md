@@ -6,10 +6,11 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-26 (dark theme built + all tests green, on branch
-`dark-theme`, not yet device-verified/merged). **Resume point: verify the dark
-theme on the Redmi and tune the hex, then merge; after that, review untapped
-1.x+ capabilities — see "NEXT UP" below.**
+**Last updated:** 2026-08-26 (dark theme + a Settings theme toggle built and
+**device-verified on the Redmi — works flawlessly**; **merged to `main` +
+pushed**). **Resume point: review untapped 1.x+ capabilities — see "NEXT UP"
+below.** (The dark hex are still the derived starting points — the maintainer was
+happy with them as-is; retune any time.)
 
 ---
 
@@ -819,8 +820,10 @@ Branch pushed to `origin`; **not yet merged to `main`** (maintainer to merge).
 
 **Done (2026-08-26): dark theme (a 1.x design slice).** Built per the approved
 plan below, on branch `dark-theme`; **278 tests green** (+3), analyze clean, no
-schema change → no migration. **Not yet device-verified or merged** — the hex are
-starting points to tune on the Redmi (toggle the phone's dark mode), then merge.
+schema change → no migration. **Device-verified on the Redmi** 2026-08-26 (dark
+mode renders the warm-dark palette correctly with real data) and **merged to
+`main` + pushed** together with the theme toggle. The hex are the derived
+starting points — the maintainer accepted them as-is; retune any time.
 What landed, matching the approved structure:
 - `buildCadenceTheme([Brightness brightness = Brightness.light])` builds the light
   theme or a warm-dark one; the arg is optional so the ~dozen `buildCadenceTheme()`
@@ -847,6 +850,44 @@ What landed, matching the approved structure:
   (dark surface, `colorScheme.brightness == dark`) and the extension is present +
   differs between both brightnesses. **No dark golden** (the hex will be tuned; a
   pixel golden would break every tweak) — the light empty-state golden stays.
+
+**Done (2026-08-26): Settings theme toggle (maintainer ask, on top of the dark
+theme).** A "Aspetto / Appearance" section at the top of the Settings screen with
+a three-way `RadioGroup<AppThemeMode>` — Follow system / Light / Dark. Defaults to
+**system** (follow the phone); Light or Dark overrides it. The choice is
+remembered across launches. **288 tests green** (+10 over the dark theme's 278),
+no schema change (reuses the v3 `AppSettings` KV table — this is exactly the
+"future toggles need no bump" it was built for).
+- **Domain (§3, pure Dart):** new `AppThemeMode {system, light, dark}` enum;
+  `SettingsRepository` gains `themeMode()` (defaults to `system` on
+  missing/unknown/unreadable) + `setThemeMode(mode)`. The UI maps `AppThemeMode`
+  → Flutter's `ThemeMode` (`app.dart` `_flutterThemeMode`), keeping Flutter types
+  out of the domain.
+- **Data:** `DriftSettingsRepository` stores the mode by `.name` under key
+  `themeMode`; an unknown stored value (e.g. a future-renamed enum) falls back to
+  `system` rather than throwing (same broad-catch, safe-default discipline as the
+  disclaimer key). No migration.
+- **Reactivity (§3, one state approach = flutter_bloc):** a small
+  `ThemeModeCubit` (`lib/ui/theme/theme_mode_cubit.dart`) is provided **above
+  `MaterialApp`** and feeds `MaterialApp.themeMode` via a `BlocBuilder`; the
+  Settings screen reads its state and calls `setMode` (emit → instant repaint,
+  then best-effort persist). One source of truth shared by the app and Settings.
+- **No launch flash:** `main()` is now `async` — it awaits the stored
+  `themeMode()` once before `runApp` and passes it as `CadenceApp.initialThemeMode`
+  (seeds the cubit), so the first frame is already in the chosen theme. One tiny
+  KV read; `WidgetsFlutterBinding.ensureInitialized()` added for the await.
+- **Strings:** 4 new ARB keys ×EN+IT — `settingsThemeHeading` ("Appearance" /
+  "Aspetto"), `settingsThemeSystem` ("Follow system" / "Come il sistema"),
+  `settingsThemeLight` ("Light" / "Chiaro"), `settingsThemeDark` ("Dark" /
+  "Scuro"). Italian is a first pass, flagged for the maintainer's wording review.
+- **Tests:** drift repo (default system, round-trip, overwrite, unknown→system,
+  read-failure→system), `ThemeModeCubit` (initial, emit+persist, same-mode no-op),
+  Settings screen (offers the three options; picking Dark persists). The existing
+  "About entry" settings test now scrolls the taller list to reach About.
+- **Device-verified** on the Redmi (release update, data intact) 2026-08-26: the
+  toggle switches Follow system / Light / Dark cleanly and the choice sticks
+  across launches ("works flawlessly"). Italian wording settled with the
+  maintainer: heading **"Tema"**, options **"Sistema" / "Chiaro" / "Scuro"**.
 
 **NEXT UP — the approved dark-theme plan (now built; kept for reference).**
 Brainstormed and approved 2026-08-26. Two maintainer decisions were made:

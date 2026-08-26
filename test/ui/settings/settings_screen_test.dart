@@ -5,28 +5,38 @@
 // the old overflow-menu export.
 
 import 'package:cadence/domain/sessions/session_repository.dart';
+import 'package:cadence/domain/settings/app_theme_mode.dart';
 import 'package:cadence/l10n/app_localizations.dart';
 import 'package:cadence/ui/settings/settings_screen.dart';
+import 'package:cadence/ui/theme/theme_mode_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/fake_session_repository.dart';
+import '../../support/fake_settings_repository.dart';
 
 void main() {
   late FakeSessionRepository repository;
+  late FakeSettingsRepository settings;
 
-  setUp(() => repository = FakeSessionRepository());
+  setUp(() {
+    repository = FakeSessionRepository();
+    settings = FakeSettingsRepository();
+  });
   tearDown(() => repository.dispose());
 
   Future<void> pumpSettings(WidgetTester tester) async {
     await tester.pumpWidget(
       RepositoryProvider<SessionRepository>.value(
         value: repository,
-        child: const MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: SettingsScreen(),
+        child: BlocProvider(
+          create: (_) => ThemeModeCubit(settings, AppThemeMode.system),
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: SettingsScreen(),
+          ),
         ),
       ),
     );
@@ -44,7 +54,27 @@ void main() {
     expect(find.text(l10n.settingsExportRangeAll), findsOneWidget);
     expect(find.text(l10n.exportCsv), findsOneWidget);
     expect(find.text(l10n.exportPdf), findsOneWidget);
+    // About sits at the bottom of the list; scroll it into view (the list grew
+    // once the Appearance section was added above it).
+    await tester.scrollUntilVisible(find.text(l10n.aboutMenu), 200);
     expect(find.text(l10n.aboutMenu), findsOneWidget);
+  });
+
+  testWidgets('offers the three theme options', (tester) async {
+    await pumpSettings(tester);
+
+    expect(find.text(l10n.settingsThemeSystem), findsOneWidget);
+    expect(find.text(l10n.settingsThemeLight), findsOneWidget);
+    expect(find.text(l10n.settingsThemeDark), findsOneWidget);
+  });
+
+  testWidgets('picking a theme persists the choice', (tester) async {
+    await pumpSettings(tester);
+
+    await tester.tap(find.text(l10n.settingsThemeDark));
+    await tester.pumpAndSettle();
+
+    expect(await settings.themeMode(), AppThemeMode.dark);
   });
 
   testWidgets('exporting an empty diary reports it instead of sharing', (

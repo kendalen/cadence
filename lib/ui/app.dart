@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../domain/sessions/id_generator.dart';
 import '../domain/sessions/session_repository.dart';
+import '../domain/settings/app_theme_mode.dart';
 import '../domain/settings/settings_repository.dart';
 import '../l10n/app_localizations.dart';
 import 'first_run_gate.dart';
 import 'theme/cadence_theme.dart';
+import 'theme/theme_mode_cubit.dart';
 
 /// The application widget.
 ///
@@ -19,6 +21,7 @@ class CadenceApp extends StatelessWidget {
     required this.sessionRepository,
     required this.idGenerator,
     required this.settingsRepository,
+    required this.initialThemeMode,
     super.key,
   });
 
@@ -28,8 +31,12 @@ class CadenceApp extends StatelessWidget {
   /// Source of identifiers for newly entered sessions and readings.
   final IdGenerator idGenerator;
 
-  /// The store of app preferences (the first-run acknowledgement, §1).
+  /// The store of app preferences (the first-run acknowledgement §1, the theme).
   final SettingsRepository settingsRepository;
+
+  /// The theme mode read from [settingsRepository] before startup, so the first
+  /// frame already renders in the user's chosen theme.
+  final AppThemeMode initialThemeMode;
 
   @override
   Widget build(BuildContext context) => MultiRepositoryProvider(
@@ -38,15 +45,29 @@ class CadenceApp extends StatelessWidget {
       RepositoryProvider<IdGenerator>.value(value: idGenerator),
       RepositoryProvider<SettingsRepository>.value(value: settingsRepository),
     ],
-    child: MaterialApp(
-      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-      // Follow the phone's light/dark setting (themeMode defaults to system when
-      // both are given). No in-app toggle — respecting the device is the point.
-      theme: buildCadenceTheme(Brightness.light),
-      darkTheme: buildCadenceTheme(Brightness.dark),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: const FirstRunGate(),
+    child: BlocProvider(
+      create: (_) => ThemeModeCubit(settingsRepository, initialThemeMode),
+      child: BlocBuilder<ThemeModeCubit, AppThemeMode>(
+        builder: (context, themeMode) => MaterialApp(
+          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+          // Light and dark are both defined; themeMode picks between them —
+          // system follows the phone, or the user's explicit choice overrides it.
+          theme: buildCadenceTheme(Brightness.light),
+          darkTheme: buildCadenceTheme(Brightness.dark),
+          themeMode: _flutterThemeMode(themeMode),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const FirstRunGate(),
+        ),
+      ),
     ),
   );
 }
+
+/// Maps the domain [AppThemeMode] to Flutter's [ThemeMode] (the domain stays
+/// free of Flutter types, CLAUDE.md §3).
+ThemeMode _flutterThemeMode(AppThemeMode mode) => switch (mode) {
+  AppThemeMode.system => ThemeMode.system,
+  AppThemeMode.light => ThemeMode.light,
+  AppThemeMode.dark => ThemeMode.dark,
+};

@@ -10,11 +10,13 @@ import '../../data/export/reading_export.dart';
 import '../../domain/sessions/session.dart';
 import '../../domain/sessions/session_repository.dart';
 import '../../domain/sessions/sessions_in_last_days.dart';
+import '../../domain/settings/app_theme_mode.dart';
 import '../../l10n/app_localizations.dart';
 import '../about/app_about.dart';
 import '../sessions/export/export_labels.dart';
 import '../sessions/export/share_export.dart';
 import '../system_insets.dart';
+import '../theme/theme_mode_cubit.dart';
 
 /// The app's Settings screen, reached from the gear icon in the readings list.
 ///
@@ -70,6 +72,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const EdgeInsets.symmetric(vertical: 8),
         ),
         children: [
+          _SectionHeading(l10n.settingsThemeHeading),
+          // The current choice comes from the ThemeModeCubit (provided above
+          // MaterialApp), so picking here updates the whole app at once.
+          RadioGroup<AppThemeMode>(
+            groupValue: context.watch<ThemeModeCubit>().state,
+            onChanged: (value) =>
+                context.read<ThemeModeCubit>().setMode(value!),
+            child: Column(
+              children: [
+                for (final mode in AppThemeMode.values)
+                  RadioListTile<AppThemeMode>(
+                    value: mode,
+                    title: Text(_themeModeLabel(l10n, mode)),
+                  ),
+              ],
+            ),
+          ),
+          const Divider(height: 32),
           _SectionHeading(l10n.settingsExportHeading),
           // A RadioGroup ancestor manages the selection; the tiles themselves
           // just declare their value (the groupValue/onChanged on RadioListTile
@@ -194,6 +214,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 }
+
+/// The localised label for a theme choice.
+String _themeModeLabel(AppLocalizations l10n, AppThemeMode mode) =>
+    switch (mode) {
+      AppThemeMode.system => l10n.settingsThemeSystem,
+      AppThemeMode.light => l10n.settingsThemeLight,
+      AppThemeMode.dark => l10n.settingsThemeDark,
+    };
 
 /// A padded section heading in the settings list.
 class _SectionHeading extends StatelessWidget {
