@@ -118,6 +118,20 @@ void main() {
     expect(find.text('Blood pressure'), findsOneWidget);
   });
 
+  testWidgets('a stream error shows a message, not an endless spinner', (
+    tester,
+  ) async {
+    await pump(tester);
+    repository.emitError(Exception('read failed'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(
+      find.text('Couldn\'t load your trends. Please try again.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('empty diary golden', (tester) async {
     // The default test window is landscape-shaped (800x600); force a portrait
     // window so the golden captures the primary (stacked) empty-state layout.

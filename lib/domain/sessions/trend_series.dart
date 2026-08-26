@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'date_window.dart';
 import 'first_reading_suggestion.dart';
 import 'session.dart';
 import 'session_average.dart';
@@ -121,22 +122,17 @@ TrendSeries buildTrendSeries(
 }) {
   final toLocalTime = toLocal ?? (utc) => utc.toLocal();
 
-  final today = _civilDate(toLocalTime(now));
   final days = range.days;
-  final windowStart = days == null
-      ? null
-      : DateTime.utc(today.year, today.month, today.day - (days - 1));
+  final window = days == null
+      ? DateWindow.upToToday(now, toLocalTime)
+      : DateWindow.lastDays(days, now, toLocalTime);
 
   final byTimeOfDay = sessions.where(
     (session) => _matchesFilter(session, filter, toLocalTime),
   );
 
   final inWindow = byTimeOfDay
-      .where(
-        (session) =>
-            windowStart == null ||
-            !_localDate(session, toLocalTime).isBefore(windowStart),
-      )
+      .where((session) => window.contains(session.occurredAt, toLocalTime))
       .toList();
 
   // The 7-day view shows every occasion as its own point rather than a daily
@@ -162,7 +158,7 @@ TrendSeries buildTrendSeries(
           inWindow,
           toLocalTime,
           bucketDays: bucketDays,
-          anchor: windowStart,
+          anchor: window.start,
         );
 
   return TrendSeries(
@@ -201,18 +197,10 @@ TrendPoint _occasionPoint(DateTime at, Session session) {
   );
 }
 
-/// The civil calendar date (no time, no DST) of [local].
-DateTime _civilDate(DateTime local) =>
-    DateTime.utc(local.year, local.month, local.day);
-
 /// [local] as a DST-free civil date-time — keeps the hour/minute so per-occasion
 /// points on the same day sit apart on the axis, without a timezone offset.
 DateTime _civilDateTime(DateTime local) =>
     DateTime.utc(local.year, local.month, local.day, local.hour, local.minute);
-
-/// The civil date an occasion falls on, under [toLocal].
-DateTime _localDate(Session session, DateTime Function(DateTime) toLocal) =>
-    _civilDate(toLocal(session.occurredAt));
 
 /// Groups [sessions] into consecutive [bucketDays]-wide buckets and averages
 /// each into a [TrendPoint]. Buckets are anchored at [anchor], or the earliest
@@ -228,12 +216,12 @@ List<TrendPoint> _pointsByBucket(
   final anchorDate =
       anchor ??
       sessions
-          .map((session) => _localDate(session, toLocal))
+          .map((session) => civilLocalDate(session.occurredAt, toLocal))
           .reduce((a, b) => a.isBefore(b) ? a : b);
 
   final groups = <DateTime, List<Session>>{};
   for (final session in sessions) {
-    final date = _localDate(session, toLocal);
+    final date = civilLocalDate(session.occurredAt, toLocal);
     final index = date.difference(anchorDate).inDays ~/ bucketDays;
     final bucketDate = DateTime.utc(
       anchorDate.year,
@@ -290,9 +278,9 @@ int _bucketDaysForSpan(
 ) {
   if (sessions.isEmpty) return 1;
   final oldest = sessions
-      .map((session) => _localDate(session, toLocal))
+      .map((session) => civilLocalDate(session.occurredAt, toLocal))
       .reduce((a, b) => a.isBefore(b) ? a : b);
-  final spanDays = _civilDate(toLocal(now)).difference(oldest).inDays;
+  final spanDays = civilLocalDate(now, toLocal).difference(oldest).inDays;
   if (spanDays <= 30) return 1;
   if (spanDays <= 90) return 7;
   return 30;

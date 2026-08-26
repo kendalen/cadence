@@ -175,6 +175,19 @@ void main() {
       expect(coverage.daysLogged, 7);
       expect(coverage.occasionsLogged, 7);
     });
+
+    test('excludes a future-dated occasion (CQ-04 upper bound)', () {
+      // A tomorrow-dated occasion must not inflate the count or push the window
+      // past today's 7 days.
+      final now = DateTime.utc(2026, 8, 25, 12);
+      final coverage = weeklyCoverage(
+        [occasion(takenAt: DateTime.utc(2026, 8, 26, 9))],
+        now: now,
+        toLocal: identity,
+      );
+      expect(coverage.occasionsLogged, 0);
+      expect(coverage.daysLogged, 0);
+    });
   });
 
   group('weeklyCoverage days', () {

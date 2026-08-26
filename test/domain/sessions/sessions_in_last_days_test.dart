@@ -87,5 +87,16 @@ void main() {
         hasLength(1),
       );
     });
+
+    test('excludes a future-dated occasion (CQ-04 upper bound)', () {
+      // A tomorrow-dated session (possible via the tolerant import) must not be
+      // handed to a clinician under "last 30 days" — the window ends today.
+      final future = occasion(takenAt: nowUtc.add(const Duration(days: 1)));
+      expect(lastDays([future], 30), isEmpty);
+    });
+
+    test('rejects a non-positive window length', () {
+      expect(() => lastDays(const [], 0), throwsArgumentError);
+    });
   });
 }

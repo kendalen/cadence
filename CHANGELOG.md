@@ -29,6 +29,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Undo after deleting an occasion or removing a reading now reports if it
+  fails.** The restore write was fire-and-forget, so a failed undo silently left
+  the data gone while looking like it had come back. A failed undo now says so.
+- **"Last N days" everywhere now excludes future-dated readings.** Coverage,
+  ranged export, and trends each filtered a lower bound but no upper one, so a
+  reading dated in the future (which a tolerant backup import can introduce)
+  could stretch the window past today. The three now share one date-window with
+  both bounds.
+- **Trends: a data-load error shows a message instead of a spinner that never
+  stops.**
 - **Trends: tapping a pulse point after a gap no longer selects the wrong point
   or crashes.** The pinned tooltip resolved the tapped point by its position in
   the full day list, but the pulse line omits days with no recorded pulse — so a

@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/core/result.dart';
+import '../../../domain/core/unit.dart';
 import '../../../domain/sessions/ids.dart';
+import '../../../domain/sessions/persistence_failure.dart';
 import '../../../domain/sessions/reading.dart';
 import '../../../domain/sessions/session.dart';
 import '../../../domain/sessions/session_repository.dart';
@@ -149,15 +151,31 @@ class _SessionDetailView extends StatelessWidget {
               content: Text(l10n.sessionDeleted),
               action: SnackBarAction(
                 label: l10n.undo,
-                // ponytail: fire-and-forget restore. A re-add of a just-valid
-                // session on a freed id all but never fails; surface it only if
-                // that assumption stops holding.
-                onPressed: () => repository.add(session),
+                onPressed: () =>
+                    _restore(messenger, l10n, () => repository.add(session)),
               ),
             ),
           );
       case Err():
         messenger.showSnackBar(SnackBar(content: Text(l10n.errorDeleteFailed)));
+    }
+  }
+
+  /// Runs an undo [write] and, if it fails, tells the user the data was not
+  /// restored.
+  ///
+  /// An undo that silently does nothing is worse than no undo at all: the user
+  /// believes their data is back when it is not (CLAUDE.md §6 — a
+  /// data-loss-adjacent action stays reversible, and a failed reverse must be
+  /// visible, not swallowed). The messenger is the app-root one, valid after the
+  /// screen has popped.
+  Future<void> _restore(
+    ScaffoldMessengerState messenger,
+    AppLocalizations l10n,
+    Future<Result<Unit, PersistenceFailure>> Function() write,
+  ) async {
+    if (await write() is Err) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errorRestoreFailed)));
     }
   }
 
@@ -292,7 +310,8 @@ class _SessionDetailView extends StatelessWidget {
               content: Text(l10n.readingRemoved),
               action: SnackBarAction(
                 label: l10n.undo,
-                onPressed: () => repository.update(before),
+                onPressed: () =>
+                    _restore(messenger, l10n, () => repository.update(before)),
               ),
             ),
           );

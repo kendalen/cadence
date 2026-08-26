@@ -183,6 +183,28 @@ void main() {
       expect(repository.added, contains(session));
     });
 
+    testWidgets('a failed undo after delete reports nothing was restored', (
+      tester,
+    ) async {
+      repository.added.add(session);
+      await pumpPushed(tester, session);
+
+      await tester.tap(find.text('Delete this occasion'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+
+      // The undo re-adds the occasion; make that write fail.
+      repository.refuseWith = WriteFailed(Exception('disk full'));
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      // Not silently pretended-restored: the occasion is still gone and the
+      // user is told so, rather than the failure being swallowed.
+      expect(repository.added, isEmpty);
+      expect(find.textContaining("Couldn't undo"), findsOneWidget);
+    });
+
     testWidgets('a failed delete reports it and keeps the occasion', (
       tester,
     ) async {
@@ -304,6 +326,27 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.added.single.readings, hasLength(2));
+    });
+
+    testWidgets('a failed undo after removing a reading reports it', (
+      tester,
+    ) async {
+      final session = pair();
+      repository.added.add(session);
+      await pump(tester, session);
+
+      await tester.tap(find.byIcon(Icons.close).first);
+      await tester.pumpAndSettle();
+      expect(repository.added.single.readings, hasLength(1));
+
+      // The undo writes the previous readings back; make that write fail.
+      repository.refuseUpdateWith = WriteFailed(Exception('disk full'));
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      // The reading stays removed and the user is told the undo failed.
+      expect(repository.added.single.readings, hasLength(1));
+      expect(find.textContaining("Couldn't undo"), findsOneWidget);
     });
   });
 

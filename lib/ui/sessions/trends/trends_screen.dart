@@ -54,6 +54,11 @@ class _TrendsScreenState extends State<TrendsScreen>
       body: StreamBuilder<List<Session>>(
         stream: repository.watchAll(),
         builder: (context, snapshot) {
+          // A stream error must not read as "still loading" — that leaves a
+          // spinner that never resolves. Show a calm message instead (CQ-05).
+          if (snapshot.hasError) {
+            return _CenteredMessage(l10n.trendsLoadError);
+          }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -98,7 +103,7 @@ class _TrendsScreenState extends State<TrendsScreen>
             _horizontalFilter(l10n),
             const SizedBox(height: 20),
             if (series.daily.isEmpty)
-              _EmptyTrends(l10n.trendsEmpty)
+              _CenteredMessage(l10n.trendsEmpty)
             else
               _tabbedCharts(l10n, series, fill: false),
           ],
@@ -138,7 +143,7 @@ class _TrendsScreenState extends State<TrendsScreen>
         const SizedBox(width: 20),
         Expanded(
           child: series.daily.isEmpty
-              ? _EmptyTrends(l10n.trendsEmpty)
+              ? _CenteredMessage(l10n.trendsEmpty)
               : _tabbedCharts(l10n, series, fill: true),
         ),
       ],
@@ -272,7 +277,7 @@ class _TrendsScreenState extends State<TrendsScreen>
   // no recorded pulse (a user who never logs pulse still has a blood-pressure
   // trend). A single line needs no legend — the tab already names it.
   Widget _pulseTab(AppLocalizations l10n, TrendSeries series) {
-    if (!_hasPulse(series)) return _EmptyTrends(l10n.trendsNoPulse);
+    if (!_hasPulse(series)) return _CenteredMessage(l10n.trendsNoPulse);
     return Padding(
       // Sides as well as top — see _bpTab: keep the extreme point/label off the
       // TabBarView's clipping edge.
@@ -310,10 +315,11 @@ class _Legend extends StatelessWidget {
   );
 }
 
-/// Shown when the chosen range and filter hold no occasions — a calm message,
-/// not an empty axis (matching the readings-list empty state).
-class _EmptyTrends extends StatelessWidget {
-  const _EmptyTrends(this.message);
+/// A calm centred message in place of a chart — for an empty range, a range
+/// with no recorded pulse, or a load error — never an empty axis or a stuck
+/// spinner (matching the readings-list empty state).
+class _CenteredMessage extends StatelessWidget {
+  const _CenteredMessage(this.message);
 
   final String message;
 

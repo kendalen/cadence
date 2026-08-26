@@ -238,6 +238,10 @@
   "@readingRemoved": {
     "description": "Snackbar shown after one reading is removed from an occasion, alongside an undo action."
   },
+  "errorRestoreFailed": "Couldn''t undo — the data wasn''t restored. Please try again.",
+  "@errorRestoreFailed": {
+    "description": "Snackbar shown when tapping Undo (after deleting an occasion or removing a reading) failed to restore the data."
+  },
   "coverageLast7Days": "Last 7 days",
   "@coverageLast7Days": {
     "description": "Heading of the summary card showing how well the last 7 days (a rolling window, not the calendar week) keep to the home-monitoring protocol (CLAUDE.md §4)."
@@ -431,6 +435,10 @@
   "trendsNoPulse": "No pulse recorded in this range.",
   "@trendsNoPulse": {
     "description": "Shown on the pulse tab of the trends screen when the range holds readings but none recorded a pulse."
+  },
+  "trendsLoadError": "Couldn''t load your trends. Please try again.",
+  "@trendsLoadError": {
+    "description": "Shown on the trends screen when reading the stored sessions failed, instead of a spinner that never resolves."
   },
   "trendsTooltipOccasions": "{count, plural, =1{averages 1 occasion} other{averages {count} occasions}}",
   "@trendsTooltipOccasions": {

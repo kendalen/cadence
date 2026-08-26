@@ -99,6 +99,9 @@ class FakeSessionRepository implements SessionRepository {
   /// Pushes [sessions] to everyone watching, as a store change would.
   void emit(List<Session> sessions) => _sessions.add(sessions);
 
+  /// Pushes an error to everyone watching, as a store read failure would.
+  void emitError(Object error) => _sessions.addError(error);
+
   /// Closes the stream; call from tearDown.
   Future<void> dispose() => _sessions.close();
 }
