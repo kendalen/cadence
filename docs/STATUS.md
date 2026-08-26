@@ -6,8 +6,8 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-26 (audit correctness tranche merged to main; three
-maintainer-decided audit findings CQ-14/02/03 done; discard-day-1 shelved)
+**Last updated:** 2026-08-26 (audit findings CQ-14/02/03 merged to main;
+discard-day-1 shelved; undo-toast persistence explained — accessibility, not a bug)
 
 ---
 
@@ -879,6 +879,22 @@ made this session:
   on-device 2026-08-25 and deemed it fine for now. Fix when picked up: ignore a
   touch whose movement is under a small threshold in `_onTouch`
   (`trend_line_chart.dart`) so a near-stationary tap still counts as a tap.
+
+## Device behaviour notes (verified, not bugs)
+
+- **Undo/success toasts stay until acted on, on the maintainer's phone.** The
+  snackbars set no `duration`, so they use Flutter's default (~4 s auto-dismiss).
+  On the Redmi they instead persist until the user taps Undo or swipes them away,
+  because an **accessibility service is active** (Tasker's,
+  `net.dinglisch.android.taskerm.MyAccessibilityService`; `accessibility_enabled
+  = 1`) and Flutter deliberately stops the auto-dismiss timer while any
+  accessibility service runs, so assistive-tech users aren't rushed. This is
+  Flutter's intended accommodation, not a Cadence bug; on a phone with no
+  accessibility service the same toasts auto-hide after ~4 s. **Decision
+  (2026-08-26): leave as-is** — a persistent undo is friendlier for the older
+  audience (the undo window is never missed). Note it affects *every* transient
+  toast on that device, not only undo. (Checked: `accessibility_*_ui_timeout_ms`
+  are both null, so it is the service flag, not an accessibility timeout.)
 
 ## Known issues (resolved)
 
