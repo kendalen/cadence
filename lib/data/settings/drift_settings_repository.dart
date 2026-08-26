@@ -17,20 +17,39 @@ class DriftSettingsRepository implements SettingsRepository {
 
   @override
   Future<bool> isDisclaimerAcknowledged() async {
-    final row =
-        await (_database.select(_database.appSettings)
-              ..where((setting) => setting.settingKey.equals(_disclaimerKey)))
-            .getSingleOrNull();
-    return row?.settingValue == 'true';
+    // A read failure must default to the safe answer (SettingsRepository
+    // contract): "not acknowledged", so the mandatory §1 notice shows rather
+    // than being silently skipped on a storage error. The catch is deliberately
+    // broad — a closed database throws a StateError (an Error, not an
+    // Exception) — because for this regulated path showing the notice again is
+    // always safe, and a genuine bug here surfaces as the notice reappearing.
+    try {
+      final row =
+          await (_database.select(_database.appSettings)
+                ..where((setting) => setting.settingKey.equals(_disclaimerKey)))
+              .getSingleOrNull();
+      return row?.settingValue == 'true';
+    } on Object {
+      return false;
+    }
   }
 
   @override
-  Future<void> acknowledgeDisclaimer() => _database
-      .into(_database.appSettings)
-      .insertOnConflictUpdate(
-        AppSettingsCompanion.insert(
-          settingKey: _disclaimerKey,
-          settingValue: 'true',
-        ),
-      );
+  Future<void> acknowledgeDisclaimer() async {
+    // A write failure is not fatal (contract): the worst case is the one-time
+    // notice showing once more next launch. Swallow it rather than surface a
+    // storage error to the user. Broad for the same reason as the read above.
+    try {
+      await _database
+          .into(_database.appSettings)
+          .insertOnConflictUpdate(
+            AppSettingsCompanion.insert(
+              settingKey: _disclaimerKey,
+              settingValue: 'true',
+            ),
+          );
+    } on Object {
+      // Intentionally ignored — see contract note above.
+    }
+  }
 }

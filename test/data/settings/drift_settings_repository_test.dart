@@ -30,4 +30,20 @@ void main() {
 
     expect(await repository.isDisclaimerAcknowledged(), isTrue);
   });
+
+  // A storage failure must default to the safe answer (§1): "not acknowledged",
+  // so the mandatory first-run notice is shown rather than silently skipped by
+  // an unhandled exception. A closed database is a stand-in for any read/write
+  // failure at the storage boundary.
+  test('a read failure defaults to not-acknowledged, never throws', () async {
+    await database.close();
+
+    expect(await repository.isDisclaimerAcknowledged(), isFalse);
+  });
+
+  test('a write failure is swallowed, never throws', () async {
+    await database.close();
+
+    await expectLater(repository.acknowledgeDisclaimer(), completes);
+  });
 }
