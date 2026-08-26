@@ -30,6 +30,30 @@ class TrendChartSeries {
   final int? Function(TrendPoint) valueOf;
 }
 
+/// The index of [selectedX] within the spots [series] actually plots over
+/// [points] — among its non-null values only — or `null` when the series has no
+/// value at that x.
+///
+/// Selection is resolved by x, never by a position in the full [points] list,
+/// so a series with gaps (pulse is optional) is never indexed past the end of
+/// its shorter spot list (CQ-13). Shared by the drawn line and its tooltip so
+/// both agree on which spot is pinned.
+@visibleForTesting
+int? selectedSpotIndex(
+  TrendChartSeries series,
+  List<TrendPoint> points,
+  double? selectedX,
+) {
+  if (selectedX == null) return null;
+  var index = 0;
+  for (final point in points) {
+    if (series.valueOf(point) == null) continue;
+    if (_TrendLineChartState._x(point) == selectedX) return index;
+    index++;
+  }
+  return null;
+}
+
 /// A time-series line chart: a faint per-day scatter behind a bold averaged
 /// line, for one or more [series] sharing an axis.
 ///
@@ -81,9 +105,6 @@ class _TrendLineChartState extends State<TrendLineChart> {
 
     // A pinned selection from an earlier range/filter may not exist now.
     final selectedX = byX.containsKey(_selectedX) ? _selectedX : null;
-    final selectedIndex = selectedX == null
-        ? null
-        : data.averaged.indexWhere((point) => _x(point) == selectedX);
 
     // Averaged bars occupy indices 0..n-1; the faint daily scatter, when it
     // differs (only once buckets widen past a day), comes after. When buckets
@@ -91,18 +112,13 @@ class _TrendLineChartState extends State<TrendLineChart> {
     // twice.
     final averagedBars = [
       for (final s in series)
-        _lineBar(
-          s,
-          data.averaged,
-          isAveraged: true,
-          selectedIndex: selectedIndex,
-        ),
+        _lineBar(s, data.averaged, isAveraged: true, selectedX: selectedX),
     ];
     final dailyBars = oneDayBuckets
         ? const <LineChartBarData>[]
         : [
             for (final s in series)
-              _lineBar(s, data.daily, isAveraged: false, selectedIndex: null),
+              _lineBar(s, data.daily, isAveraged: false, selectedX: null),
           ];
 
     return LineChart(
@@ -158,12 +174,14 @@ class _TrendLineChartState extends State<TrendLineChart> {
             ? const []
             : [
                 ShowingTooltipIndicators([
-                  for (var i = 0; i < averagedBars.length; i++)
-                    LineBarSpot(
-                      averagedBars[i],
-                      i,
-                      averagedBars[i].spots[selectedIndex!],
-                    ),
+                  // Resolve the selection to each series' OWN spots by x: a
+                  // series with a gap at the selected x (pulse is optional) has
+                  // no spot there and is simply skipped, rather than being
+                  // indexed with a position from the full point list (CQ-13).
+                  for (var i = 0; i < series.length; i++)
+                    if (selectedSpotIndex(series[i], data.averaged, selectedX)
+                        case final j?)
+                      LineBarSpot(averagedBars[i], i, averagedBars[i].spots[j]),
                 ]),
               ],
         lineTouchData: LineTouchData(
@@ -213,19 +231,22 @@ class _TrendLineChartState extends State<TrendLineChart> {
 
   /// One line: the averaged line is bold with dots; the daily scatter is faint
   /// dots only (zero-width line). Points where the series has no value are
-  /// dropped so a gap never reads as a zero. [selectedIndex], when set, keeps
-  /// that point's tooltip pinned.
+  /// dropped so a gap never reads as a zero. [selectedX], when it falls on one
+  /// of this line's own spots, keeps that point's tooltip pinned — matched by x
+  /// rather than a shared index so a gappy series (pulse) can't be indexed out
+  /// of range (CQ-13).
   LineChartBarData _lineBar(
     TrendChartSeries s,
     List<TrendPoint> points, {
     required bool isAveraged,
-    required int? selectedIndex,
+    required double? selectedX,
   }) {
     final spots = <FlSpot>[
       for (final point in points)
         if (s.valueOf(point) case final value?)
           FlSpot(_x(point), value.toDouble()),
     ];
+    final selectedIndex = selectedSpotIndex(s, points, selectedX);
     final faint = s.color.withValues(alpha: isAveraged ? 1 : 0.35);
     return LineChartBarData(
       spots: spots,
