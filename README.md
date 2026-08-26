@@ -1,4 +1,8 @@
-# Cadence
+<p align="center">
+  <img src="assets/icon/icon.png" width="120" alt="Cadence app icon">
+</p>
+
+<h1 align="center">Cadence</h1>
 
 Offline-first blood pressure diary for Android. Session-based readings following the 7-2-2 home monitoring protocol. Flutter, no accounts, no ads, your data stays yours.
 
@@ -12,8 +16,9 @@ Cadence is a diary, not a medical device. It records what your monitor tells you
 
 ## Status
 
-In active development toward a 1.0 release; not yet on the Play Store. The core
-diary works end to end:
+The v1.0 feature set is complete and runs end to end on a real device; the
+remaining work is the Play-Store release track, so it is **not yet on the Play
+Store**. What the app does today:
 
 - **Log** a measurement occasion of one or more readings, with optional
   arm/posture/before-or-after-medication context and a note. Big −/+ steppers
@@ -23,15 +28,20 @@ diary works end to end:
   remove one, add one, or delete the occasion.
 - **Coverage.** A pinned "Last 7 days" card reports 7-2-2 coverage — occasions
   logged against the fourteen expected and days against the seven — plus the
-  period average. It states completeness; it never judges the numbers or shows a
-  threshold.
+  period average. It flags an average that rests on too few days as partial, and
+  can show — behind an opt-in info button — how the average compares to the ESH
+  135/85 home reference. It states completeness and cites its source; it never
+  judges the numbers or colours a reading.
+- **Trends.** A read-only chart screen: systolic/diastolic over time and pulse on
+  its own tab, with 7/30/90/All ranges and a morning/evening filter. Neutral
+  lines only — no threshold, no verdict.
 - **Export / backup.** Versioned JSON backup and restore (merge-by-id), plus
-  CSV and PDF export to hand a clinician, all through the Android share sheet.
-- **First-run disclaimer** and an About page (a diary, not a medical device),
-  a warm Material 3 theme (Hanken Grotesk, light-only for now), and **English +
-  Italian**. Release signing is set up.
-- **In progress:** a trends chart — the domain aggregation has landed; the chart
-  screen is next.
+  date-bounded CSV and PDF export to hand a clinician, all through the Android
+  share sheet.
+- **Settings, disclaimer, theme.** A Settings screen (export + About + theme
+  choice), a first-run "diary, not a medical device" disclaimer, a warm Material 3
+  theme (Hanken Grotesk) in **light and dark** that follows the phone or can be
+  set manually, and **English + Italian**. Release signing is set up.
 
 Built on a three-layer architecture (`lib/domain`, `lib/data`, `lib/ui`) with
 strict static analysis, enforced import boundaries, ARB localisation, and a
