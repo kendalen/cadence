@@ -91,4 +91,36 @@ void main() {
     expect(find.text('0 of 14 occasions'), findsOneWidget);
     expect(find.text('Average'), findsNothing);
   });
+
+  testWidgets('tags the average as partial below four logged days', (
+    tester,
+  ) async {
+    // Three distinct days back the average — under the four-day cutoff (§4).
+    await pump(
+      tester,
+      const MonitoringCoverage(
+        occasionsLogged: 5,
+        daysLogged: 3,
+        periodAverage: SessionAverage(systolic: 128, diastolic: 82),
+      ),
+    );
+
+    expect(find.text('128/82'), findsOneWidget);
+    expect(find.text('based on partial data'), findsOneWidget);
+  });
+
+  testWidgets('shows no partial tag at four or more logged days', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const MonitoringCoverage(
+        occasionsLogged: 5,
+        daysLogged: 4,
+        periodAverage: SessionAverage(systolic: 128, diastolic: 82),
+      ),
+    );
+
+    expect(find.text('based on partial data'), findsNothing);
+  });
 }

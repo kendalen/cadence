@@ -233,4 +233,29 @@ void main() {
       expect(cover(history, toLocal: plusFive).daysLogged, 2);
     });
   });
+
+  group('weeklyCoverage hasSufficientDays', () {
+    test('is false below the four-day cutoff, however many occasions', () {
+      // Three distinct days, but doubled up — still under-sampled: sufficiency
+      // is about spread, not volume (§4).
+      final history = [daysAgo(0), daysAgo(0), daysAgo(1), daysAgo(2)];
+      final coverage = cover(history);
+
+      expect(coverage.daysLogged, 3);
+      expect(coverage.occasionsLogged, 4);
+      expect(coverage.hasSufficientDays, isFalse);
+    });
+
+    test('is true at four distinct days', () {
+      final history = [daysAgo(0), daysAgo(1), daysAgo(2), daysAgo(3)];
+      final coverage = cover(history);
+
+      expect(coverage.daysLogged, 4);
+      expect(coverage.hasSufficientDays, isTrue);
+    });
+
+    test('is false with no history', () {
+      expect(cover(const []).hasSufficientDays, isFalse);
+    });
+  });
 }

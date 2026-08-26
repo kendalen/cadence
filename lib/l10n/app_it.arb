@@ -63,6 +63,7 @@
   "coverageLast7Days": "Ultimi 7 giorni",
   "coverageOccasions": "{logged} di {total} occasioni",
   "coverageDays": "{logged} di {total} giorni",
+  "coveragePartialData": "dati parziali",
   "exportBackup": "Esporta backup",
   "exportBackupEmpty": "Ancora nessuna misurazione da salvare.",
   "exportBackupFailed": "Impossibile esportare il backup.",

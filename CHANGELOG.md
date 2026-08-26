@@ -8,6 +8,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- The **"Last 7 days" average now flags itself as partial** when it rests on
+  fewer than four distinct logged days — a small "based on partial data" note, so
+  an average from little data is not read as if it were a full week's. It states
+  completeness only, never a judgement of the numbers.
 - A **Settings screen**, reached from a gear icon in the readings list. It is the
   new home of the readings export and the About dialog.
 - **Date-bounded CSV / PDF export.** From Settings you can now export only the

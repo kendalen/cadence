@@ -11,6 +11,16 @@ const int expectedWeeklyOccasions = 14;
 /// How many distinct days the 7-2-2 protocol spans — the "7" in 7-2-2.
 const int expectedMonitoringDays = 7;
 
+/// The fewest distinct logged days for the period average to be read without a
+/// "partial data" caveat: fewer than four of the seven days (less than half the
+/// period) is too little to lean on (CLAUDE.md §4 — "an average from insufficient
+/// data must be labelled as such").
+///
+/// This is a **completeness** cutoff, not a clinical threshold on the numbers
+/// (§1): it says how much data backs the mean, never whether the mean is good or
+/// bad. The value is the maintainer's call, not a guideline figure.
+const int minReliableMonitoringDays = 4;
+
 /// How well the last seven days keep to the 7-2-2 protocol (CLAUDE.md §4).
 ///
 /// Coverage is a first-class output: it reports occasions *logged* against
@@ -54,6 +64,14 @@ final class MonitoringCoverage extends Equatable {
   /// meaning is always read alongside [occasionsLogged]: an average is never
   /// shown without the count of occasions behind it.
   final SessionAverage? periodAverage;
+
+  /// Whether enough distinct days back the [periodAverage] to read it without a
+  /// "partial data" caveat — at least [minReliableMonitoringDays] of the seven.
+  ///
+  /// A completeness signal for the UI (§4), never a verdict on the numbers (§1).
+  /// It reflects how *spread out* the data is, not how much: four occasions on
+  /// one day is still under-sampled, four single-occasion days is not.
+  bool get hasSufficientDays => daysLogged >= minReliableMonitoringDays;
 
   @override
   List<Object?> get props => [

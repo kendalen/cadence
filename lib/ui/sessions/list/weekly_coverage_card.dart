@@ -62,6 +62,10 @@ class WeeklyCoverageCard extends StatelessWidget {
         if (average != null) ...[
           const SizedBox(height: 12),
           _average(theme, l10n, average, expand: true),
+          if (!coverage.hasSufficientDays) ...[
+            const SizedBox(height: 2),
+            _partialTag(theme, l10n),
+          ],
         ],
       ],
     );
@@ -81,9 +85,23 @@ class WeeklyCoverageCard extends StatelessWidget {
         _dot(theme),
         _days(theme, l10n),
         if (average != null) _average(theme, l10n, average, expand: false),
+        if (average != null && !coverage.hasSufficientDays)
+          _partialTag(theme, l10n),
       ],
     );
   }
+
+  /// A small, muted, italic note that the average rests on fewer than
+  /// [minReliableMonitoringDays] logged days — a completeness caveat, never a
+  /// verdict on the numbers (CLAUDE.md §1, §4). Kept tiny so it does not crowd
+  /// the short landscape card.
+  Widget _partialTag(ThemeData theme, AppLocalizations l10n) => Text(
+    l10n.coveragePartialData,
+    style: theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+      fontStyle: FontStyle.italic,
+    ),
+  );
 
   Widget _title(ThemeData theme, AppLocalizations l10n) =>
       Text(l10n.coverageLast7Days, style: theme.textTheme.titleMedium);
