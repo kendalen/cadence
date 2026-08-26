@@ -6,9 +6,10 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-26 (Italian accepted → S10 fully done; dark-theme slice
-brainstormed + approved, ready to build next session; undo-toast persistence
-explained). **Resume point: implement the dark theme — see "NEXT UP" below.**
+**Last updated:** 2026-08-26 (dark theme built + all tests green, on branch
+`dark-theme`, not yet device-verified/merged). **Resume point: verify the dark
+theme on the Redmi and tune the hex, then merge; after that, review untapped
+1.x+ capabilities — see "NEXT UP" below.**
 
 ---
 
@@ -816,9 +817,39 @@ Branch pushed to `origin`; **not yet merged to `main`** (maintainer to merge).
   diary reports "nothing to export" instead of sharing). The menu-tap→native
   share stays untested, same boundary as the JSON backup and the old export.
 
-**NEXT UP — approved, not yet started: dark theme (a 1.x design slice).**
-Brainstormed and approved 2026-08-26; **resume in a fresh session** and implement
-directly (bounded, well under the §8 budget). Two maintainer decisions are made:
+**Done (2026-08-26): dark theme (a 1.x design slice).** Built per the approved
+plan below, on branch `dark-theme`; **278 tests green** (+3), analyze clean, no
+schema change → no migration. **Not yet device-verified or merged** — the hex are
+starting points to tune on the Redmi (toggle the phone's dark mode), then merge.
+What landed, matching the approved structure:
+- `buildCadenceTheme([Brightness brightness = Brightness.light])` builds the light
+  theme or a warm-dark one; the arg is optional so the ~dozen `buildCadenceTheme()`
+  pump helpers didn't churn. `app.dart` sets `theme:` + `darkTheme:` (both
+  brightnesses), so `MaterialApp.themeMode` follows the phone (system default). No
+  toggle, no Settings UI, no persistence.
+- New `CadenceExtraColors` **`ThemeExtension`** (`lib/ui/theme/cadence_extra_colors.dart`)
+  carries the four non-Material colours — chart `systolic`/`diastolic`/`pulse` and
+  the coverage-card `sand` — with `light`/`dark` const instances, attached to both
+  themes. The four direct `CadenceColors.*` reads in the widgets
+  (`trends_screen.dart` ×3, `weekly_coverage_card.dart` ×1) now read from
+  `Theme.of(context).extension<CadenceExtraColors>()!`, removing the last bit of
+  colour-coupling. (Actual paths were `lib/ui/sessions/trends/` and
+  `lib/ui/sessions/list/`, not the stale paths the old plan noted.)
+- `cardTheme.color` and the scaffold background are brightness-aware (dark = lifted
+  charcoal). Dark `ColorScheme` seeded dark from the brightened teal, identity
+  roles pinned to new `dark…` tokens in a `// Dark` block in `cadence_colors.dart`
+  (surface `#17130F`, card `#221D18`, sand `#2A241E`, border `#38302A`, ink
+  `#F2EAE1`/`#C4B8AC`/`#8B8074`, teal `#5CB3A3`, tealTint `#24463F`, clay `#E08769`,
+  clayTint `#4A2C22`, error `#F2B8B5`, chart systolic `#33B79C`/diastolic
+  `#E0B24A`/pulse `#8CA6B8`) — **all starting points, retune on device.**
+- §1 held: no threshold lines, no good/bad colour in dark either.
+- Test: `test/ui/theme/cadence_theme_test.dart` — dark theme is actually dark
+  (dark surface, `colorScheme.brightness == dark`) and the extension is present +
+  differs between both brightnesses. **No dark golden** (the hex will be tuned; a
+  pixel golden would break every tweak) — the light empty-state golden stays.
+
+**NEXT UP — the approved dark-theme plan (now built; kept for reference).**
+Brainstormed and approved 2026-08-26. Two maintainer decisions were made:
 - **Switching: follow the phone.** `MaterialApp` gets `theme` + `darkTheme`;
   `themeMode` defaults to system when both are set. **No toggle, no Settings UI,
   no persistence** — the whole point is to respect the device's light/dark

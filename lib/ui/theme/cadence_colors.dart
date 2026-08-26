@@ -71,4 +71,63 @@ abstract final class CadenceColors {
   /// slate, clear of the warm teal/ochre/clay accents (maintainer's call — the
   /// hex is proposed, retune to taste).
   static const Color pulse = Color(0xFF556B7A);
+
+  // ---------------------------------------------------------------------------
+  // Dark
+  //
+  // The warm-dark counterpart, used when the phone is set to dark mode (the app
+  // follows the device — no in-app toggle). It keeps the same warmth as the
+  // light palette rather than going cold or pure-black: surfaces are lifted
+  // charcoals with a brown cast, accents are brightened so they read on a dark
+  // ground. These hexes are deliberate STARTING POINTS for the maintainer to
+  // retune on the device (as the light palette and the pulse colour were).
+  //
+  // Colour still never grades a reading and no threshold is drawn (§1, §4); the
+  // two chart series stay colour-blind-safe against each other after brightening.
+  // ---------------------------------------------------------------------------
+
+  /// Dark page background — a deep warm charcoal, not pure black.
+  static const Color darkPaper = Color(0xFF17130F);
+
+  /// Dark card and sheet surface — lifted a step above [darkPaper].
+  static const Color darkSurface = Color(0xFF221D18);
+
+  /// Dark "sand": the quiet secondary fill (the coverage card), lifted again.
+  static const Color darkSand = Color(0xFF2A241E);
+
+  /// Hairline border and divider on dark.
+  static const Color darkBorder = Color(0xFF38302A);
+
+  /// Primary text on dark — warm off-white, not pure white.
+  static const Color darkInk = Color(0xFFF2EAE1);
+
+  /// Secondary text on dark.
+  static const Color darkInkSecondary = Color(0xFFC4B8AC);
+
+  /// Tertiary text on dark — hints and disabled labels.
+  static const Color darkInkTertiary = Color(0xFF8B8074);
+
+  /// Teal accent brightened to read on a dark ground.
+  static const Color darkTeal = Color(0xFF5CB3A3);
+
+  /// Deep-ish teal fill behind teal-accented content on dark.
+  static const Color darkTealTint = Color(0xFF24463F);
+
+  /// Clay action colour brightened for dark.
+  static const Color darkClay = Color(0xFFE08769);
+
+  /// Clay fill behind clay-accented content on dark.
+  static const Color darkClayTint = Color(0xFF4A2C22);
+
+  /// Error red on dark — a light rose, the Material dark convention.
+  static const Color darkError = Color(0xFFF2B8B5);
+
+  /// Systolic chart series on dark (brightened; still CVD-safe vs [darkDiastolic]).
+  static const Color darkSystolic = Color(0xFF33B79C);
+
+  /// Diastolic chart series on dark (brightened; still CVD-safe vs [darkSystolic]).
+  static const Color darkDiastolic = Color(0xFFE0B24A);
+
+  /// Pulse chart series on dark.
+  static const Color darkPulse = Color(0xFF8CA6B8);
 }

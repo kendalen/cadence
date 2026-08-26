@@ -6,7 +6,7 @@ import '../../../domain/sessions/session_repository.dart';
 import '../../../domain/sessions/trend_series.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../system_insets.dart';
-import '../../theme/cadence_colors.dart';
+import '../../theme/cadence_extra_colors.dart';
 import 'trend_line_chart.dart';
 
 /// A read-only view of the user's readings over time (CLAUDE.md §1: a diary
@@ -196,29 +196,36 @@ class _TrendsScreenState extends State<TrendsScreen>
     ],
   );
 
-  // The two blood-pressure lines: systolic teal, diastolic ochre.
-  List<TrendChartSeries> _bpSeries(AppLocalizations l10n) => [
-    TrendChartSeries(
-      label: l10n.fieldSystolic,
-      color: CadenceColors.systolic,
-      valueOf: (point) => point.systolic,
-    ),
-    TrendChartSeries(
-      label: l10n.fieldDiastolic,
-      color: CadenceColors.diastolic,
-      valueOf: (point) => point.diastolic,
-    ),
-  ];
+  // The two blood-pressure lines: systolic teal, diastolic ochre. Series colours
+  // come from the theme extension so they follow the light/dark palette.
+  List<TrendChartSeries> _bpSeries(AppLocalizations l10n) {
+    final extra = Theme.of(context).extension<CadenceExtraColors>()!;
+    return [
+      TrendChartSeries(
+        label: l10n.fieldSystolic,
+        color: extra.systolic,
+        valueOf: (point) => point.systolic,
+      ),
+      TrendChartSeries(
+        label: l10n.fieldDiastolic,
+        color: extra.diastolic,
+        valueOf: (point) => point.diastolic,
+      ),
+    ];
+  }
 
   // The single pulse line. Its points carry a null value on buckets where no
   // occasion recorded a pulse, which the chart simply skips.
-  List<TrendChartSeries> _pulseSeries(AppLocalizations l10n) => [
-    TrendChartSeries(
-      label: l10n.fieldPulse,
-      color: CadenceColors.pulse,
-      valueOf: (point) => point.pulse,
-    ),
-  ];
+  List<TrendChartSeries> _pulseSeries(AppLocalizations l10n) {
+    final extra = Theme.of(context).extension<CadenceExtraColors>()!;
+    return [
+      TrendChartSeries(
+        label: l10n.fieldPulse,
+        color: extra.pulse,
+        valueOf: (point) => point.pulse,
+      ),
+    ];
+  }
 
   // Only show the pulse chart when the range actually holds a recorded pulse —
   // a user who never logs pulse shouldn't face an empty second chart.

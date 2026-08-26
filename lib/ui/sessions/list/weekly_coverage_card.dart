@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/sessions/session_average.dart';
 import '../../../domain/sessions/weekly_coverage.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../theme/cadence_colors.dart';
+import '../../theme/cadence_extra_colors.dart';
 import '../pressure_text.dart';
 
 /// A summary of how well the last seven days keep to the 7-2-2 protocol,
@@ -37,7 +37,7 @@ class WeeklyCoverageCard extends StatelessWidget {
     // than another entry. Sand is neutral on purpose — colouring it teal/green
     // would read as a good/bad verdict on the numbers, which §1 forbids.
     return Card(
-      color: CadenceColors.sand,
+      color: theme.extension<CadenceExtraColors>()!.sand,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: landscape ? _flowing(theme, l10n) : _stacked(theme, l10n),

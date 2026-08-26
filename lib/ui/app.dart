@@ -40,7 +40,10 @@ class CadenceApp extends StatelessWidget {
     ],
     child: MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-      theme: buildCadenceTheme(),
+      // Follow the phone's light/dark setting (themeMode defaults to system when
+      // both are given). No in-app toggle — respecting the device is the point.
+      theme: buildCadenceTheme(Brightness.light),
+      darkTheme: buildCadenceTheme(Brightness.dark),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: const FirstRunGate(),
