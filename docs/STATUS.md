@@ -561,7 +561,12 @@ documents the `keytool` command and keys.
   once on genuine first launch. Own branch `b1-release-signing`. The universal
   APK is 67 MB; the slim per-ABI `.aab` for the store is **B7**.
 
-**Done (2026-08-25, pending wording review): S10 — Italian localisation.**
+**Done (2026-08-25; wording accepted by the maintainer 2026-08-26): S10 —
+Italian localisation.** The native-speaker wording pass is **complete** — the
+maintainer reviewed the Italian (including the §1 disclaimer/medical strings and
+the informal "tu" register) and accepts it as-is; later string additions this
+session (partial-data tag, import detail-drop note) were written to the same
+register. No open Italian item remains.
 `lib/l10n/app_it.arb` translates the full 86-key string set to Italian; English
 stays the source locale (§9). Register is **informal "tu"** (maintainer's call —
 modern app convention, warmer for the calm tone). No Dart change: gen-l10n adds
