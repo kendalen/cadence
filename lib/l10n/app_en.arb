@@ -350,6 +350,18 @@
   "@exportDisclaimer": {
     "description": "Footer line on the PDF and leading line in the CSV, stating that the export is a diary and not a clinical assessment (CLAUDE.md §1)."
   },
+  "referenceBelow": "Your 7-day average is below the ESH home-monitoring reference of 135/85 mmHg.",
+  "@referenceBelow": {
+    "description": "Coverage-card line shown when the 7-day period average is below the ESH home reference. States a position, never a judgement (CLAUDE.md §1). Paired on the next line with exportDisclaimer."
+  },
+  "referenceAtOrAbove": "Your 7-day average is at or above the ESH home-monitoring reference of 135/85 mmHg.",
+  "@referenceAtOrAbove": {
+    "description": "Coverage-card line shown when the 7-day period average reaches the ESH home reference on systolic and/or diastolic. States a position, never a judgement (CLAUDE.md §1). Paired on the next line with exportDisclaimer."
+  },
+  "referenceInfoLabel": "Reference range",
+  "@referenceInfoLabel": {
+    "description": "Tooltip and accessibility label of the info button on the coverage card that reveals or hides the ESH reference-range comparison."
+  },
   "exportColumnDate": "Date",
   "@exportColumnDate": {
     "description": "Header of the export column holding the date a reading was taken."

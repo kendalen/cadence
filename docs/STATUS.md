@@ -6,11 +6,13 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-26 (dark theme + a Settings theme toggle built and
-**device-verified on the Redmi — works flawlessly**; **merged to `main` +
-pushed**). **Resume point: review untapped 1.x+ capabilities — see "NEXT UP"
-below.** (The dark hex are still the derived starting points — the maintainer was
-happy with them as-is; retune any time.)
+**Last updated:** 2026-08-26 (**reference-range display done + device-verified +
+squash-merged to `main`**; 300 tests green). Shown via an in-card info button
+(hidden until tapped), landscape card full-width + centred summary, portrait
+left-aligned. **Resume point: the remaining 1.x polish is optional (time-format,
+bolder PDF headers, more locales) — the real next step is the Play-Store release
+track (B2–B7). Also open: the Italian wording review for the reference strings,
+and the trends-tooltip micro-bug (Known issues).**
 
 ---
 
@@ -931,9 +933,50 @@ Approved structure:
   light empty-state golden stays.
 - On-device: verify on the Redmi by toggling the phone's dark mode; tune hex.
 
-**Then (maintainer ask): review untapped 1.x+ capabilities.** After dark theme,
-walk through what the roadmap's "Deferred to 1.x" list and any newer ideas hold
-that we haven't looked at yet, and decide what (if anything) is worth pulling in.
+**Done (2026-08-26): reference-range display (the one high-value 1.x feature).**
+The coverage card can now show whether the 7-day period average is **below** or
+**at or above** the ESH home-monitoring reference of **135/85 mmHg** — a single
+neutral, ESH-attributed comparison paired with the reused "not a diagnosis"
+clause. Built subagent-free (inline, TDD, 7 commits) on branch
+`reference-range-display`; **305 tests green** (+37 from work across the theme
+slices' 268 base + this), analyze + format clean, **no schema change** (reuses the
+v3 KV table). Spec + plan: `docs/superpowers/{specs,plans}/2026-08-26-reference-*`
+(local, gitignored). Product decisions (brainstorm, maintainer-approved):
+- **Binary** below / at-or-above the single 135/85 home reference (ESH category
+  ladder rejected as too interpretive); on the **period average only**, never a
+  single reading, never a chart line (§1/§4).
+- **Suppressed until reliable** — shows only when `hasSufficientDays` (≥4 logged
+  days) and there is an in-window average, so a partial average never becomes a
+  comparison (§4). Side effect: it "unlocks" at enough data.
+- **Hidden behind an info button, revealed on tap** (maintainer's on-device
+  call, 2026-08-26 — replaced the original always-on-with-a-Settings-toggle
+  design). A small (i) button appears on the card only when the average is
+  reliable; tapping it reveals the comparison, tapping again hides it; it
+  **starts hidden** and the reveal is **ephemeral** (never remembered). This
+  fixes the landscape height crowding and is a stronger §1 posture — the
+  interpretation is opt-in per view, never pushed. ESH **and/or** rule
+  (`systolic ≥135 OR diastolic ≥85`), **simple** phrasing, **no colour**.
+- Layers: pure `home_reference.dart` (`compareToHomeReference` +
+  `ReferenceComparison`, TDD); `WeeklyCoverageCard` is now a **StatefulWidget**
+  holding the ephemeral `_revealed` flag, with the (i) `IconButton` + the muted
+  reference block. **No persistence, no cubit, no Settings row** — the toggle,
+  its `ReferenceRangeCubit`, the `SettingsRepository.isReferenceRangeEnabled`/
+  `setReferenceRangeEnabled` methods and the `main()`/`app.dart` wiring that the
+  first cut added were all **removed** when the info-button reveal replaced them.
+- **Strings:** `referenceBelow`, `referenceAtOrAbove`, `referenceInfoLabel`
+  (the (i) tooltip/label) — EN + IT. Italian is a first pass — **flag for the
+  maintainer's wording review** (the two comparison sentences; label "Intervallo
+  di riferimento"). The consult-your-doctor clause reuses `exportDisclaimer`.
+- **On-device check pending:** the (i) appears only at ≥4 days, tapping reveals
+  the comparison, it reads well in Italian, and the card stays compact in
+  landscape until revealed.
+
+**Then (maintainer ask): the remaining 1.x polish is optional.** After
+reference-range, what's left on the roadmap's "Deferred to 1.x" list is minor:
+**time-format 12h/24h** (cheap now, low value for the IT audience), **bolder PDF
+headers** (needs a static bold font instance), **more locales** (translation
+only). The strategic next step is really the **Play-Store release track (B2–B7)**,
+not another feature. Also open: the trends-tooltip micro-bug (Known issues).
 
 **Discard-day-1 toggle — SHELVED (maintainer's call, 2026-08-26).** Brainstormed
 and deferred, not built. The feature has no solid anchor in Cadence's model: the

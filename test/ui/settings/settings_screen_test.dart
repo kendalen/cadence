@@ -52,10 +52,11 @@ void main() {
     expect(find.text(l10n.settingsExportRangeLast30), findsOneWidget);
     expect(find.text(l10n.settingsExportRangeLast90), findsOneWidget);
     expect(find.text(l10n.settingsExportRangeAll), findsOneWidget);
+    // The export buttons and About sit lower down; scroll them into view (the
+    // list grew once the Appearance and Reference sections were added above).
+    await tester.scrollUntilVisible(find.text(l10n.exportCsv), 200);
     expect(find.text(l10n.exportCsv), findsOneWidget);
     expect(find.text(l10n.exportPdf), findsOneWidget);
-    // About sits at the bottom of the list; scroll it into view (the list grew
-    // once the Appearance section was added above it).
     await tester.scrollUntilVisible(find.text(l10n.aboutMenu), 200);
     expect(find.text(l10n.aboutMenu), findsOneWidget);
   });
@@ -83,6 +84,7 @@ void main() {
     // history stays empty, so the range filter yields nothing to export.
     await pumpSettings(tester);
 
+    await tester.scrollUntilVisible(find.text(l10n.exportCsv), 200);
     await tester.tap(find.text(l10n.exportCsv));
     await tester.pump(); // fire the async handler
     await tester.pump(); // recentHistory() resolves, snackbar shows

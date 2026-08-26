@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- A **reference-range comparison** on the "Last 7 days" card: whether your 7-day
+  average is below or at/or/above the ESH home-monitoring reference of
+  135/85 mmHg, always attributed to ESH and paired with a "not a diagnosis —
+  discuss with your doctor" line. It's offered by a small **info button** that
+  appears only once the average rests on enough days; the text stays **hidden
+  until you tap it**, and it shows no colour or verdict.
+
 - A **dark theme** in a warm-dark palette (kept warm, not cold or pure-black).
   Colour still never grades a reading, and the chart series stay
   colour-blind-safe against each other in dark.
