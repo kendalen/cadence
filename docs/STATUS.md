@@ -6,8 +6,8 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-25 (Settings screen + date-bounded CSV/PDF export +
-app version in About)
+**Last updated:** 2026-08-26 (code-quality audit correctness tranche on
+`audit-correctness-fixes`; discard-day-1 toggle shelved)
 
 ---
 
@@ -810,13 +810,47 @@ Branch pushed to `origin`; **not yet merged to `main`** (maintainer to merge).
   diary reports "nothing to export" instead of sharing). The menu-tap→native
   share stays untested, same boundary as the JSON backup and the old export.
 
-**Next (agreed): the discard-day-1 toggle** — its own slice with a short
-brainstorm. Research done (memory `discard-day1-rule`): ESH drops **all of the
-first monitoring day** (first-day BP runs high — "first measurement effect"), but
-Cadence's **rolling** last-7-days window has no "day 1" marker, so *which* day is
-day 1 (oldest in window? first logged?) and whether it affects the **average
-only** vs the coverage counts are the maintainer's clinical calls (§10). **Default
-decided: toggle OFF — do NOT drop day 1** (maintainer, 2026-08-25).
+**Discard-day-1 toggle — SHELVED (maintainer's call, 2026-08-26).** Brainstormed
+and deferred, not built. The feature has no solid anchor in Cadence's model: the
+7-2-2 rule drops the first day of a *deliberately started* monitoring block, but
+Cadence uses a **rolling** last-7-days window with no monitoring-period marker.
+Every reading of "day 1" is compromised — "global first day logged" goes inert
+once it scrolls out of the window (~after week 1); "first day of the current
+stretch" needs an invented gap-detection heuristic (itself an unstated clinical
+threshold) and changes a first-class output (average + coverage) in a way that's
+hard to explain to the older audience. Default was OFF anyway and §4 says the
+literature is divided. **Revive trigger:** only if/when an explicit monitoring
+period (user-started "start a 7-day check" with a real start date) is added —
+then "drop day 1" is well-defined and cheap. See memory `discard-day1-rule`.
+
+**Done (2026-08-26): code-quality audit — correctness tranche.** Worked through
+`docs/CODE_QUALITY_AUDIT.md` (untracked; adversarial audit of the settings/export
+work). Verified the two sharp claims against the code (both real) and fixed the
+findings that need no clinical/design call, on branch `audit-correctness-fixes`
+(pushed, **267 tests green**, not yet merged — maintainer to merge):
+- **CQ-13** — pulse tooltip crash. `selectedIndex` from the full point list was
+  used against the pulse line's shorter (gap-filtered) spot list → wrong point or
+  `RangeError` on tap. Now resolved by x per line via a shared `selectedSpotIndex`
+  helper (pure, tested). Chart pixels stay untested (§7).
+- **CQ-05** — first-run §1 disclaimer could be skipped by a settings read error
+  (contract promised safe-default, adapter didn't honour it); now defaults-safe
+  (broad catch, deliberate for the regulated path). Trends stream-error half also
+  fixed: a stream error shows a message, not an endless spinner.
+- **CQ-01** — both destructive-undo paths were fire-and-forget; a failed restore
+  looked like success. Now await + report `errorRestoreFailed`.
+- **CQ-04** — "last N days" had no upper bound and was implemented three times
+  (`weeklyCoverage`, `sessionsInLastDays`, `buildTrendSeries`); a future-dated
+  reading (via the tolerant import) could stretch the window. Extracted one
+  `DateWindow` value (inclusive lower **+** upper bound, positive-length
+  validation) and rewired all three (rule of three). Future-date + DST tests.
+- Also folded in a maintainer on-device report: the trends chart's last point/
+  date label was clipped by the `TabBarView` edge — horizontal padding on both
+  tabs.
+- **Left for the maintainer (§10, clinical/design):** CQ-14 (label under-sampled
+  averages — needs a threshold), CQ-02 (backup-import validation policy), CQ-03
+  (release-safe domain invariants). **Left as optional polish:** CQ-06–12, CQ-15,
+  and two CQ-05 leftovers (broad `on Exception` in transfer/About, StreamBuilder-
+  vs-Cubit). Resolution log at the top of the audit doc.
 
 ## Known issues (open)
 
