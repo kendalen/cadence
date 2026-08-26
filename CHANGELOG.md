@@ -29,6 +29,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Trends: tapping a pulse point after a gap no longer selects the wrong point
+  or crashes.** The pinned tooltip resolved the tapped point by its position in
+  the full day list, but the pulse line omits days with no recorded pulse — so a
+  later tap could index past the shorter line and throw. Selection is now matched
+  by the point's position on the time axis, per line.
+- **The first-run "diary, not a device" notice can no longer be skipped by a
+  storage error.** A failed settings read now defaults to "not acknowledged"
+  (showing the notice) and a failed write is ignored, matching the repository's
+  documented safe-failure contract (§1).
+- **Trends: the chart's last point and date label are no longer clipped inside
+  the tab view.** A little horizontal padding keeps the extreme point off the
+  tab's clipping edge.
 - The "Remove" tooltip on a reading in the entry form showed "Remove this
   reading" instead of the short "Remove": `app_en.arb` defined `removeReading`
   twice and the later, longer entry silently won. The two actions now have

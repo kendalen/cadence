@@ -251,7 +251,10 @@ class _TrendsScreenState extends State<TrendsScreen>
   Widget _bpTab(AppLocalizations l10n, TrendSeries series) {
     final chartSeries = _bpSeries(l10n);
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      // Sides as well as top: the chart fills the tab, and a TabBarView clips at
+      // the page edge, so the last point's dot and date label — which sit right
+      // at the axis extremes — got shaved off until a swipe revealed them.
+      padding: const EdgeInsets.only(top: 12, left: 8, right: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -271,7 +274,9 @@ class _TrendsScreenState extends State<TrendsScreen>
   Widget _pulseTab(AppLocalizations l10n, TrendSeries series) {
     if (!_hasPulse(series)) return _EmptyTrends(l10n.trendsNoPulse);
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      // Sides as well as top — see _bpTab: keep the extreme point/label off the
+      // TabBarView's clipping edge.
+      padding: const EdgeInsets.only(top: 12, left: 8, right: 8),
       child: TrendLineChart(series: _pulseSeries(l10n), data: series),
     );
   }
