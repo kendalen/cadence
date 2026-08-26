@@ -6,8 +6,8 @@ decision worth remembering, update this file in the same commit. It complements
 `CHANGELOG.md` (which records *what shipped*); this file records *where things
 stand and what's next*.
 
-**Last updated:** 2026-08-26 (code-quality audit correctness tranche on
-`audit-correctness-fixes`; discard-day-1 toggle shelved)
+**Last updated:** 2026-08-26 (audit correctness tranche merged to main; three
+maintainer-decided audit findings CQ-14/02/03 done; discard-day-1 shelved)
 
 ---
 
@@ -846,11 +846,30 @@ findings that need no clinical/design call, on branch `audit-correctness-fixes`
 - Also folded in a maintainer on-device report: the trends chart's last point/
   date label was clipped by the `TabBarView` edge — horizontal padding on both
   tabs.
-- **Left for the maintainer (§10, clinical/design):** CQ-14 (label under-sampled
-  averages — needs a threshold), CQ-02 (backup-import validation policy), CQ-03
-  (release-safe domain invariants). **Left as optional polish:** CQ-06–12, CQ-15,
-  and two CQ-05 leftovers (broad `on Exception` in transfer/About, StreamBuilder-
-  vs-Cubit). Resolution log at the top of the audit doc.
+- **Left as optional polish:** CQ-06–12, CQ-15, and two CQ-05 leftovers (broad
+  `on Exception` in transfer/About, StreamBuilder-vs-Cubit). Resolution log at
+  the top of the audit doc.
+
+**Done (2026-08-26): the three maintainer-decided audit findings** (branch
+`audit-decisions-cq14-02-03`, **275 tests green**), each a decision the maintainer
+made this session:
+- **CQ-14 — under-sampled average labelled.** The "Last 7 days" average now shows
+  a small muted "based on partial data" note when it rests on **fewer than four
+  distinct logged days** (maintainer's cutoff — a completeness signal, never a
+  verdict, §1/§4). Domain `MonitoringCoverage.hasSufficientDays` +
+  `minReliableMonitoringDays = 4`; tag in both card layouts (tiny, landscape-safe).
+- **CQ-02 — report-only import.** A backup reading with a malformed *optional*
+  field (unknown enum, non-numeric pulse, non-text note) is still imported, but
+  now **counted** (`BackupParsed.readingsWithDroppedDetails`) and reported ("some
+  readings had details that couldn't be read") rather than silently nulled (§5).
+  No range-checking / duplicate rejection (the "strict" path the maintainer did
+  not pick).
+- **CQ-03 — invariants enforced in release.** `Session` (≥1 reading) and `Reading`
+  (UTC time) now **throw** instead of `assert` (asserts are stripped from release),
+  and `Session.readings` / `TrendSeries` lists are stored unmodifiable. Dropped
+  `const` from `Session`.
+- **discard-day-1** stays shelved (above). **On-device check pending** for CQ-14's
+  tag; the rest are logic covered by tests.
 
 ## Known issues (open)
 
